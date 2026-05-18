@@ -33,7 +33,8 @@ src/
 
 - `domain/` has zero dependencies on frameworks, Prisma, or Next.js.
 - **Functional style only — no classes.** Use factory functions everywhere: `createPrismaXxxRepository(prisma)` for repositories, `createXxxService(repo)` for services. Never use `class` or `new`.
-- `services/` receive repository instances as factory function parameters (manual DI — no IoC container).
+- **Dependency injection via parameters.** Services receive their repository as a function parameter typed as the interface (`ICategoryRepository`), not the concrete implementation. This decouples the service from Prisma and makes it trivially testable by passing a mock object with `vi.fn()` methods.
+- **Closure over dependencies.** The object returned by a factory function closes over the injected parameter — all returned methods share access to `repo` or `prisma` without needing `this`. This is the functional equivalent of a `private readonly` field in a class.
 - Route handlers only handle HTTP: parse input, call service, return response. No business logic here.
 - No DTOs or mappers unless domain and DB models diverge significantly.
 - No use case layer — services cover orchestration at this scale.
