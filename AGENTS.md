@@ -75,10 +75,32 @@ export type Transaction = z.infer<typeof TransactionSchema>
 
 Never use Zod inside services or repositories — validation belongs at the HTTP boundary only.
 
+## Database
+
+Two PostgreSQL instances via Docker Compose:
+
+| Instance | Port | Database | Purpose |
+|---|---|---|---|
+| `db` | `5432` | `personal_finances` | Development |
+| `db_test` | `5433` | `personal_finances_test` | Integration tests |
+
+- Schema is defined in `prisma/schema.prisma`
+- Client is generated to `src/generated/prisma` (gitignored — run `pnpm prisma generate` after clone)
+- Migrations live in `prisma/migrations/` and are committed to the repo
+- Never edit `src/generated/prisma` manually
+
+After cloning, run:
+```bash
+pnpm db:up
+pnpm prisma migrate dev
+pnpm prisma generate
+```
+
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router)
 - **ORM:** Prisma 7
+- **Database:** PostgreSQL 17 (Docker Compose)
 - **Validation:** Zod 4
 - **Testing:** Vitest
 - **UI components:** shadcn/ui (Radix, Nova preset)
