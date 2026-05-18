@@ -42,38 +42,31 @@ function toDomain(raw: PrismaRecurringItem): RecurringItem {
 	}
 }
 
-export class PrismaRecurringItemRepository implements IRecurringItemRepository {
-	constructor(private readonly prisma: PrismaClient) {}
-
-	async findAll(): Promise<RecurringItem[]> {
-		const rows = await this.prisma.recurringItem.findMany()
-		return rows.map(toDomain)
-	}
-
-	async findById(id: number): Promise<RecurringItem | null> {
-		const row = await this.prisma.recurringItem.findUnique({ where: { id } })
-		return row ? toDomain(row) : null
-	}
-
-	async findActive(): Promise<RecurringItem[]> {
-		const rows = await this.prisma.recurringItem.findMany({
-			where: { active: true },
-		})
-		return rows.map(toDomain)
-	}
-
-	async create(input: CreateRecurringItemInput): Promise<RecurringItem> {
-		const row = await this.prisma.recurringItem.create({ data: input })
-		return toDomain(row)
-	}
-
-	async update(id: number, input: UpdateRecurringItemInput): Promise<RecurringItem> {
-		const row = await this.prisma.recurringItem.update({ where: { id }, data: input })
-		return toDomain(row)
-	}
-
-	async deactivate(id: number): Promise<RecurringItem> {
-		const row = await this.prisma.recurringItem.update({ where: { id }, data: { active: false } })
-		return toDomain(row)
+export function createPrismaRecurringItemRepository(prisma: PrismaClient): IRecurringItemRepository {
+	return {
+		findAll: async () => {
+			const rows = await prisma.recurringItem.findMany()
+			return rows.map(toDomain)
+		},
+		findById: async (id) => {
+			const row = await prisma.recurringItem.findUnique({ where: { id } })
+			return row ? toDomain(row) : null
+		},
+		findActive: async () => {
+			const rows = await prisma.recurringItem.findMany({ where: { active: true } })
+			return rows.map(toDomain)
+		},
+		create: async (input: CreateRecurringItemInput) => {
+			const row = await prisma.recurringItem.create({ data: input })
+			return toDomain(row)
+		},
+		update: async (id: number, input: UpdateRecurringItemInput) => {
+			const row = await prisma.recurringItem.update({ where: { id }, data: input })
+			return toDomain(row)
+		},
+		deactivate: async (id: number) => {
+			const row = await prisma.recurringItem.update({ where: { id }, data: { active: false } })
+			return toDomain(row)
+		},
 	}
 }

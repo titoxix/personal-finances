@@ -57,48 +57,40 @@ function monthRange(month: Date): { gte: Date; lt: Date } {
 	return { gte: start, lt: end }
 }
 
-export class PrismaTransactionRepository implements ITransactionRepository {
-	constructor(private readonly prisma: PrismaClient) {}
-
-	async findAll(): Promise<Transaction[]> {
-		const rows = await this.prisma.transaction.findMany({
-			orderBy: { date: 'desc' },
-		})
-		return rows.map(toDomain)
-	}
-
-	async findById(id: number): Promise<Transaction | null> {
-		const row = await this.prisma.transaction.findUnique({ where: { id } })
-		return row ? toDomain(row) : null
-	}
-
-	async findByMonth(month: Date): Promise<Transaction[]> {
-		const rows = await this.prisma.transaction.findMany({
-			where: { date: monthRange(month) },
-			orderBy: { date: 'desc' },
-		})
-		return rows.map(toDomain)
-	}
-
-	async findByMonthAndCategory(month: Date, categoryId: number): Promise<Transaction[]> {
-		const rows = await this.prisma.transaction.findMany({
-			where: { date: monthRange(month), categoryId },
-			orderBy: { date: 'desc' },
-		})
-		return rows.map(toDomain)
-	}
-
-	async create(input: CreateTransactionInput): Promise<Transaction> {
-		const row = await this.prisma.transaction.create({ data: input })
-		return toDomain(row)
-	}
-
-	async update(id: number, input: UpdateTransactionInput): Promise<Transaction> {
-		const row = await this.prisma.transaction.update({ where: { id }, data: input })
-		return toDomain(row)
-	}
-
-	async delete(id: number): Promise<void> {
-		await this.prisma.transaction.delete({ where: { id } })
+export function createPrismaTransactionRepository(prisma: PrismaClient): ITransactionRepository {
+	return {
+		findAll: async () => {
+			const rows = await prisma.transaction.findMany({ orderBy: { date: 'desc' } })
+			return rows.map(toDomain)
+		},
+		findById: async (id) => {
+			const row = await prisma.transaction.findUnique({ where: { id } })
+			return row ? toDomain(row) : null
+		},
+		findByMonth: async (month: Date) => {
+			const rows = await prisma.transaction.findMany({
+				where: { date: monthRange(month) },
+				orderBy: { date: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
+		findByMonthAndCategory: async (month: Date, categoryId: number) => {
+			const rows = await prisma.transaction.findMany({
+				where: { date: monthRange(month), categoryId },
+				orderBy: { date: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
+		create: async (input: CreateTransactionInput) => {
+			const row = await prisma.transaction.create({ data: input })
+			return toDomain(row)
+		},
+		update: async (id: number, input: UpdateTransactionInput) => {
+			const row = await prisma.transaction.update({ where: { id }, data: input })
+			return toDomain(row)
+		},
+		delete: async (id: number) => {
+			await prisma.transaction.delete({ where: { id } })
+		},
 	}
 }

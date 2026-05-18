@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaRecurringItemRepository } from './PrismaRecurringItemRepository'
+import { createPrismaRecurringItemRepository } from './PrismaRecurringItemRepository'
 
-const repository = new PrismaRecurringItemRepository(prismaTest)
+const repository = createPrismaRecurringItemRepository(prismaTest)
 
 let categoryId: number
 let essentialityId: number

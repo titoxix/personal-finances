@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaMonthlySnapshotRepository } from './PrismaMonthlySnapshotRepository'
+import { createPrismaMonthlySnapshotRepository } from './PrismaMonthlySnapshotRepository'
 
-const repository = new PrismaMonthlySnapshotRepository(prismaTest)
+const repository = createPrismaMonthlySnapshotRepository(prismaTest)
 
 const MAY_2026 = new Date('2026-05-01')
 const APR_2026 = new Date('2026-04-01')

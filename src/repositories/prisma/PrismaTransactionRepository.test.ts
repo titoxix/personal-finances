@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaTransactionRepository } from './PrismaTransactionRepository'
+import { createPrismaTransactionRepository } from './PrismaTransactionRepository'
 
-const repository = new PrismaTransactionRepository(prismaTest)
+const repository = createPrismaTransactionRepository(prismaTest)
 
 let categoryId: number
 let category2Id: number

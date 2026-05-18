@@ -29,39 +29,33 @@ function toDomain(raw: PrismaExchangeRate): ExchangeRate {
 	}
 }
 
-export class PrismaExchangeRateRepository implements IExchangeRateRepository {
-	constructor(private readonly prisma: PrismaClient) {}
-
-	async findAll(): Promise<ExchangeRate[]> {
-		const rows = await this.prisma.exchangeRate.findMany({
-			orderBy: { recordedAt: 'desc' },
-		})
-		return rows.map(toDomain)
-	}
-
-	async findById(id: number): Promise<ExchangeRate | null> {
-		const row = await this.prisma.exchangeRate.findUnique({ where: { id } })
-		return row ? toDomain(row) : null
-	}
-
-	async findBySource(source: ExchangeRateSource): Promise<ExchangeRate[]> {
-		const rows = await this.prisma.exchangeRate.findMany({
-			where: { source },
-			orderBy: { recordedAt: 'desc' },
-		})
-		return rows.map(toDomain)
-	}
-
-	async findLatestBySource(source: ExchangeRateSource): Promise<ExchangeRate | null> {
-		const row = await this.prisma.exchangeRate.findFirst({
-			where: { source },
-			orderBy: { recordedAt: 'desc' },
-		})
-		return row ? toDomain(row) : null
-	}
-
-	async create(input: CreateExchangeRateInput): Promise<ExchangeRate> {
-		const row = await this.prisma.exchangeRate.create({ data: input })
-		return toDomain(row)
+export function createPrismaExchangeRateRepository(prisma: PrismaClient): IExchangeRateRepository {
+	return {
+		findAll: async () => {
+			const rows = await prisma.exchangeRate.findMany({ orderBy: { recordedAt: 'desc' } })
+			return rows.map(toDomain)
+		},
+		findById: async (id) => {
+			const row = await prisma.exchangeRate.findUnique({ where: { id } })
+			return row ? toDomain(row) : null
+		},
+		findBySource: async (source: ExchangeRateSource) => {
+			const rows = await prisma.exchangeRate.findMany({
+				where: { source },
+				orderBy: { recordedAt: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
+		findLatestBySource: async (source: ExchangeRateSource) => {
+			const row = await prisma.exchangeRate.findFirst({
+				where: { source },
+				orderBy: { recordedAt: 'desc' },
+			})
+			return row ? toDomain(row) : null
+		},
+		create: async (input: CreateExchangeRateInput) => {
+			const row = await prisma.exchangeRate.create({ data: input })
+			return toDomain(row)
+		},
 	}
 }

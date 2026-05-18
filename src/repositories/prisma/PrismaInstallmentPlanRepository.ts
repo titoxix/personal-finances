@@ -45,38 +45,33 @@ function toDomain(raw: PrismaInstallmentPlan): InstallmentPlan {
 	}
 }
 
-export class PrismaInstallmentPlanRepository implements IInstallmentPlanRepository {
-	constructor(private readonly prisma: PrismaClient) {}
-
-	async findAll(): Promise<InstallmentPlan[]> {
-		const rows = await this.prisma.installmentPlan.findMany()
-		return rows.map(toDomain)
-	}
-
-	async findById(id: number): Promise<InstallmentPlan | null> {
-		const row = await this.prisma.installmentPlan.findUnique({ where: { id } })
-		return row ? toDomain(row) : null
-	}
-
-	async findActive(): Promise<InstallmentPlan[]> {
-		const rows = await this.prisma.installmentPlan.findMany({
-			where: { active: true },
-		})
-		return rows.map(toDomain)
-	}
-
-	async create(input: CreateInstallmentPlanInput): Promise<InstallmentPlan> {
-		const row = await this.prisma.installmentPlan.create({ data: input })
-		return toDomain(row)
-	}
-
-	async update(id: number, input: UpdateInstallmentPlanInput): Promise<InstallmentPlan> {
-		const row = await this.prisma.installmentPlan.update({ where: { id }, data: input })
-		return toDomain(row)
-	}
-
-	async deactivate(id: number): Promise<InstallmentPlan> {
-		const row = await this.prisma.installmentPlan.update({ where: { id }, data: { active: false } })
-		return toDomain(row)
+export function createPrismaInstallmentPlanRepository(
+	prisma: PrismaClient,
+): IInstallmentPlanRepository {
+	return {
+		findAll: async () => {
+			const rows = await prisma.installmentPlan.findMany()
+			return rows.map(toDomain)
+		},
+		findById: async (id) => {
+			const row = await prisma.installmentPlan.findUnique({ where: { id } })
+			return row ? toDomain(row) : null
+		},
+		findActive: async () => {
+			const rows = await prisma.installmentPlan.findMany({ where: { active: true } })
+			return rows.map(toDomain)
+		},
+		create: async (input: CreateInstallmentPlanInput) => {
+			const row = await prisma.installmentPlan.create({ data: input })
+			return toDomain(row)
+		},
+		update: async (id: number, input: UpdateInstallmentPlanInput) => {
+			const row = await prisma.installmentPlan.update({ where: { id }, data: input })
+			return toDomain(row)
+		},
+		deactivate: async (id: number) => {
+			const row = await prisma.installmentPlan.update({ where: { id }, data: { active: false } })
+			return toDomain(row)
+		},
 	}
 }

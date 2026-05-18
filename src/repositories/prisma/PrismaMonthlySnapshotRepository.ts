@@ -68,40 +68,33 @@ function toDomain(raw: PrismaMonthlySnapshot): MonthlySnapshot {
 	}
 }
 
-export class PrismaMonthlySnapshotRepository implements IMonthlySnapshotRepository {
-	constructor(private readonly prisma: PrismaClient) {}
-
-	async findAll(): Promise<MonthlySnapshot[]> {
-		const rows = await this.prisma.monthlySnapshot.findMany({
-			orderBy: { month: 'desc' },
-		})
-		return rows.map(toDomain)
-	}
-
-	async findById(id: number): Promise<MonthlySnapshot | null> {
-		const row = await this.prisma.monthlySnapshot.findUnique({ where: { id } })
-		return row ? toDomain(row) : null
-	}
-
-	async findByMonth(month: Date): Promise<MonthlySnapshot | null> {
-		const row = await this.prisma.monthlySnapshot.findUnique({ where: { month } })
-		return row ? toDomain(row) : null
-	}
-
-	async findLatest(): Promise<MonthlySnapshot | null> {
-		const row = await this.prisma.monthlySnapshot.findFirst({
-			orderBy: { month: 'desc' },
-		})
-		return row ? toDomain(row) : null
-	}
-
-	async create(input: CreateMonthlySnapshotInput): Promise<MonthlySnapshot> {
-		const row = await this.prisma.monthlySnapshot.create({ data: input })
-		return toDomain(row)
-	}
-
-	async update(id: number, input: UpdateMonthlySnapshotInput): Promise<MonthlySnapshot> {
-		const row = await this.prisma.monthlySnapshot.update({ where: { id }, data: input })
-		return toDomain(row)
+export function createPrismaMonthlySnapshotRepository(
+	prisma: PrismaClient,
+): IMonthlySnapshotRepository {
+	return {
+		findAll: async () => {
+			const rows = await prisma.monthlySnapshot.findMany({ orderBy: { month: 'desc' } })
+			return rows.map(toDomain)
+		},
+		findById: async (id) => {
+			const row = await prisma.monthlySnapshot.findUnique({ where: { id } })
+			return row ? toDomain(row) : null
+		},
+		findByMonth: async (month: Date) => {
+			const row = await prisma.monthlySnapshot.findUnique({ where: { month } })
+			return row ? toDomain(row) : null
+		},
+		findLatest: async () => {
+			const row = await prisma.monthlySnapshot.findFirst({ orderBy: { month: 'desc' } })
+			return row ? toDomain(row) : null
+		},
+		create: async (input: CreateMonthlySnapshotInput) => {
+			const row = await prisma.monthlySnapshot.create({ data: input })
+			return toDomain(row)
+		},
+		update: async (id: number, input: UpdateMonthlySnapshotInput) => {
+			const row = await prisma.monthlySnapshot.update({ where: { id }, data: input })
+			return toDomain(row)
+		},
 	}
 }

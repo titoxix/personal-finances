@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaBudgetRepository } from './PrismaBudgetRepository'
+import { createPrismaBudgetRepository } from './PrismaBudgetRepository'
 
-const repository = new PrismaBudgetRepository(prismaTest)
+const repository = createPrismaBudgetRepository(prismaTest)
 
 let categoryId: number
 let category2Id: number

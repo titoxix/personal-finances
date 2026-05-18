@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaExchangeRateRepository } from './PrismaExchangeRateRepository'
+import { createPrismaExchangeRateRepository } from './PrismaExchangeRateRepository'
 
-const repository = new PrismaExchangeRateRepository(prismaTest)
+const repository = createPrismaExchangeRateRepository(prismaTest)
 
 beforeEach(async () => {
 	await prismaTest.exchangeRate.deleteMany()

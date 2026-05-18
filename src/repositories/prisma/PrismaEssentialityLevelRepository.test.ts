@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaEssentialityLevelRepository } from './PrismaEssentialityLevelRepository'
+import { createPrismaEssentialityLevelRepository } from './PrismaEssentialityLevelRepository'
 
-const repository = new PrismaEssentialityLevelRepository(prismaTest)
+const repository = createPrismaEssentialityLevelRepository(prismaTest)
 
 beforeEach(async () => {
 	await prismaTest.essentialityLevel.deleteMany()

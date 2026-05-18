@@ -6,30 +6,15 @@ import type {
 	UpdateCategoryInput,
 } from '@/domain/repositories/ICategoryRepository'
 
-export class PrismaCategoryRepository implements ICategoryRepository {
-	constructor(private readonly prisma: PrismaClient) {}
-
-	async findAll(): Promise<Category[]> {
-		return this.prisma.category.findMany()
-	}
-
-	async findById(id: number): Promise<Category | null> {
-		return this.prisma.category.findUnique({ where: { id } })
-	}
-
-	async findByCode(code: string): Promise<Category | null> {
-		return this.prisma.category.findUnique({ where: { code } })
-	}
-
-	async create(input: CreateCategoryInput): Promise<Category> {
-		return this.prisma.category.create({ data: input })
-	}
-
-	async update(id: number, input: UpdateCategoryInput): Promise<Category> {
-		return this.prisma.category.update({ where: { id }, data: input })
-	}
-
-	async deactivate(id: number): Promise<Category> {
-		return this.prisma.category.update({ where: { id }, data: { active: false } })
+export function createPrismaCategoryRepository(prisma: PrismaClient): ICategoryRepository {
+	return {
+		findAll: () => prisma.category.findMany(),
+		findById: (id) => prisma.category.findUnique({ where: { id } }),
+		findByCode: (code) => prisma.category.findUnique({ where: { code } }),
+		create: (input: CreateCategoryInput) => prisma.category.create({ data: input }),
+		update: (id: number, input: UpdateCategoryInput) =>
+			prisma.category.update({ where: { id }, data: input }),
+		deactivate: (id: number) =>
+			prisma.category.update({ where: { id }, data: { active: false } }),
 	}
 }

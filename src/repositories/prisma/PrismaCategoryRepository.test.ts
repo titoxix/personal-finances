@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { afterAll, beforeEach, describe, expect, it } from 'vitest'
 import { prismaTest } from '@/test/prisma'
-import { PrismaCategoryRepository } from './PrismaCategoryRepository'
+import { createPrismaCategoryRepository } from './PrismaCategoryRepository'
 
-const repository = new PrismaCategoryRepository(prismaTest)
+const repository = createPrismaCategoryRepository(prismaTest)
 
 beforeEach(async () => {
 	await prismaTest.category.deleteMany()

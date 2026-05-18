@@ -32,7 +32,8 @@ src/
 ## Rules
 
 - `domain/` has zero dependencies on frameworks, Prisma, or Next.js.
-- `services/` receive repository instances via constructor (manual DI — no IoC container).
+- **Functional style only — no classes.** Use factory functions everywhere: `createPrismaXxxRepository(prisma)` for repositories, `createXxxService(repo)` for services. Never use `class` or `new`.
+- `services/` receive repository instances as factory function parameters (manual DI — no IoC container).
 - Route handlers only handle HTTP: parse input, call service, return response. No business logic here.
 - No DTOs or mappers unless domain and DB models diverge significantly.
 - No use case layer — services cover orchestration at this scale.
