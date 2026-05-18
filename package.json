@@ -12,7 +12,10 @@
 		"test:coverage": "vitest run --coverage",
 		"check": "biome check .",
 		"check:fix": "biome check --write .",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"db:up": "docker compose up -d",
+		"db:down": "docker compose down",
+		"db:reset": "docker compose down -v && docker compose up -d"
 	},
 	"dependencies": {
 		"@base-ui/react": "^1.4.1",
@@ -47,6 +50,7 @@
 		"@types/react-dom": "^19",
 		"@vitejs/plugin-react": "^6.0.2",
 		"@vitest/coverage-v8": "^4.1.6",
+		"dotenv": "^17.4.2",
 		"eslint": "^9",
 		"eslint-config-next": "16.2.6",
 		"jsdom": "^29.1.1",

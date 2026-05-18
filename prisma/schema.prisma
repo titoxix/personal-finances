@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum PaymentMethod {
+  itau_visa
+  ueno_mastercard
+  itau_debito
+  ueno_debito
+  transferencia
+  mango
+  gnb_mastercard
+}
+
+enum ExchangeRateSource {
+  itau
+  ueno
+  bcp
+}
+
+enum RecurringFrequency {
+  monthly
+  annual
+}
+
+// ─── Reference tables ────────────────────────────────────────────────────────
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(50)
+  label       String   @db.VarChar(100)
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  transactions     Transaction[]
+  budgets          Budget[]
+  recurringItems   RecurringItem[]
+  installmentPlans InstallmentPlan[]
+
+  @@map("categories")
+}
+
+model EssentialityLevel {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(20)
+  label       String   @db.VarChar(50)
+  description String?
+  sortOrder   Int      @db.SmallInt @map("sort_order")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  transactions     Transaction[]
+  budgets          Budget[]
+  recurringItems   RecurringItem[]
+  installmentPlans InstallmentPlan[]
+
+  @@map("essentiality_levels")
+}
+
+model ExchangeRate {
+  id         Int                @id @default(autoincrement())
+  recordedAt DateTime           @default(now()) @map("recorded_at")
+  source     ExchangeRateSource
+  rateBuy    Decimal?           @db.Decimal(10, 2) @map("rate_buy")
+  rateSell   Decimal?           @db.Decimal(10, 2) @map("rate_sell")
+  rateMid    Decimal?           @db.Decimal(10, 2) @map("rate_mid")
+  notes      String?
+  createdAt  DateTime           @default(now()) @map("created_at")
+
+  transactions     Transaction[]
+  monthlySnapshots MonthlySnapshot[]
+
+  @@map("exchange_rates")
+}
+
+// ─── Core tables ─────────────────────────────────────────────────────────────
+
+model Income {
+  id                     Int      @id @default(autoincrement())
+  month                  DateTime @db.Date
+  grossIncomeUsd         Decimal  @db.Decimal(10, 2) @map("gross_income_usd")
+  budgetCapUsd           Decimal  @db.Decimal(10, 2) @map("budget_cap_usd")
+  automaticInvestmentUsd Decimal  @db.Decimal(10, 2) @map("automatic_investment_usd")
+  automaticDest          String   @db.VarChar(50) @map("automatic_dest")
+  exchangeRate           Decimal  @db.Decimal(10, 2) @map("exchange_rate")
+  notes                  String?
+  createdAt              DateTime @default(now()) @map("created_at")
+
+  @@map("income")
+}
+
+model InstallmentPlan {
+  id                  Int           @id @default(autoincrement())
+  description         String        @db.VarChar(255)
+  totalAmountGs       Decimal?      @db.Decimal(15, 2) @map("total_amount_gs")
+  totalAmountUsd      Decimal?      @db.Decimal(10, 2) @map("total_amount_usd")
+  installmentsTotal   Int           @db.SmallInt @map("installments_total")
+  installmentsPaid    Int           @default(0) @db.SmallInt @map("installments_paid")
+  installmentAmountGs Decimal?      @db.Decimal(15, 2) @map("installment_amount_gs")
+  startDate           DateTime      @db.Date @map("start_date")
+  endDate             DateTime?     @db.Date @map("end_date")
+  paymentMethod       PaymentMethod @map("payment_method")
+  categoryId          Int           @map("category_id")
+  essentialityId      Int           @map("essentiality_id")
+  active              Boolean       @default(true)
+  notes               String?
+  createdAt           DateTime      @default(now()) @map("created_at")
+
+  category     Category          @relation(fields: [categoryId], references: [id])
+  essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
+  transactions Transaction[]
+
+  @@map("installment_plans")
+}
+
+model Transaction {
+  id                Int           @id @default(autoincrement())
+  date              DateTime      @db.Date
+  description       String        @db.VarChar(255)
+  amountGs          Decimal?      @db.Decimal(15, 2) @map("amount_gs")
+  amountUsd         Decimal?      @db.Decimal(10, 2) @map("amount_usd")
+  exchangeRateValue Decimal?      @db.Decimal(10, 2) @map("exchange_rate")
+  exchangeRateId    Int?          @map("exchange_rate_id")
+  categoryId        Int           @map("category_id")
+  essentialityId    Int           @map("essentiality_id")
+  paymentMethod     PaymentMethod @map("payment_method")
+  weekOfMonth       Int?          @db.SmallInt @map("week_of_month")
+  isInstallment     Boolean       @default(false) @map("is_installment")
+  installmentCurrent Int?         @db.SmallInt @map("installment_current")
+  installmentTotal  Int?          @db.SmallInt @map("installment_total")
+  installmentPlanId Int?          @map("installment_plan_id")
+  isRecurring       Boolean       @default(false) @map("is_recurring")
+  notes             String?
+  createdAt         DateTime      @default(now()) @map("created_at")
+
+  category        Category          @relation(fields: [categoryId], references: [id])
+  essentiality    EssentialityLevel @relation(fields: [essentialityId], references: [id])
+  exchangeRate    ExchangeRate?     @relation(fields: [exchangeRateId], references: [id])
+  installmentPlan InstallmentPlan?  @relation(fields: [installmentPlanId], references: [id])
+
+  @@map("transactions")
+}
+
+model Budget {
+  id             Int      @id @default(autoincrement())
+  month          DateTime @db.Date
+  categoryId     Int      @map("category_id")
+  essentialityId Int      @map("essentiality_id")
+  budgetedUsd    Decimal? @db.Decimal(10, 2) @map("budgeted_usd")
+  budgetedGs     Decimal? @db.Decimal(15, 2) @map("budgeted_gs")
+  notes          String?
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  category     Category          @relation(fields: [categoryId], references: [id])
+  essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
+
+  @@unique([month, categoryId])
+  @@map("budgets")
+}
+
+model MonthlySnapshot {
+  id                    Int      @id @default(autoincrement())
+  month                 DateTime @unique @db.Date
+  incomeUsd             Decimal? @db.Decimal(10, 2) @map("income_usd")
+  exchangeRateValue     Decimal? @db.Decimal(10, 2) @map("exchange_rate")
+  exchangeRateId        Int?     @map("exchange_rate_id")
+  balanceItauUsd        Decimal? @db.Decimal(10, 2) @map("balance_itau_usd")
+  balanceItauGs         Decimal? @db.Decimal(15, 2) @map("balance_itau_gs")
+  balanceUenoUsd        Decimal? @db.Decimal(10, 2) @map("balance_ueno_usd")
+  balanceUenoGs         Decimal? @db.Decimal(15, 2) @map("balance_ueno_gs")
+  balanceMangoGs        Decimal? @db.Decimal(15, 2) @map("balance_mango_gs")
+  balanceGnbGs          Decimal? @db.Decimal(15, 2) @map("balance_gnb_gs")
+  gnbCardGs             Decimal? @db.Decimal(15, 2) @map("gnb_card_gs")
+  investorFundUsd       Decimal? @db.Decimal(10, 2) @map("investor_fund_usd")
+  investorFundGs        Decimal? @db.Decimal(15, 2) @map("investor_fund_gs")
+  investorReturnPct     Decimal? @db.Decimal(5, 2) @map("investor_return_pct")
+  etfPortfolioUsd       Decimal? @db.Decimal(10, 2) @map("etf_portfolio_usd")
+  etfReturnPct          Decimal? @db.Decimal(5, 2) @map("etf_return_pct")
+  itauCardGs            Decimal? @db.Decimal(15, 2) @map("itau_card_gs")
+  uenoCardGs            Decimal? @db.Decimal(15, 2) @map("ueno_card_gs")
+  pendingInstallmentsGs Decimal? @db.Decimal(15, 2) @map("pending_installments_gs")
+  netWorthUsd           Decimal? @db.Decimal(10, 2) @map("net_worth_usd")
+  totalInvestedUsd      Decimal? @db.Decimal(10, 2) @map("total_invested_usd")
+  totalDebtUsd          Decimal? @db.Decimal(10, 2) @map("total_debt_usd")
+  savingsRatePct        Decimal? @db.Decimal(5, 2) @map("savings_rate_pct")
+  notes                 String?
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  exchangeRate ExchangeRate? @relation(fields: [exchangeRateId], references: [id])
+
+  @@map("monthly_snapshot")
+}
+
+model RecurringItem {
+  id             Int                @id @default(autoincrement())
+  description    String             @db.VarChar(255)
+  amountGs       Decimal?           @db.Decimal(15, 2) @map("amount_gs")
+  amountUsd      Decimal?           @db.Decimal(10, 2) @map("amount_usd")
+  categoryId     Int                @map("category_id")
+  essentialityId Int                @map("essentiality_id")
+  paymentMethod  PaymentMethod      @map("payment_method")
+  frequency      RecurringFrequency
+  billingDay     Int?               @db.SmallInt @map("billing_day")
+  billingMonth   Int?               @db.SmallInt @map("billing_month")
+  isVariable     Boolean            @default(false) @map("is_variable")
+  active         Boolean            @default(true)
+  notes          String?
+  createdAt      DateTime           @default(now()) @map("created_at")
+
+  category     Category          @relation(fields: [categoryId], references: [id])
+  essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
+
+  @@map("recurring_items")
+}
