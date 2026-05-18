@@ -11,5 +11,9 @@ export default defineConfig({
 		setupFiles: ['./src/test/setup.ts'],
 		// Unit tests (services, domain) don't need DOM — override per file with:
 		// @vitest-environment node
+
+		// Integration tests share a single PostgreSQL test DB — run files sequentially
+		// to prevent beforeEach/afterAll hooks in one file from deleting data owned by another
+		fileParallelism: false,
 	},
 })

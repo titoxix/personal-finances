@@ -1,0 +1,31 @@
+import { z } from 'zod'
+
+export const MonthlySnapshotSchema = z.object({
+	id: z.number(),
+	month: z.date(),
+	incomeUsd: z.number().nullable(),
+	exchangeRateValue: z.number().nullable(),
+	exchangeRateId: z.number().nullable(),
+	balanceItauUsd: z.number().nullable(),
+	balanceItauGs: z.number().nullable(),
+	balanceUenoUsd: z.number().nullable(),
+	balanceUenoGs: z.number().nullable(),
+	balanceMangoGs: z.number().nullable(),
+	balanceGnbGs: z.number().nullable(),
+	gnbCardGs: z.number().nullable(),
+	investorFundUsd: z.number().nullable(),
+	investorFundGs: z.number().nullable(),
+	investorReturnPct: z.number().nullable(),
+	etfPortfolioUsd: z.number().nullable(),
+	etfReturnPct: z.number().nullable(),
+	itauCardGs: z.number().nullable(),
+	uenoCardGs: z.number().nullable(),
+	pendingInstallmentsGs: z.number().nullable(),
+	netWorthUsd: z.number().nullable(),
+	totalInvestedUsd: z.number().nullable(),
+	totalDebtUsd: z.number().nullable(),
+	savingsRatePct: z.number().nullable(),
+	notes: z.string().nullable(),
+	createdAt: z.date(),
+})
+export type MonthlySnapshot = z.infer<typeof MonthlySnapshotSchema>
