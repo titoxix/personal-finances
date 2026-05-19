@@ -31,3 +31,31 @@ export const RecurringItemSchema = z.object({
 	createdAt: z.date(),
 })
 export type RecurringItem = z.infer<typeof RecurringItemSchema>
+
+export const CreateRecurringItemSchema = z.object({
+	description: z.string().min(1),
+	categoryId: z.number().int().positive(),
+	essentialityId: z.number().int().positive(),
+	paymentMethod: PaymentMethodSchema,
+	frequency: RecurringFrequencySchema,
+	amountGs: z.number().positive().optional(),
+	amountUsd: z.number().positive().optional(),
+	billingDay: z.number().int().min(1).max(31).optional(),
+	billingMonth: z.number().int().min(1).max(12).optional(),
+	isVariable: z.boolean().optional(),
+	notes: z.string().optional(),
+})
+
+export const UpdateRecurringItemSchema = z.object({
+	description: z.string().min(1).optional(),
+	amountGs: z.number().positive().nullable().optional(),
+	amountUsd: z.number().positive().nullable().optional(),
+	categoryId: z.number().int().positive().optional(),
+	essentialityId: z.number().int().positive().optional(),
+	paymentMethod: PaymentMethodSchema.optional(),
+	frequency: RecurringFrequencySchema.optional(),
+	billingDay: z.number().int().min(1).max(31).nullable().optional(),
+	billingMonth: z.number().int().min(1).max(12).nullable().optional(),
+	isVariable: z.boolean().optional(),
+	notes: z.string().nullable().optional(),
+})

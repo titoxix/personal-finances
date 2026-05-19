@@ -14,3 +14,12 @@ export const ExchangeRateSchema = z.object({
 	createdAt: z.date(),
 })
 export type ExchangeRate = z.infer<typeof ExchangeRateSchema>
+
+export const CreateExchangeRateSchema = z.object({
+	source: ExchangeRateSourceSchema,
+	rateBuy: z.number().positive().optional(),
+	rateSell: z.number().positive().optional(),
+	rateMid: z.number().positive().optional(),
+	notes: z.string().optional(),
+	recordedAt: z.coerce.date().optional(),
+})

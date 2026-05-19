@@ -22,3 +22,41 @@ export const TransactionSchema = z.object({
 	createdAt: z.date(),
 })
 export type Transaction = z.infer<typeof TransactionSchema>
+
+export const CreateTransactionSchema = z.object({
+	date: z.coerce.date(),
+	description: z.string().min(1),
+	categoryId: z.number().int().positive(),
+	essentialityId: z.number().int().positive(),
+	paymentMethod: PaymentMethodSchema,
+	amountGs: z.number().positive().optional(),
+	amountUsd: z.number().positive().optional(),
+	exchangeRateValue: z.number().positive().optional(),
+	exchangeRateId: z.number().int().positive().optional(),
+	weekOfMonth: z.number().int().min(1).max(4).optional(),
+	isInstallment: z.boolean().optional(),
+	installmentCurrent: z.number().int().positive().optional(),
+	installmentTotal: z.number().int().positive().optional(),
+	installmentPlanId: z.number().int().positive().optional(),
+	isRecurring: z.boolean().optional(),
+	notes: z.string().optional(),
+})
+
+export const UpdateTransactionSchema = z.object({
+	date: z.coerce.date().optional(),
+	description: z.string().min(1).optional(),
+	amountGs: z.number().positive().nullable().optional(),
+	amountUsd: z.number().positive().nullable().optional(),
+	exchangeRateValue: z.number().positive().nullable().optional(),
+	exchangeRateId: z.number().int().positive().nullable().optional(),
+	categoryId: z.number().int().positive().optional(),
+	essentialityId: z.number().int().positive().optional(),
+	paymentMethod: PaymentMethodSchema.optional(),
+	weekOfMonth: z.number().int().min(1).max(4).nullable().optional(),
+	isInstallment: z.boolean().optional(),
+	installmentCurrent: z.number().int().positive().nullable().optional(),
+	installmentTotal: z.number().int().positive().nullable().optional(),
+	installmentPlanId: z.number().int().positive().nullable().optional(),
+	isRecurring: z.boolean().optional(),
+	notes: z.string().nullable().optional(),
+})
