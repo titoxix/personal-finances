@@ -15,7 +15,7 @@ export default async function AppLayout({
 		<div className="flex min-h-screen bg-background">
 			<Sidebar balance={balance} />
 			<div className="flex min-w-0 flex-1 flex-col lg:ml-[240px]">
-				<TopBar />
+				<TopBar balance={balance} />
 				<main className="flex-1 overflow-x-hidden px-5 py-5 pb-28 lg:px-8 lg:py-8 lg:pb-10">
 					<div className="mx-auto max-w-[680px] lg:max-w-none">
 						{children}
