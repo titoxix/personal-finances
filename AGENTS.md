@@ -15,7 +15,7 @@ Personal finance PWA (mobile-first). Backend and frontend live in the same Next.
 ```
 src/
 ├── domain/
-│   ├── entities/        # Pure TypeScript types and classes — no framework deps
+│   ├── entities/        # Pure TypeScript types — no framework deps
 │   └── repositories/    # Interfaces only: ITransactionRepository, etc.
 │
 ├── repositories/
@@ -23,11 +23,26 @@ src/
 │
 ├── services/            # Business logic — depends on repository interfaces, not implementations
 │
-└── app/
-    └── api/             # Next.js route handlers — HTTP layer only, calls services
+├── app/
+│   ├── api/             # Next.js route handlers — external HTTP API only
+│   └── (app)/           # UI route group — all screens live here
+│
+├── components/
+│   ├── ui/              # shadcn — CLI only, never edit manually
+│   ├── layout/          # App shell: BottomNav, PageHeader
+│   ├── transactions/    # Feature components: TransactionForm, TransactionCard
+│   └── categories/      # Feature components: CategoryForm, CategoryList, CategoryItem
+│
+└── lib/
+    ├── container.ts     # DI wiring — exports pre-built service instances
+    └── utils.ts
 ```
 
-**Data flow:** `API Route → Service → IRepository (interface) → PrismaRepository → DB`
+**Backend data flow:** `API Route → Service → IRepository → PrismaRepository → DB`
+
+**Frontend data flow:** `page.tsx (Server Component) → lib/container.ts → Service → DB`
+
+**Mutation flow:** `"use client" Form → Server Action (actions.ts) → lib/container.ts → Service → revalidatePath`
 
 ## Rules
 
@@ -39,14 +54,23 @@ src/
 - No DTOs or mappers unless domain and DB models diverge significantly.
 - No use case layer — services cover orchestration at this scale.
 
-## How to add a new feature
+## How to add a new backend feature
 
 1. Add or update the entity type in `domain/entities/`.
 2. Add the method signature to the interface in `domain/repositories/`.
 3. Implement the method in `repositories/prisma/Prisma<Entity>Repository.ts`.
 4. Add or update the service method in `services/<Entity>Service.ts`.
-5. Add or update the route handler in `app/api/<resource>/route.ts`.
-6. Write tests at each layer (see Testing section).
+5. Export the service instance from `lib/container.ts`.
+6. Add or update the route handler in `app/api/<resource>/route.ts`.
+7. Write tests at each layer (see Testing section).
+
+## How to add a new UI screen
+
+1. Create the page at `app/(app)/<feature>/page.tsx` — always a Server Component.
+2. Import the service from `lib/container.ts` and call it directly (no `fetch`).
+3. Create feature components in `components/<feature>/` — use `"use client"` only for interactive parts.
+4. For mutations, create `app/(app)/<feature>/actions.ts` with `"use server"` functions.
+5. Server Actions call `lib/container.ts` → service, then `revalidatePath` + `redirect`.
 
 ## Testing
 
@@ -118,3 +142,124 @@ pnpm prisma generate
 - Dark mode is enabled by default via the `dark` class on `<html>` in `layout.tsx`
 - Font: Geist Sans loaded via `next/font/google`, injected as `--font-geist-sans`
 - When adding shadcn components, check `components.json` for the current style/registry config
+
+---
+
+## Frontend architecture
+
+### Route map
+
+All UI screens live inside the `(app)` route group, which owns the mobile shell (bottom nav, safe-area padding).
+
+```
+app/
+└── (app)/
+    ├── layout.tsx              # Mobile shell — renders BottomNav, applies safe-area padding
+    ├── page.tsx                # Home / Dashboard
+    ├── transactions/
+    │   ├── actions.ts          # Server Actions: createTransaction
+    │   └── new/
+    │       └── page.tsx        # New transaction form
+    └── categories/
+        ├── actions.ts          # Server Actions: createCategory, updateCategory, deleteCategory
+        ├── page.tsx            # Category list
+        ├── new/
+        │   └── page.tsx        # New category form
+        └── [id]/
+            └── edit/
+                └── page.tsx    # Edit category form
+```
+
+### Component map
+
+```
+components/
+├── ui/                         # shadcn — CLI only, never edit manually
+├── layout/
+│   ├── BottomNav.tsx           # "use client" — active route needs usePathname
+│   └── PageHeader.tsx          # Server Component — title + optional back button
+├── transactions/
+│   ├── TransactionForm.tsx     # "use client" — calls createTransaction server action
+│   └── TransactionCard.tsx     # Server Component — display only
+└── categories/
+    ├── CategoryForm.tsx        # "use client" — calls createCategory / updateCategory
+    ├── CategoryList.tsx        # Server Component — renders list of CategoryItem
+    └── CategoryItem.tsx        # Server Component — single row with edit/delete actions
+```
+
+### Dependency injection on the frontend
+
+`lib/container.ts` is the single file that wires the DI graph. It is the only place that imports `prisma`, repositories, and services together. Pages and Server Actions import pre-built instances from here — they never construct services themselves.
+
+```ts
+// lib/container.ts
+import { prisma } from '@/lib/prisma'
+import { createPrismaCategoryRepository } from '@/repositories/prisma/PrismaCategoryRepository'
+import { createCategoryService } from '@/services/CategoryService'
+
+export const categoryService = createCategoryService(
+  createPrismaCategoryRepository(prisma)
+)
+// add more services as the app grows
+```
+
+### Server Component page pattern
+
+Pages are `async` Server Components. They fetch data by calling the service directly — no `fetch()`, no API round-trip.
+
+```ts
+// app/(app)/categories/page.tsx
+import { categoryService } from '@/lib/container'
+import { CategoryList } from '@/components/categories/CategoryList'
+
+export default async function CategoriesPage() {
+  const categories = await categoryService.getAll()
+  return <CategoryList categories={categories} />
+}
+```
+
+### Server Action pattern
+
+Mutations live in `actions.ts` co-located with their route segment. They are `"use server"` functions that call the service, then invalidate the cache and redirect.
+
+```ts
+// app/(app)/categories/actions.ts
+'use server'
+import { categoryService } from '@/lib/container'
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+
+export async function createCategory(formData: FormData) {
+  const name = formData.get('name') as string
+  await categoryService.create({ name })
+  revalidatePath('/categories')
+  redirect('/categories')
+}
+```
+
+### Client Component form pattern
+
+Forms are `"use client"` components. They receive the Server Action as a prop or import it directly, and use it as the `action` on a `<form>` or via `useActionState`.
+
+```ts
+// components/categories/CategoryForm.tsx
+'use client'
+import { createCategory } from '@/app/(app)/categories/actions'
+
+export function CategoryForm() {
+  return (
+    <form action={createCategory}>
+      <input name="name" />
+      <button type="submit">Save</button>
+    </form>
+  )
+}
+```
+
+### Rules
+
+- **`page.tsx` is always a Server Component** — never add `"use client"` to a page file. If a page needs interactivity, extract it into a component.
+- **Never `fetch()` the own API routes from the UI** — Server Components call services directly; Client Components call Server Actions. The `app/api/` routes are the external HTTP interface only.
+- **`lib/container.ts` is the only DI wiring point** — add new service instances here as the app grows.
+- **`actions.ts` is co-located with its route segment** — category actions live in `app/(app)/categories/actions.ts`, not in a global file.
+- **`"use client"` boundary is at the form/interactive component level** — keep Server Components as high as possible in the tree to maximise server-side rendering.
