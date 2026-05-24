@@ -9,6 +9,7 @@ export type CreateCategoryInput = {
 export type UpdateCategoryInput = {
 	label?: string
 	description?: string
+	active?: boolean
 }
 
 export interface ICategoryRepository {

@@ -19,4 +19,5 @@ export const CreateCategorySchema = z.object({
 export const UpdateCategorySchema = z.object({
 	label: z.string().min(1).optional(),
 	description: z.string().optional(),
+	active: z.boolean().optional(),
 })

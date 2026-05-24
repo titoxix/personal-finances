@@ -18,6 +18,8 @@ const RIGHT_NAV = [
 function isFormPage(pathname: string): boolean {
 	if (pathname === '/transactions/new') return true
 	if (/^\/transactions\/\d+\/edit$/.test(pathname)) return true
+	if (pathname === '/categories/new') return true
+	if (/^\/categories\/\d+\/edit$/.test(pathname)) return true
 	return false
 }
 

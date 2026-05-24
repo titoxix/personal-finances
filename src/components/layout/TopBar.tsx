@@ -8,12 +8,14 @@ import { cn } from '@/lib/utils'
 
 const STATIC_INNER_PAGES: Record<string, { title: string }> = {
 	'/transactions/new': { title: 'Nueva Transacción' },
+	'/categories/new': { title: 'Nueva Categoría' },
 }
 
 function getInnerPage(pathname: string): { title: string } | undefined {
 	const staticPage = STATIC_INNER_PAGES[pathname]
 	if (staticPage) return staticPage
 	if (/^\/transactions\/\d+\/edit$/.test(pathname)) return { title: 'Editar Transacción' }
+	if (/^\/categories\/\d+\/edit$/.test(pathname)) return { title: 'Editar Categoría' }
 	return undefined
 }
 
