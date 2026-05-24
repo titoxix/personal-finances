@@ -36,24 +36,40 @@ export default async function HomePage() {
 		spentByCategory.set(tx.categoryId, (spentByCategory.get(tx.categoryId) ?? 0) + usd)
 	}
 
-	// Items para BudgetSection
+	// Gasto por categoría también en Gs (para presupuestos en Gs)
+	const spentGsByCategory = new Map<number, number>()
+	for (const tx of monthTransactions) {
+		const gs = tx.amountGs ?? (tx.amountUsd ? tx.amountUsd * gsToUsd : 0)
+		spentGsByCategory.set(tx.categoryId, (spentGsByCategory.get(tx.categoryId) ?? 0) + gs)
+	}
+
+	// Items para BudgetSection — montos en la moneda nativa del presupuesto
 	const budgetItems = budgets.map((b) => {
 		const cat = categoryMap.get(b.categoryId)
-		const budgetedUsd = b.budgetedUsd ?? (b.budgetedGs ? b.budgetedGs / gsToUsd : 0)
-		const spent = spentByCategory.get(b.categoryId) ?? 0
+		const isGs = b.budgetedGs != null
+		const budgeted = isGs ? (b.budgetedGs ?? 0) : (b.budgetedUsd ?? 0)
+		const spent = isGs
+			? Math.round((spentGsByCategory.get(b.categoryId) ?? 0))
+			: Math.round((spentByCategory.get(b.categoryId) ?? 0) * 100) / 100
 		return {
 			id: b.id,
 			categoryLabel: cat?.label ?? `#${b.categoryId}`,
-			spent: Math.round(spent * 100) / 100,
-			budgetedUsd: Math.round(budgetedUsd * 100) / 100,
+			spent,
+			budgeted,
+			currency: (isGs ? 'gs' : 'usd') as 'usd' | 'gs',
 		}
 	})
 
-	const totalBudgeted = budgetItems.reduce((sum, b) => sum + (b.budgetedUsd ?? 0), 0)
-	const totalSpent = budgetItems.reduce((sum, b) => sum + b.spent, 0)
+	// Totales en USD para el overview card
+	const totalBudgeted = budgets.reduce((sum, b) => {
+		return sum + (b.budgetedUsd ?? (b.budgetedGs ? b.budgetedGs / gsToUsd : 0))
+	}, 0)
+	const totalSpent = budgets.reduce((sum, b) => {
+		return sum + (spentByCategory.get(b.categoryId) ?? 0)
+	}, 0)
 	const spentPct = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0
 	const alertCount = budgetItems.filter(
-		(b) => b.budgetedUsd && b.budgetedUsd > 0 && b.spent / b.budgetedUsd >= 0.75,
+		(b) => b.budgeted > 0 && b.spent / b.budgeted >= 0.75,
 	).length
 
 	// Últimas 5 transacciones (todos los tiempos)

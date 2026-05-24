@@ -94,23 +94,23 @@ export default async function BudgetsPage({
 	const categoryMap = new Map(categories.map((c) => [c.id, c]))
 	const essentialityMap = new Map(essentialityLevels.map((l) => [l.id, l]))
 
-	let totalBudgetedUsd = 0
-	let totalSpentUsd = 0
+	let totalBudgetedGs = 0
+	let totalSpentGs = 0
 	for (const budget of budgets) {
-		const bUsd =
-			budget.budgetedUsd ??
-			(budget.budgetedGs ? budget.budgetedGs / gsToUsd : 0)
+		const bGs =
+			budget.budgetedGs ??
+			(budget.budgetedUsd ? budget.budgetedUsd * gsToUsd : 0)
 		const spent = spentMap.get(budget.categoryId) ?? { usd: 0, gs: 0 }
-		totalBudgetedUsd += bUsd
-		totalSpentUsd += spent.usd
+		totalBudgetedGs += bGs
+		totalSpentGs += spent.gs
 	}
 
 	const monthLabel = `${MONTHS_ES[targetDate.getUTCMonth()]} ${targetDate.getUTCFullYear()}`
 	const totalPct =
-		totalBudgetedUsd > 0
-			? Math.round((totalSpentUsd / totalBudgetedUsd) * 100)
+		totalBudgetedGs > 0
+			? Math.round((totalSpentGs / totalBudgetedGs) * 100)
 			: 0
-	const totalOver = totalSpentUsd > totalBudgetedUsd
+	const totalOver = totalSpentGs > totalBudgetedGs
 
 	return (
 		<div>
@@ -159,16 +159,16 @@ export default async function BudgetsPage({
 								Total gastado
 							</p>
 							<p className="font-mono text-2xl font-bold text-foreground">
-								{fmtUsd(totalSpentUsd)}
+								{fmtGs(totalSpentGs)}
 							</p>
 							<p className="font-mono text-xs text-muted-foreground">
-								de {fmtUsd(totalBudgetedUsd)} presupuestados
+								de {fmtGs(totalBudgetedGs)} presupuestados
 							</p>
 						</div>
 						<span
 							className={`font-mono text-lg font-bold ${totalOver ? 'text-destructive' : 'text-primary'}`}
 						>
-							{totalBudgetedUsd > 0 ? `${totalPct}%` : '—'}
+							{totalBudgetedGs > 0 ? `${totalPct}%` : '—'}
 						</span>
 					</div>
 					<div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">

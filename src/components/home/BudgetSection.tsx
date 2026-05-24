@@ -5,7 +5,8 @@ type BudgetItem = {
 	id: number
 	categoryLabel: string
 	spent: number
-	budgetedUsd: number | null
+	budgeted: number
+	currency: 'usd' | 'gs'
 }
 
 type Props = {
@@ -39,7 +40,8 @@ export function BudgetSection({ items, alertCount }: Props) {
 							key={item.id}
 							label={item.categoryLabel}
 							spent={item.spent}
-							budgeted={item.budgetedUsd ?? 0}
+							budgeted={item.budgeted}
+							currency={item.currency}
 							colorIndex={idx}
 						/>
 					))}

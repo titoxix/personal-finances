@@ -11,19 +11,27 @@ const COLOR_VARIANTS = [
 	{ bg: 'bg-pink-500/15', text: 'text-pink-400' },
 ]
 
-function formatK(n: number): string {
+function fmtUsd(n: number): string {
 	if (n >= 1000) return `$${(n / 1000).toFixed(1)}K`
 	return `$${n.toFixed(0)}`
+}
+
+function fmtGs(n: number): string {
+	if (n >= 1_000_000) return `₲${(n / 1_000_000).toFixed(1)}M`
+	if (n >= 1_000) return `₲${(n / 1_000).toFixed(0)}K`
+	return `₲${n.toFixed(0)}`
 }
 
 type Props = {
 	label: string
 	spent: number
 	budgeted: number
+	currency: 'usd' | 'gs'
 	colorIndex: number
 }
 
-export function BudgetCard({ label, spent, budgeted, colorIndex }: Props) {
+export function BudgetCard({ label, spent, budgeted, currency, colorIndex }: Props) {
+	const fmt = currency === 'gs' ? fmtGs : fmtUsd
 	const pct = budgeted > 0 ? (spent / budgeted) * 100 : 0
 	const isOver = pct >= 100
 	const isWarning = pct >= 75 && !isOver
@@ -51,8 +59,8 @@ export function BudgetCard({ label, spent, budgeted, colorIndex }: Props) {
 			<div>
 				<p className="text-sm font-semibold text-foreground">{label}</p>
 				<p className="mt-0.5 font-mono text-xs">
-					<span className="text-foreground/90">{formatK(spent)}</span>
-					<span className="text-muted-foreground">/{formatK(budgeted)}</span>
+					<span className="text-foreground/90">{fmt(spent)}</span>
+					<span className="text-muted-foreground">/{fmt(budgeted)}</span>
 				</p>
 			</div>
 
