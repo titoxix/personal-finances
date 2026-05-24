@@ -7,6 +7,7 @@ import {
 	Settings,
 	Target,
 	TrendingUp,
+	Wallet,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -15,6 +16,7 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
 	{ href: '/', icon: LayoutDashboard, label: 'Dashboard' },
 	{ href: '/transactions', icon: Receipt, label: 'Transacciones' },
+	{ href: '/incomes', icon: Wallet, label: 'Ingresos' },
 	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics' },

@@ -1,8 +1,8 @@
 'use client'
 
+import { FileText, Home, Plus, Target, Wallet } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, FileText, Target, Settings, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LEFT_NAV = [
@@ -12,7 +12,7 @@ const LEFT_NAV = [
 
 const RIGHT_NAV = [
 	{ href: '/budgets', icon: Target },
-	{ href: '/settings', icon: Settings },
+	{ href: '/incomes', icon: Wallet },
 ]
 
 function isFormPage(pathname: string): boolean {
@@ -23,6 +23,8 @@ function isFormPage(pathname: string): boolean {
 	if (pathname === '/exchange-rates/new') return true
 	if (pathname === '/budgets/new') return true
 	if (/^\/budgets\/\d+\/edit$/.test(pathname)) return true
+	if (pathname === '/incomes/new') return true
+	if (/^\/incomes\/\d+\/edit$/.test(pathname)) return true
 	return false
 }
 

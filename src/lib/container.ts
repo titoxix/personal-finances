@@ -3,12 +3,14 @@ import { createPrismaBudgetRepository } from '@/repositories/prisma/PrismaBudget
 import { createPrismaCategoryRepository } from '@/repositories/prisma/PrismaCategoryRepository'
 import { createPrismaEssentialityLevelRepository } from '@/repositories/prisma/PrismaEssentialityLevelRepository'
 import { createPrismaExchangeRateRepository } from '@/repositories/prisma/PrismaExchangeRateRepository'
+import { createPrismaIncomeRepository } from '@/repositories/prisma/PrismaIncomeRepository'
 import { createPrismaMonthlySnapshotRepository } from '@/repositories/prisma/PrismaMonthlySnapshotRepository'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
 import { createBudgetService } from '@/services/BudgetService'
 import { createCategoryService } from '@/services/CategoryService'
 import { createEssentialityLevelService } from '@/services/EssentialityLevelService'
 import { createExchangeRateService } from '@/services/ExchangeRateService'
+import { createIncomeService } from '@/services/IncomeService'
 import { createMonthlySnapshotService } from '@/services/MonthlySnapshotService'
 import { createTransactionService } from '@/services/TransactionService'
 
@@ -34,4 +36,8 @@ export const budgetService = createBudgetService(
 
 export const monthlySnapshotService = createMonthlySnapshotService(
 	createPrismaMonthlySnapshotRepository(prisma),
+)
+
+export const incomeService = createIncomeService(
+	createPrismaIncomeRepository(prisma),
 )
