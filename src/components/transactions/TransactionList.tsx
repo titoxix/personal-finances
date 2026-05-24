@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Search } from 'lucide-react'
-import { TransactionListItem } from './TransactionListItem'
+import { TransactionItem } from '@/components/home/TransactionItem'
 
 export type TransactionListRow = {
 	id: number
@@ -90,7 +90,15 @@ export function TransactionList({ rows }: Props) {
 					</p>
 					<div className="flex flex-col gap-2">
 						{section.rows.map((tx) => (
-							<TransactionListItem key={tx.id} tx={tx} />
+							<TransactionItem
+								key={tx.id}
+								id={tx.id}
+								description={tx.description}
+								date={tx.date}
+								categoryLabel={tx.categoryLabel}
+								amountUsd={tx.amountUsd}
+								amountGs={tx.amountGs}
+							/>
 						))}
 					</div>
 				</div>

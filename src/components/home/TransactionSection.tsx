@@ -5,6 +5,7 @@ export type TransactionRow = {
 	id: number
 	description: string
 	date: Date
+	categoryLabel: string
 	amountUsd: number | null
 	amountGs: number | null
 }
@@ -27,14 +28,15 @@ export function TransactionSection({ transactions }: Props) {
 				<p className="pt-3 text-sm text-muted-foreground">Sin transacciones este mes.</p>
 			) : (
 				<div className="flex flex-col gap-3 pt-2">
-					{transactions.map((tx, idx) => (
+					{transactions.map((tx) => (
 						<TransactionItem
 							key={tx.id}
+							id={tx.id}
 							description={tx.description}
 							date={tx.date}
+							categoryLabel={tx.categoryLabel}
 							amountUsd={tx.amountUsd}
 							amountGs={tx.amountGs}
-							index={idx}
 						/>
 					))}
 				</div>

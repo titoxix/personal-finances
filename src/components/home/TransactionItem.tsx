@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const AVATAR_COLORS = [
@@ -9,53 +11,38 @@ const AVATAR_COLORS = [
 ]
 
 type Props = {
+	id: number
 	description: string
 	date: Date
+	categoryLabel: string
 	amountUsd: number | null
 	amountGs: number | null
-	index: number
 }
 
-function formatDate(date: Date): string {
-	return new Intl.DateTimeFormat('es-PY', {
-		hour: '2-digit',
-		minute: '2-digit',
-		hour12: true,
-		month: 'short',
-		day: 'numeric',
-		year: 'numeric',
-	}).format(date)
-}
-
-function formatAmount(
-	amountUsd: number | null,
-	amountGs: number | null,
-): { text: string; negative: boolean } {
-	const amount = amountUsd ?? amountGs ?? 0
-	const negative = amount < 0
+function formatAmount(amountUsd: number | null, amountGs: number | null): string {
 	if (amountUsd != null) {
-		return {
-			text: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amountUsd),
-			negative,
-		}
+		return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amountUsd)
 	}
-	return {
-		text: new Intl.NumberFormat('es-PY', {
-			style: 'currency',
-			currency: 'PYG',
-			maximumFractionDigits: 0,
-		}).format(amountGs ?? 0),
-		negative,
-	}
+	return new Intl.NumberFormat('es-PY', {
+		style: 'currency',
+		currency: 'PYG',
+		maximumFractionDigits: 0,
+	}).format(amountGs ?? 0)
 }
 
-export function TransactionItem({ description, date, amountUsd, amountGs, index }: Props) {
-	const { text, negative } = formatAmount(amountUsd, amountGs)
-	const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length]
+export function TransactionItem({ id, description, date, categoryLabel, amountUsd, amountGs }: Props) {
+	const avatarColor = AVATAR_COLORS[id % AVATAR_COLORS.length]!
 	const initials = description.slice(0, 2).toUpperCase()
+	const amount = formatAmount(amountUsd, amountGs)
+
+	const dateStr = date.toLocaleDateString('es-PY', { month: 'short', day: 'numeric' })
+	const timeStr = date.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })
 
 	return (
-		<div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+		<Link
+			href={`/transactions/${id}/edit`}
+			className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:border-primary/30"
+		>
 			<div
 				className={cn(
 					'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xs font-bold',
@@ -66,16 +53,13 @@ export function TransactionItem({ description, date, amountUsd, amountGs, index 
 			</div>
 			<div className="min-w-0 flex-1">
 				<p className="truncate text-sm font-semibold text-foreground">{description}</p>
-				<p className="text-xs text-muted-foreground">{formatDate(date)}</p>
+				<p className="truncate text-xs text-muted-foreground">{categoryLabel}</p>
+				<p className="text-xs text-muted-foreground/70">{dateStr}, {timeStr}</p>
 			</div>
-			<p
-				className={cn(
-					'shrink-0 font-mono text-sm font-semibold',
-					negative ? 'text-destructive' : 'text-foreground',
-				)}
-			>
-				{text}
-			</p>
-		</div>
+			<div className="flex items-center gap-1.5">
+				<span className="font-mono text-sm font-semibold text-foreground tabular-nums">{amount}</span>
+				<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+			</div>
+		</Link>
 	)
 }
