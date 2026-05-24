@@ -15,8 +15,16 @@ const RIGHT_NAV = [
 	{ href: '/settings', icon: Settings },
 ]
 
+function isFormPage(pathname: string): boolean {
+	if (pathname === '/transactions/new') return true
+	if (/^\/transactions\/\d+\/edit$/.test(pathname)) return true
+	return false
+}
+
 export function BottomNav() {
 	const pathname = usePathname()
+
+	if (isFormPage(pathname)) return null
 
 	return (
 		<nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around bg-[#0d1527] border-t border-[#1e2a3a] lg:hidden">
