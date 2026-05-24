@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, FileText, Heart, Settings, Plus } from 'lucide-react'
+import { Home, FileText, Target, Settings, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const LEFT_NAV = [
@@ -11,7 +11,7 @@ const LEFT_NAV = [
 ]
 
 const RIGHT_NAV = [
-	{ href: '/categories', icon: Heart },
+	{ href: '/budgets', icon: Target },
 	{ href: '/settings', icon: Settings },
 ]
 
@@ -21,6 +21,8 @@ function isFormPage(pathname: string): boolean {
 	if (pathname === '/categories/new') return true
 	if (/^\/categories\/\d+\/edit$/.test(pathname)) return true
 	if (pathname === '/exchange-rates/new') return true
+	if (pathname === '/budgets/new') return true
+	if (/^\/budgets\/\d+\/edit$/.test(pathname)) return true
 	return false
 }
 

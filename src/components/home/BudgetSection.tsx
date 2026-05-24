@@ -25,8 +25,8 @@ export function BudgetSection({ items, alertCount }: Props) {
 						</p>
 					)}
 				</div>
-				<Link href="/categories" className="text-xs font-semibold text-primary hover:underline">
-					Agregar
+				<Link href="/budgets" className="text-xs font-semibold text-primary hover:underline">
+					Ver todo
 				</Link>
 			</div>
 

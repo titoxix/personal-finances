@@ -9,6 +9,7 @@ import {
 	MoreVertical,
 	Receipt,
 	Settings,
+	Target,
 	TrendingUp,
 	X,
 } from 'lucide-react'
@@ -21,6 +22,7 @@ const STATIC_INNER_PAGES: Record<string, { title: string }> = {
 	'/transactions/new': { title: 'Nueva Transacción' },
 	'/categories/new': { title: 'Nueva Categoría' },
 	'/exchange-rates/new': { title: 'Nueva Tasa' },
+	'/budgets/new': { title: 'Nuevo Presupuesto' },
 }
 
 function getInnerPage(pathname: string): { title: string } | undefined {
@@ -30,12 +32,15 @@ function getInnerPage(pathname: string): { title: string } | undefined {
 		return { title: 'Editar Transacción' }
 	if (/^\/categories\/\d+\/edit$/.test(pathname))
 		return { title: 'Editar Categoría' }
+	if (/^\/budgets\/\d+\/edit$/.test(pathname))
+		return { title: 'Editar Presupuesto' }
 	return undefined
 }
 
 const NAV_ITEMS = [
 	{ href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-	{ href: '/transactions', icon: Receipt, label: 'Transactions' },
+	{ href: '/transactions', icon: Receipt, label: 'Transacciones' },
+	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics' },
 	{ href: '/settings', icon: Settings, label: 'Settings' },

@@ -5,6 +5,7 @@ import {
 	LayoutDashboard,
 	Receipt,
 	Settings,
+	Target,
 	TrendingUp,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -13,7 +14,8 @@ import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
 	{ href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-	{ href: '/transactions', icon: Receipt, label: 'Transactions' },
+	{ href: '/transactions', icon: Receipt, label: 'Transacciones' },
+	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics' },
 	{ href: '/settings', icon: Settings, label: 'Settings' },
