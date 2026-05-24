@@ -10,6 +10,7 @@ export type CreateBudgetPayload = {
 	essentialityId: number
 	currency: 'usd' | 'gs'
 	amount: number
+	isRecurring: boolean
 	notes?: string
 }
 
@@ -17,6 +18,7 @@ export type UpdateBudgetPayload = {
 	essentialityId: number
 	currency: 'usd' | 'gs'
 	amount: number
+	isRecurring: boolean
 	notes?: string
 }
 
@@ -35,6 +37,7 @@ export async function createBudget(
 			essentialityId: payload.essentialityId,
 			budgetedUsd: payload.currency === 'usd' ? payload.amount : undefined,
 			budgetedGs: payload.currency === 'gs' ? payload.amount : undefined,
+			isRecurring: payload.isRecurring,
 			notes: payload.notes,
 		})
 	} catch (e) {
@@ -56,6 +59,7 @@ export async function updateBudget(
 			essentialityId: payload.essentialityId,
 			budgetedUsd: payload.currency === 'usd' ? payload.amount : null,
 			budgetedGs: payload.currency === 'gs' ? payload.amount : null,
+			isRecurring: payload.isRecurring,
 			notes: payload.notes ?? null,
 		})
 	} catch (e) {

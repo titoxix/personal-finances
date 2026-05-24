@@ -48,6 +48,7 @@ export default async function EditBudgetPage({
 				essentialityId: budget.essentialityId,
 				currency,
 				amount,
+				isRecurring: budget.isRecurring,
 				notes: budget.notes ?? '',
 			}}
 		/>

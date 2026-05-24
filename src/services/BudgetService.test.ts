@@ -8,11 +8,13 @@ const makeRepo = (): IBudgetRepository => ({
 	findById: vi.fn(),
 	findByMonth: vi.fn(),
 	findByMonthAndCategory: vi.fn(),
+	findRecurring: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 })
 
 const MAY_2026 = new Date('2026-05-01')
+const APR_2026 = new Date('2026-04-01')
 
 const makeBudget = (overrides: Partial<Budget> = {}): Budget => ({
 	id: 1,
@@ -21,6 +23,7 @@ const makeBudget = (overrides: Partial<Budget> = {}): Budget => ({
 	essentialityId: 1,
 	budgetedUsd: 500,
 	budgetedGs: null,
+	isRecurring: false,
 	notes: null,
 	createdAt: new Date(),
 	...overrides,
@@ -65,14 +68,39 @@ describe('createBudgetService', () => {
 	})
 
 	describe('findByMonth', () => {
-		it('returns budgets for the given month', async () => {
-			const budgets = [makeBudget()]
-			vi.mocked(repo.findByMonth).mockResolvedValue(budgets)
+		it('returns specific budgets for the given month', async () => {
+			const specific = [makeBudget()]
+			vi.mocked(repo.findByMonth).mockResolvedValue(specific)
+			vi.mocked(repo.findRecurring).mockResolvedValue([])
 
 			const result = await service.findByMonth(MAY_2026)
 
-			expect(result).toBe(budgets)
-			expect(repo.findByMonth).toHaveBeenCalledWith(MAY_2026)
+			expect(result).toEqual(specific)
+		})
+
+		it('fills missing categories with recurring budgets from previous months', async () => {
+			const specificCategory2 = makeBudget({ id: 2, categoryId: 2 })
+			const recurringCategory1 = makeBudget({ id: 10, month: APR_2026, categoryId: 1, isRecurring: true })
+			vi.mocked(repo.findByMonth).mockResolvedValue([specificCategory2])
+			vi.mocked(repo.findRecurring).mockResolvedValue([recurringCategory1])
+
+			const result = await service.findByMonth(MAY_2026)
+
+			expect(result).toHaveLength(2)
+			expect(result).toContain(specificCategory2)
+			expect(result).toContain(recurringCategory1)
+		})
+
+		it('does not add recurring budget when specific already exists for that category', async () => {
+			const specific = makeBudget({ categoryId: 1 })
+			const recurring = makeBudget({ id: 10, month: APR_2026, categoryId: 1, isRecurring: true })
+			vi.mocked(repo.findByMonth).mockResolvedValue([specific])
+			vi.mocked(repo.findRecurring).mockResolvedValue([recurring])
+
+			const result = await service.findByMonth(MAY_2026)
+
+			expect(result).toHaveLength(1)
+			expect(result[0]).toBe(specific)
 		})
 	})
 

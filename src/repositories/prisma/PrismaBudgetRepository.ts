@@ -13,6 +13,7 @@ type PrismaBudget = {
 	essentialityId: number
 	budgetedUsd: { toNumber(): number } | null
 	budgetedGs: { toNumber(): number } | null
+	isRecurring: boolean
 	notes: string | null
 	createdAt: Date
 }
@@ -25,6 +26,7 @@ function toDomain(raw: PrismaBudget): Budget {
 		essentialityId: raw.essentialityId,
 		budgetedUsd: raw.budgetedUsd?.toNumber() ?? null,
 		budgetedGs: raw.budgetedGs?.toNumber() ?? null,
+		isRecurring: raw.isRecurring,
 		notes: raw.notes,
 		createdAt: raw.createdAt,
 	}
@@ -49,6 +51,22 @@ export function createPrismaBudgetRepository(prisma: PrismaClient): IBudgetRepos
 				where: { month_categoryId: { month, categoryId } },
 			})
 			return row ? toDomain(row) : null
+		},
+		findRecurring: async (upToMonth: Date) => {
+			const rows = await prisma.budget.findMany({
+				where: { isRecurring: true, month: { lte: upToMonth } },
+				orderBy: { month: 'desc' },
+			})
+			// Tomar el más reciente por categoría
+			const seen = new Set<number>()
+			const latest: typeof rows = []
+			for (const row of rows) {
+				if (!seen.has(row.categoryId)) {
+					seen.add(row.categoryId)
+					latest.push(row)
+				}
+			}
+			return latest.map(toDomain)
 		},
 		create: async (input: CreateBudgetInput) => {
 			const row = await prisma.budget.create({ data: input })

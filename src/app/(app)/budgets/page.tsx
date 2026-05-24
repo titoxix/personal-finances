@@ -224,6 +224,9 @@ export default async function BudgetsPage({
 							: isWarning
 								? 'bg-yellow-400'
 								: 'bg-primary'
+						// Heredado = recurrente creado en un mes anterior
+						const isInherited =
+							budget.isRecurring && budget.month.getTime() !== targetDate.getTime()
 
 						return (
 							<Link
@@ -241,9 +244,23 @@ export default async function BudgetsPage({
 								{/* Contenido */}
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center justify-between gap-2">
-										<p className="truncate text-sm font-semibold text-foreground">
-											{category?.label ?? '—'}
-										</p>
+										<div className="flex min-w-0 items-center gap-1.5">
+											<p className="truncate text-sm font-semibold text-foreground">
+												{category?.label ?? '—'}
+											</p>
+											{budget.isRecurring && (
+												<span
+													title={
+														isInherited
+															? `Heredado de ${MONTHS_ES[budget.month.getUTCMonth()]} ${budget.month.getUTCFullYear()}`
+															: 'Recurrente'
+													}
+													className="shrink-0 text-[10px] text-primary"
+												>
+													↺
+												</span>
+											)}
+										</div>
 										<span
 											className={`shrink-0 font-mono text-xs font-bold ${isOver ? 'text-destructive' : isWarning ? 'text-yellow-400' : 'text-primary'}`}
 										>

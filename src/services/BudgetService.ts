@@ -15,7 +15,15 @@ export function createBudgetService(repo: IBudgetRepository) {
 			return budget
 		},
 
-		findByMonth: (month: Date): Promise<Budget[]> => repo.findByMonth(month),
+		findByMonth: async (month: Date): Promise<Budget[]> => {
+			const [specific, recurring] = await Promise.all([
+				repo.findByMonth(month),
+				repo.findRecurring(month),
+			])
+			const specificCategoryIds = new Set(specific.map((b) => b.categoryId))
+			const inherited = recurring.filter((b) => !specificCategoryIds.has(b.categoryId))
+			return [...specific, ...inherited]
+		},
 
 		findByMonthAndCategory: (month: Date, categoryId: number): Promise<Budget | null> =>
 			repo.findByMonthAndCategory(month, categoryId),

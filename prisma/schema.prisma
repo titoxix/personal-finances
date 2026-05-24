@@ -156,6 +156,7 @@ model Budget {
   essentialityId Int      @map("essentiality_id")
   budgetedUsd    Decimal? @db.Decimal(10, 2) @map("budgeted_usd")
   budgetedGs     Decimal? @db.Decimal(15, 2) @map("budgeted_gs")
+  isRecurring    Boolean  @default(false) @map("is_recurring")
   notes          String?
   createdAt      DateTime @default(now()) @map("created_at")
 

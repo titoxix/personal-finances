@@ -32,6 +32,7 @@ type EditProps = {
 		essentialityId: number
 		currency: 'usd' | 'gs'
 		amount: number
+		isRecurring: boolean
 		notes: string
 	}
 	onSubmit: (
@@ -54,6 +55,9 @@ export function BudgetForm(props: Props) {
 	)
 	const [amount, setAmount] = useState(
 		props.mode === 'edit' ? props.initialValues.amount.toString() : '',
+	)
+	const [isRecurring, setIsRecurring] = useState(
+		props.mode === 'edit' ? props.initialValues.isRecurring : false,
 	)
 	const [notes, setNotes] = useState(
 		props.mode === 'edit' ? props.initialValues.notes : '',
@@ -81,6 +85,7 @@ export function BudgetForm(props: Props) {
 					essentialityId: essentialityId as number,
 					currency,
 					amount: Number(amount),
+					isRecurring,
 					notes: notes.trim() || undefined,
 				})
 			} else {
@@ -88,6 +93,7 @@ export function BudgetForm(props: Props) {
 					essentialityId: essentialityId as number,
 					currency,
 					amount: Number(amount),
+					isRecurring,
 					notes: notes.trim() || undefined,
 				})
 			}
@@ -236,6 +242,31 @@ export function BudgetForm(props: Props) {
 						</button>
 					))}
 				</div>
+			</div>
+
+			{/* ── Recurrente ── */}
+			<div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
+				<div>
+					<p className="text-sm font-semibold text-foreground">Repetir cada mes</p>
+					<p className="text-xs text-muted-foreground">
+						Se aplica automáticamente a los meses siguientes
+					</p>
+				</div>
+				<button
+					type="button"
+					role="switch"
+					aria-checked={isRecurring}
+					onClick={() => setIsRecurring((v) => !v)}
+					className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+						isRecurring ? 'bg-primary' : 'bg-muted'
+					}`}
+				>
+					<span
+						className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
+							isRecurring ? 'left-6' : 'left-1'
+						}`}
+					/>
+				</button>
 			</div>
 
 			{/* ── Notas ── */}

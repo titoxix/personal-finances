@@ -7,6 +7,7 @@ export const BudgetSchema = z.object({
 	essentialityId: z.number(),
 	budgetedUsd: z.number().nullable(),
 	budgetedGs: z.number().nullable(),
+	isRecurring: z.boolean(),
 	notes: z.string().nullable(),
 	createdAt: z.date(),
 })
@@ -18,6 +19,7 @@ export const CreateBudgetSchema = z.object({
 	essentialityId: z.number().int().positive(),
 	budgetedUsd: z.number().positive().optional(),
 	budgetedGs: z.number().positive().optional(),
+	isRecurring: z.boolean().optional(),
 	notes: z.string().optional(),
 })
 
@@ -25,5 +27,6 @@ export const UpdateBudgetSchema = z.object({
 	budgetedUsd: z.number().positive().nullable().optional(),
 	budgetedGs: z.number().positive().nullable().optional(),
 	essentialityId: z.number().int().positive().optional(),
+	isRecurring: z.boolean().optional(),
 	notes: z.string().nullable().optional(),
 })
