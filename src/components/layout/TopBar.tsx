@@ -3,18 +3,17 @@
 import { useState } from 'react'
 import { Menu, Bell, X, LayoutDashboard, Receipt, TrendingUp, Settings, ArrowLeft, MoreVertical } from 'lucide-react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
-const STATIC_INNER_PAGES: Record<string, { title: string; backHref: string }> = {
-	'/transactions/new': { title: 'Nueva Transacción', backHref: '/transactions' },
+const STATIC_INNER_PAGES: Record<string, { title: string }> = {
+	'/transactions/new': { title: 'Nueva Transacción' },
 }
 
-function getInnerPage(pathname: string): { title: string; backHref: string } | undefined {
+function getInnerPage(pathname: string): { title: string } | undefined {
 	const staticPage = STATIC_INNER_PAGES[pathname]
 	if (staticPage) return staticPage
-	if (/^\/transactions\/\d+\/edit$/.test(pathname))
-		return { title: 'Editar Transacción', backHref: '/transactions' }
+	if (/^\/transactions\/\d+\/edit$/.test(pathname)) return { title: 'Editar Transacción' }
 	return undefined
 }
 
@@ -32,18 +31,20 @@ type Props = {
 export function TopBar({ balance }: Props) {
 	const [open, setOpen] = useState(false)
 	const pathname = usePathname()
+	const router = useRouter()
 	const innerPage = getInnerPage(pathname)
 
 	if (innerPage) {
 		return (
 			<header className="sticky top-0 z-40 flex items-center justify-between bg-background px-5 py-4 lg:hidden">
-				<Link
-					href={innerPage.backHref}
+				<button
+					type="button"
+					onClick={() => router.back()}
 					className="rounded-lg p-1.5 text-foreground hover:bg-accent"
 					aria-label="Volver"
 				>
 					<ArrowLeft className="h-5 w-5" />
-				</Link>
+				</button>
 				<span className="text-base font-semibold text-foreground">{innerPage.title}</span>
 				<button
 					type="button"
