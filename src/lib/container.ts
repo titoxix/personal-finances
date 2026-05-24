@@ -1,14 +1,20 @@
 import { prisma } from '@/lib/prisma'
-import { createPrismaCategoryRepository } from '@/repositories/prisma/PrismaCategoryRepository'
-import { createCategoryService } from '@/services/CategoryService'
-import { createPrismaEssentialityLevelRepository } from '@/repositories/prisma/PrismaEssentialityLevelRepository'
-import { createEssentialityLevelService } from '@/services/EssentialityLevelService'
-import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
-import { createTransactionService } from '@/services/TransactionService'
 import { createPrismaBudgetRepository } from '@/repositories/prisma/PrismaBudgetRepository'
-import { createBudgetService } from '@/services/BudgetService'
+import { createPrismaCategoryRepository } from '@/repositories/prisma/PrismaCategoryRepository'
+import { createPrismaEssentialityLevelRepository } from '@/repositories/prisma/PrismaEssentialityLevelRepository'
+import { createPrismaExchangeRateRepository } from '@/repositories/prisma/PrismaExchangeRateRepository'
 import { createPrismaMonthlySnapshotRepository } from '@/repositories/prisma/PrismaMonthlySnapshotRepository'
+import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
+import { createBudgetService } from '@/services/BudgetService'
+import { createCategoryService } from '@/services/CategoryService'
+import { createEssentialityLevelService } from '@/services/EssentialityLevelService'
+import { createExchangeRateService } from '@/services/ExchangeRateService'
 import { createMonthlySnapshotService } from '@/services/MonthlySnapshotService'
+import { createTransactionService } from '@/services/TransactionService'
+
+export const exchangeRateService = createExchangeRateService(
+	createPrismaExchangeRateRepository(prisma),
+)
 
 export const categoryService = createCategoryService(
 	createPrismaCategoryRepository(prisma),

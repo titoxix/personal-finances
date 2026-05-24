@@ -1,13 +1,20 @@
 'use client'
 
+import {
+	ArrowLeftRight,
+	LayoutDashboard,
+	Receipt,
+	Settings,
+	TrendingUp,
+} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, Receipt, TrendingUp, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
 	{ href: '/', icon: LayoutDashboard, label: 'Dashboard' },
 	{ href: '/transactions', icon: Receipt, label: 'Transactions' },
+	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics' },
 	{ href: '/settings', icon: Settings, label: 'Settings' },
 ]
@@ -23,7 +30,9 @@ export function Sidebar({ balance }: Props) {
 		<aside className="fixed left-0 top-0 h-full w-[240px] hidden lg:flex flex-col bg-[#0d1527] border-r border-[#1e2a3a]">
 			{/* Logo */}
 			<div className="px-6 py-5">
-				<span className="text-xl font-bold tracking-tight text-foreground">Finanz</span>
+				<span className="text-xl font-bold tracking-tight text-foreground">
+					Finanz
+				</span>
 			</div>
 
 			{/* User */}
@@ -32,7 +41,9 @@ export function Sidebar({ balance }: Props) {
 					<span className="text-sm font-bold text-primary">N</span>
 				</div>
 				<div className="min-w-0">
-					<p className="truncate text-sm font-semibold text-foreground">Nisrina Saidah</p>
+					<p className="truncate text-sm font-semibold text-foreground">
+						Nisrina Saidah
+					</p>
 					<p className="text-xs text-muted-foreground">Premium Member</p>
 				</div>
 			</div>
