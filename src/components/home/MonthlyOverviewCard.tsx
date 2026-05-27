@@ -15,18 +15,23 @@ const MONTHS = [
 	'Diciembre',
 ]
 
-function usd(amount: number) {
-	return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
+function gs(amount: number) {
+	return `₲ ${new Intl.NumberFormat('es-PY').format(Math.round(amount))}`
 }
 
 type Props = {
 	month: Date
-	totalSpent: number
-	totalBudgeted: number
+	totalSpentGs: number
+	capGs: number
 	spentPct: number
+	incomeGs?: {
+		grossGs: number
+		investmentGs: number
+		remainingGs: number
+	}
 }
 
-export function MonthlyOverviewCard({ month, totalSpent, totalBudgeted, spentPct }: Props) {
+export function MonthlyOverviewCard({ month, totalSpentGs, capGs, spentPct, incomeGs }: Props) {
 	const monthName = MONTHS[month.getUTCMonth()]
 	const year = month.getUTCFullYear()
 	const clampedPct = Math.min(spentPct, 100)
@@ -52,7 +57,7 @@ export function MonthlyOverviewCard({ month, totalSpent, totalBudgeted, spentPct
 
 			{/* Amounts */}
 			<p className="relative mt-1 font-mono text-sm text-[#003824]/80">
-				{usd(totalSpent)} gastados de {usd(totalBudgeted)}
+				{gs(totalSpentGs)} gastados de {gs(capGs)}
 			</p>
 
 			{/* Progress */}
@@ -65,6 +70,38 @@ export function MonthlyOverviewCard({ month, totalSpent, totalBudgeted, spentPct
 				</div>
 				<p className="mt-1.5 text-center font-mono text-xs text-[#003824]/70">{spentPct}%</p>
 			</div>
+
+			{/* Income breakdown — solo cuando hay income registrado */}
+			{incomeGs && (
+				<div className="relative mt-4 flex items-center justify-between rounded-xl bg-white/10 px-3 py-2">
+					<div className="text-center">
+						<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+							Ingreso
+						</p>
+						<p className="font-mono text-sm font-bold text-[#003824]">
+							{gs(incomeGs.grossGs)}
+						</p>
+					</div>
+					<div className="h-6 w-px bg-white/20" />
+					<div className="text-center">
+						<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+							Inversión
+						</p>
+						<p className="font-mono text-sm font-bold text-[#003824]">
+							{gs(incomeGs.investmentGs)}
+						</p>
+					</div>
+					<div className="h-6 w-px bg-white/20" />
+					<div className="text-center">
+						<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+							Disponible
+						</p>
+						<p className="font-mono text-sm font-bold text-[#003824]">
+							{gs(incomeGs.remainingGs)}
+						</p>
+					</div>
+				</div>
+			)}
 		</div>
 	)
 }

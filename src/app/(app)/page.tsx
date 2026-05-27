@@ -3,6 +3,7 @@ import {
 	categoryService,
 	budgetService,
 	exchangeRateService,
+	incomeService,
 } from '@/lib/container'
 import { BudgetSection } from '@/components/home/BudgetSection'
 import { MonthlyOverviewCard } from '@/components/home/MonthlyOverviewCard'
@@ -13,15 +14,18 @@ export default async function HomePage() {
 	const now = new Date()
 	const currentMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
 
-	const [allTransactions, categories, budgets, latestRate] = await Promise.all([
+	const [allTransactions, categories, budgets, latestRate, income] = await Promise.all([
 		transactionService.findAll(),
 		categoryService.findAll(),
 		budgetService.findByMonth(currentMonth),
 		exchangeRateService.findLatestBySource('itau'),
+		incomeService.findByMonth(currentMonth),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c]))
-	const gsToUsd = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
+	// Tasa de referencia: primero el income del mes, luego la última tasa de Itaú
+	const refRate = income?.exchangeRate ?? latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
+	const gsToUsd = refRate
 
 	// Transacciones del mes actual
 	const monthTransactions = allTransactions.filter((tx) => {
@@ -60,14 +64,22 @@ export default async function HomePage() {
 		}
 	})
 
-	// Totales en USD para el overview card
-	const totalBudgeted = budgets.reduce((sum, b) => {
-		return sum + (b.budgetedUsd ?? (b.budgetedGs ? b.budgetedGs / gsToUsd : 0))
+	// Totales en Gs para el overview card
+	const totalSpentGs = [...spentGsByCategory.values()].reduce((sum, v) => sum + v, 0)
+	// Cap en Gs: si hay income usar budgetCapUsd * tasa, si no sumar presupuestos en Gs
+	const totalBudgetedFromBudgetsGs = budgets.reduce((sum, b) => {
+		return sum + (b.budgetedGs ?? (b.budgetedUsd ? b.budgetedUsd * refRate : 0))
 	}, 0)
-	const totalSpent = budgets.reduce((sum, b) => {
-		return sum + (spentByCategory.get(b.categoryId) ?? 0)
-	}, 0)
-	const spentPct = totalBudgeted > 0 ? Math.round((totalSpent / totalBudgeted) * 100) : 0
+	const capGs = income ? income.budgetCapUsd * refRate : totalBudgetedFromBudgetsGs
+	const spentPct = capGs > 0 ? Math.round((totalSpentGs / capGs) * 100) : 0
+
+	const incomeGs = income
+		? {
+				grossGs: income.grossIncomeUsd * refRate,
+				investmentGs: income.automaticInvestmentUsd * refRate,
+				remainingGs: Math.max(capGs - totalSpentGs, 0),
+			}
+		: undefined
 	const alertCount = budgetItems.filter(
 		(b) => b.budgeted > 0 && b.spent / b.budgeted >= 0.75,
 	).length
@@ -89,9 +101,10 @@ export default async function HomePage() {
 		<div className="space-y-6">
 			<MonthlyOverviewCard
 				month={currentMonth}
-				totalSpent={totalSpent}
-				totalBudgeted={totalBudgeted}
+				totalSpentGs={totalSpentGs}
+				capGs={capGs}
 				spentPct={spentPct}
+				incomeGs={incomeGs}
 			/>
 			<BudgetSection items={budgetItems} alertCount={alertCount} />
 			<TransactionSection transactions={recentTransactions} />
