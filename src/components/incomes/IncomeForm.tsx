@@ -268,7 +268,7 @@ export function IncomeForm(props: Props) {
 				</div>
 
 				<Link
-					href="/exchange-rates"
+					href="/exchange-rates/new"
 					className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
 				>
 					<PlusCircle className="h-3.5 w-3.5" />

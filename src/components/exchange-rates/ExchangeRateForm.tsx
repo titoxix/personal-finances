@@ -1,7 +1,8 @@
 'use client'
 
-import { Check } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import type { CreateExchangeRatesPayload } from '@/app/(app)/exchange-rates/actions'
 
 type Props = {
@@ -21,6 +22,7 @@ function parseRate(value: string): number | null {
 }
 
 export function ExchangeRateForm({ onSubmit }: Props) {
+	const router = useRouter()
 	const [itauBuy, setItauBuy] = useState('')
 	const [itauSell, setItauSell] = useState('')
 	const [uenoBuy, setUenoBuy] = useState('')
@@ -58,6 +60,23 @@ export function ExchangeRateForm({ onSubmit }: Props) {
 
 	return (
 		<div className="space-y-5 pb-6">
+			{/* ── Header ── */}
+			<div className="flex items-center gap-3">
+				<button
+					type="button"
+					onClick={() => router.back()}
+					className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:bg-card/80 hover:text-foreground"
+				>
+					<ArrowLeft className="h-4 w-4" />
+				</button>
+				<div>
+					<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+						Finanzas
+					</p>
+					<h1 className="text-2xl font-bold text-foreground">Tipo de Cambio</h1>
+				</div>
+			</div>
+
 			<BankSection
 				name="Itaú"
 				idPrefix="itau"
