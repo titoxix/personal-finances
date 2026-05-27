@@ -1,6 +1,7 @@
 'use client'
 
-import { CheckCircle2, Lock } from 'lucide-react'
+import { CheckCircle2, Lock, PlusCircle } from 'lucide-react'
+import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import type {
 	CreateIncomePayload,
@@ -265,6 +266,14 @@ export function IncomeForm(props: Props) {
 						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 					/>
 				</div>
+
+				<Link
+					href="/exchange-rates"
+					className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
+				>
+					<PlusCircle className="h-3.5 w-3.5" />
+					Cargar nuevo tipo de cambio
+				</Link>
 
 				{latestRates.length > 0 && (
 					<div className="flex gap-2 pt-1">
