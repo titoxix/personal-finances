@@ -6,6 +6,7 @@ import type {
 	CreateIncomePayload,
 	UpdateIncomePayload,
 } from '@/app/(app)/incomes/actions'
+import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 
 function currentMonthISO(): string {
 	const now = new Date()
@@ -14,6 +15,7 @@ function currentMonthISO(): string {
 
 type CreateProps = {
 	mode: 'create'
+	latestRates?: ExchangeRate[]
 	onSubmit: (
 		payload: CreateIncomePayload,
 	) => Promise<{ error: string } | undefined>
@@ -22,6 +24,7 @@ type CreateProps = {
 type EditProps = {
 	mode: 'edit'
 	monthLabel: string
+	latestRates?: ExchangeRate[]
 	initialValues: {
 		grossIncomeUsd: number
 		budgetCapUsd: number
@@ -37,7 +40,32 @@ type EditProps = {
 
 type Props = CreateProps | EditProps
 
+const SOURCE_LABEL: Record<string, string> = {
+	itau: 'Itaú',
+	ueno: 'Ueno',
+	bcp: 'BCP',
+}
+
+function fmtDate(date: Date): string {
+	return date.toLocaleDateString('es-PY', {
+		day: '2-digit',
+		month: 'short',
+		hour: '2-digit',
+		minute: '2-digit',
+	})
+}
+
 export function IncomeForm(props: Props) {
+	const latestRates = props.latestRates ?? []
+
+	// El mejor tipo de cambio es el que tiene mayor rateSell (más Gs por USD al cambiar)
+	const bestRateId = latestRates.reduce<number | null>((bestId, rate) => {
+		if (rate.rateSell == null) return bestId
+		if (bestId === null) return rate.id
+		const best = latestRates.find((r) => r.id === bestId)
+		return (rate.rateSell ?? 0) > (best?.rateSell ?? 0) ? rate.id : bestId
+	}, null)
+
 	const [month, setMonth] = useState(currentMonthISO())
 	const [grossIncomeUsd, setGrossIncomeUsd] = useState(
 		props.mode === 'edit' ? props.initialValues.grossIncomeUsd.toString() : '',
@@ -237,6 +265,47 @@ export function IncomeForm(props: Props) {
 						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
 					/>
 				</div>
+
+				{latestRates.length > 0 && (
+					<div className="flex gap-2 pt-1">
+						{latestRates.map((rate) => {
+							const isBest = rate.id === bestRateId
+							const displayRate = rate.rateSell ?? rate.rateMid
+							if (displayRate == null) return null
+							const isSelected = exchangeRate === displayRate.toString()
+
+							return (
+								<button
+									key={rate.id}
+									type="button"
+									onClick={() => setExchangeRate(displayRate.toString())}
+									className={`flex flex-1 flex-col gap-0.5 rounded-xl border px-3 py-2 text-left transition-colors ${
+										isSelected
+											? 'border-primary/60 bg-primary/10'
+											: 'border-border bg-card hover:bg-card/80'
+									}`}
+								>
+									<div className="flex items-center gap-1.5">
+										<span className="text-xs font-semibold text-foreground">
+											{SOURCE_LABEL[rate.source] ?? rate.source}
+										</span>
+										{isBest && (
+											<span className="rounded-full bg-primary/20 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
+												Mejor
+											</span>
+										)}
+									</div>
+									<p className="font-mono text-sm font-bold text-foreground">
+										₲ {displayRate.toLocaleString('es-PY')}
+									</p>
+									<p className="text-[10px] text-muted-foreground">
+										{fmtDate(rate.recordedAt)}
+									</p>
+								</button>
+							)
+						})}
+					</div>
+				)}
 			</div>
 
 			{/* ── Notas ── */}

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { IncomeForm } from '@/components/incomes/IncomeForm'
-import { incomeService } from '@/lib/container'
+import { incomeService, exchangeRateService } from '@/lib/container'
 import type { UpdateIncomePayload } from '../../actions'
 import { updateIncome } from '../../actions'
 
@@ -28,8 +28,17 @@ export default async function EditIncomePage({
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
-	const income = await incomeService.findById(id).catch(() => null)
+	const [income, itau, ueno] = await Promise.all([
+		incomeService.findById(id).catch(() => null),
+		exchangeRateService.findLatestBySource('itau'),
+		exchangeRateService.findLatestBySource('ueno'),
+	])
 	if (!income) notFound()
+
+	const latestRates = [
+		...(itau ? [itau] : []),
+		...(ueno ? [ueno] : []),
+	]
 
 	const monthLabel = `${MONTHS_ES[income.month.getUTCMonth()]} ${income.month.getUTCFullYear()}`
 
@@ -43,6 +52,7 @@ export default async function EditIncomePage({
 			mode="edit"
 			monthLabel={monthLabel}
 			onSubmit={handleUpdate}
+			latestRates={latestRates}
 			initialValues={{
 				grossIncomeUsd: income.grossIncomeUsd,
 				budgetCapUsd: income.budgetCapUsd,
