@@ -23,8 +23,8 @@ const NAV_ITEMS = [
 	{ href: '/categories', icon: Tag, label: 'Categorías' },
 	{ href: '/recurring-items', icon: RefreshCw, label: 'Recurrentes' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
-	{ href: '/analytics', icon: TrendingUp, label: 'Analytics' },
-	{ href: '/settings', icon: Settings, label: 'Settings' },
+	{ href: '/analytics', icon: TrendingUp, label: 'Analytics', comingSoon: true },
+	{ href: '/settings', icon: Settings, label: 'Settings', comingSoon: true },
 ]
 
 type Props = {
@@ -58,7 +58,21 @@ export function Sidebar({ balance }: Props) {
 
 			{/* Nav */}
 			<nav className="flex-1 space-y-0.5 px-3 py-2">
-				{NAV_ITEMS.map(({ href, icon: Icon, label }) => {
+				{NAV_ITEMS.map(({ href, icon: Icon, label, comingSoon }) => {
+					if (comingSoon) {
+						return (
+							<div
+								key={href}
+								className="flex cursor-not-allowed items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground/40"
+							>
+								<Icon className="h-4 w-4 shrink-0" />
+								{label}
+								<span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/60">
+									Pronto
+								</span>
+							</div>
+						)
+					}
 					const active = pathname === href
 					return (
 						<Link
