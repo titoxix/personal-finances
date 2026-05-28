@@ -6,7 +6,7 @@ import {
 	essentialityService,
 } from '@/lib/container'
 import type { UpdateBudgetPayload } from '../../actions'
-import { updateBudget } from '../../actions'
+import { deleteBudget, updateBudget } from '../../actions'
 
 export default async function EditBudgetPage({
 	params,
@@ -38,12 +38,18 @@ export default async function EditBudgetPage({
 		return updateBudget(id, payload)
 	}
 
+	async function handleDelete(reason?: string) {
+		'use server'
+		return deleteBudget(id, reason)
+	}
+
 	return (
 		<BudgetForm
 			mode="edit"
 			categoryLabel={category?.label ?? `Categoría #${budget.categoryId}`}
 			essentialityLevels={activeLevels}
 			onSubmit={handleUpdate}
+			onDelete={handleDelete}
 			initialValues={{
 				essentialityId: budget.essentialityId,
 				currency,

@@ -9,6 +9,8 @@ export const BudgetSchema = z.object({
 	budgetedGs: z.number().nullable(),
 	isRecurring: z.boolean(),
 	notes: z.string().nullable(),
+	deletedAt: z.date().nullable(),
+	deleteReason: z.string().nullable(),
 	createdAt: z.date(),
 })
 export type Budget = z.infer<typeof BudgetSchema>

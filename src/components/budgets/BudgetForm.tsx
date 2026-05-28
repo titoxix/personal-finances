@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, Lock } from 'lucide-react'
+import { CheckCircle2, Lock, Trash2 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import type {
 	CreateBudgetPayload,
@@ -38,6 +38,7 @@ type EditProps = {
 	onSubmit: (
 		payload: UpdateBudgetPayload,
 	) => Promise<{ error: string } | undefined>
+	onDelete: (reason?: string) => Promise<{ error: string } | undefined>
 }
 
 type Props = CreateProps | EditProps
@@ -64,11 +65,22 @@ export function BudgetForm(props: Props) {
 	)
 	const [error, setError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
+	const [showDelete, setShowDelete] = useState(false)
+	const [deleteReason, setDeleteReason] = useState('')
+	const [isDeleting, startDeleteTransition] = useTransition()
 
 	const isValid =
 		Number(amount) > 0 &&
 		essentialityId !== null &&
 		(props.mode === 'edit' || categoryId !== '')
+
+	function handleDelete() {
+		if (props.mode !== 'edit') return
+		startDeleteTransition(async () => {
+			const result = await props.onDelete(deleteReason.trim() || undefined)
+			if (result?.error) setError(result.error)
+		})
+	}
 
 	function handleSubmit() {
 		if (!isValid) {
@@ -247,7 +259,9 @@ export function BudgetForm(props: Props) {
 			{/* ── Recurrente ── */}
 			<div className="flex items-center justify-between rounded-2xl border border-border bg-card p-4">
 				<div>
-					<p className="text-sm font-semibold text-foreground">Repetir cada mes</p>
+					<p className="text-sm font-semibold text-foreground">
+						Repetir cada mes
+					</p>
 					<p className="text-xs text-muted-foreground">
 						Se aplica automáticamente a los meses siguientes
 					</p>
@@ -309,6 +323,59 @@ export function BudgetForm(props: Props) {
 						? 'Crear presupuesto'
 						: 'Actualizar'}
 			</button>
+
+			{/* ── Eliminar — edit mode only ── */}
+			{props.mode === 'edit' && (
+				<div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 space-y-3">
+					{!showDelete ? (
+						<button
+							type="button"
+							onClick={() => setShowDelete(true)}
+							className="flex w-full items-center justify-center gap-2 py-1.5 text-sm font-semibold text-destructive transition-opacity hover:opacity-80"
+						>
+							<Trash2 className="h-4 w-4" />
+							Eliminar presupuesto
+						</button>
+					) : (
+						<>
+							<p className="text-sm font-semibold text-destructive">
+								¿Eliminás este presupuesto?
+							</p>
+							<p className="text-xs text-muted-foreground">
+								El registro se conserva en la base de datos para mantener el
+								historial.
+							</p>
+							<textarea
+								value={deleteReason}
+								onChange={(e) => setDeleteReason(e.target.value)}
+								placeholder="Motivo (opcional)..."
+								rows={2}
+								className="w-full resize-none rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-destructive/50 transition-colors"
+							/>
+							<div className="flex gap-2">
+								<button
+									type="button"
+									onClick={() => {
+										setShowDelete(false)
+										setDeleteReason('')
+									}}
+									className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent"
+								>
+									Cancelar
+								</button>
+								<button
+									type="button"
+									onClick={handleDelete}
+									disabled={isDeleting}
+									className="flex-1 rounded-xl bg-destructive py-2.5 text-sm font-semibold text-destructive-foreground transition-opacity disabled:opacity-60"
+								>
+									{isDeleting ? 'Eliminando...' : 'Confirmar'}
+								</button>
+							</div>
+						</>
+					)}
+				</div>
+			)}
 		</div>
 	)
 }

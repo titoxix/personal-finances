@@ -1,10 +1,10 @@
-import type { PrismaClient } from '@/generated/prisma/client'
 import type { Budget } from '@/domain/entities/budget'
 import type {
 	CreateBudgetInput,
 	IBudgetRepository,
 	UpdateBudgetInput,
 } from '@/domain/repositories/IBudgetRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type PrismaBudget = {
 	id: number
@@ -15,6 +15,8 @@ type PrismaBudget = {
 	budgetedGs: { toNumber(): number } | null
 	isRecurring: boolean
 	notes: string | null
+	deletedAt: Date | null
+	deleteReason: string | null
 	createdAt: Date
 }
 
@@ -28,36 +30,47 @@ function toDomain(raw: PrismaBudget): Budget {
 		budgetedGs: raw.budgetedGs?.toNumber() ?? null,
 		isRecurring: raw.isRecurring,
 		notes: raw.notes,
+		deletedAt: raw.deletedAt,
+		deleteReason: raw.deleteReason,
 		createdAt: raw.createdAt,
 	}
 }
 
-export function createPrismaBudgetRepository(prisma: PrismaClient): IBudgetRepository {
+export function createPrismaBudgetRepository(
+	prisma: PrismaClient,
+): IBudgetRepository {
 	return {
 		findAll: async () => {
-			const rows = await prisma.budget.findMany()
+			const rows = await prisma.budget.findMany({ where: { deletedAt: null } })
 			return rows.map(toDomain)
 		},
 		findById: async (id) => {
-			const row = await prisma.budget.findUnique({ where: { id } })
+			const row = await prisma.budget.findFirst({
+				where: { id, deletedAt: null },
+			})
 			return row ? toDomain(row) : null
 		},
 		findByMonth: async (month: Date) => {
-			const rows = await prisma.budget.findMany({ where: { month } })
+			const rows = await prisma.budget.findMany({
+				where: { month, deletedAt: null },
+			})
 			return rows.map(toDomain)
 		},
 		findByMonthAndCategory: async (month: Date, categoryId: number) => {
-			const row = await prisma.budget.findUnique({
-				where: { month_categoryId: { month, categoryId } },
+			const row = await prisma.budget.findFirst({
+				where: { month, categoryId, deletedAt: null },
 			})
 			return row ? toDomain(row) : null
 		},
 		findRecurring: async (upToMonth: Date) => {
 			const rows = await prisma.budget.findMany({
-				where: { isRecurring: true, month: { lte: upToMonth } },
+				where: {
+					isRecurring: true,
+					month: { lte: upToMonth },
+					deletedAt: null,
+				},
 				orderBy: { month: 'desc' },
 			})
-			// Tomar el más reciente por categoría
 			const seen = new Set<number>()
 			const latest: typeof rows = []
 			for (const row of rows) {
@@ -74,6 +87,13 @@ export function createPrismaBudgetRepository(prisma: PrismaClient): IBudgetRepos
 		},
 		update: async (id: number, input: UpdateBudgetInput) => {
 			const row = await prisma.budget.update({ where: { id }, data: input })
+			return toDomain(row)
+		},
+		softDelete: async (id: number, reason?: string) => {
+			const row = await prisma.budget.update({
+				where: { id },
+				data: { deletedAt: new Date(), deleteReason: reason ?? null },
+			})
 			return toDomain(row)
 		},
 	}

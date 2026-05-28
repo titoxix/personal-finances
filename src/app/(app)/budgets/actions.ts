@@ -72,3 +72,20 @@ export async function updateBudget(
 	revalidatePath('/')
 	redirect('/budgets')
 }
+
+export async function deleteBudget(
+	id: number,
+	reason?: string,
+): Promise<{ error: string } | undefined> {
+	try {
+		await budgetService.delete(id, reason?.trim() || undefined)
+	} catch (e) {
+		return {
+			error:
+				e instanceof Error ? e.message : 'Error al eliminar el presupuesto',
+		}
+	}
+	revalidatePath('/budgets')
+	revalidatePath('/')
+	redirect('/budgets')
+}

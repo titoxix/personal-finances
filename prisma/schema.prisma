@@ -150,15 +150,17 @@ model Transaction {
 }
 
 model Budget {
-  id             Int      @id @default(autoincrement())
-  month          DateTime @db.Date
-  categoryId     Int      @map("category_id")
-  essentialityId Int      @map("essentiality_id")
-  budgetedUsd    Decimal? @db.Decimal(10, 2) @map("budgeted_usd")
-  budgetedGs     Decimal? @db.Decimal(15, 2) @map("budgeted_gs")
-  isRecurring    Boolean  @default(false) @map("is_recurring")
+  id             Int       @id @default(autoincrement())
+  month          DateTime  @db.Date
+  categoryId     Int       @map("category_id")
+  essentialityId Int       @map("essentiality_id")
+  budgetedUsd    Decimal?  @db.Decimal(10, 2) @map("budgeted_usd")
+  budgetedGs     Decimal?  @db.Decimal(15, 2) @map("budgeted_gs")
+  isRecurring    Boolean   @default(false) @map("is_recurring")
   notes          String?
-  createdAt      DateTime @default(now()) @map("created_at")
+  deletedAt      DateTime? @map("deleted_at")
+  deleteReason   String?   @map("delete_reason")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   category     Category          @relation(fields: [categoryId], references: [id])
   essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
