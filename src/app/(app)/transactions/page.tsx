@@ -45,6 +45,8 @@ export default async function TransactionsPage() {
 		.sort((a, b) => b.amountGs - a.amountGs)
 		.slice(0, 5)
 
+	const maxSpendGs = Math.max(...spendingByCategory.map((c) => c.amountGs), 1)
+
 	return (
 		<div>
 			<div className="mb-5 flex items-end justify-between">
@@ -64,7 +66,41 @@ export default async function TransactionsPage() {
 			</div>
 
 			<div className="lg:grid lg:grid-cols-[1fr_272px] lg:gap-6">
-				<TransactionList rows={rows} />
+				<TransactionList
+					rows={rows}
+					belowSearch={
+						spendingByCategory.length > 0 ? (
+							<div className="lg:hidden">
+								<p className="mb-3 text-sm font-bold text-foreground">
+									Gasto por Categoría
+								</p>
+								<div className="flex gap-2.5 overflow-x-auto pb-1">
+									{spendingByCategory.map(({ label, amountGs }) => (
+										<div
+											key={label}
+											className="w-[136px] flex-none rounded-2xl border border-border bg-card px-4 py-3"
+										>
+											<p className="truncate text-xs text-muted-foreground">{label}</p>
+											<p className="mt-1 font-mono text-sm font-bold text-foreground">
+												{amountGs >= 1_000_000
+													? `₲${(amountGs / 1_000_000).toFixed(1)}M`
+													: amountGs >= 1_000
+														? `₲${(amountGs / 1_000).toFixed(0)}K`
+														: `₲${amountGs}`}
+											</p>
+											<div className="mt-2 h-1 overflow-hidden rounded-full bg-secondary">
+												<div
+													className="h-full rounded-full bg-primary transition-all"
+													style={{ width: `${(amountGs / maxSpendGs) * 100}%` }}
+												/>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						) : undefined
+					}
+				/>
 				<TransactionPageSidebar spendingByCategory={spendingByCategory} />
 			</div>
 		</div>

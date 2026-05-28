@@ -71,9 +71,14 @@ if (comingSoon) {
 }
 ```
 
-### TransactionPageSidebar — datos reales ✅ (2026-05-28)
+### TransactionPageSidebar — datos reales + vista mobile ✅ (2026-05-28)
 
-`TransactionsPage` ahora filtra las transacciones del mes actual y construye `spendingByCategory` (`CategorySpend[]`), convirtiendo montos USD a Gs con el último tipo de cambio Itaú. Pasa el top 5 por gasto como prop al sidebar. Las barras usan el mayor gasto como referencia (100%). El botón "Ver detalle →" linkea a `/budgets`. Estado vacío ("Sin gastos registrados este mes.") si no hay transacciones en el mes.
+`TransactionsPage` filtra las transacciones del mes actual y construye `spendingByCategory` (`CategorySpend[]`), convirtiendo USD a Gs con el último tipo de cambio Itaú. Pasa el top 5 por gasto como prop. Las barras usan el mayor gasto como referencia (100%).
+
+- **Desktop:** sidebar vertical con barras, sin cambios respecto al layout original.
+- **Mobile:** scroll horizontal de tarjetas compactas (label + monto + mini barra), ubicadas entre la barra de búsqueda y la lista de transacciones — se inyectan via prop `belowSearch` en `TransactionList`.
+- El botón "Ver detalle →" se eliminó por no tener destino coherente (no hay página de analytics aún).
+- Estado vacío: en mobile no se renderiza nada; en desktop muestra "Sin gastos registrados este mes."
 
 ### TopBar bugs de Ingresos ✅ (2026-05-28)
 

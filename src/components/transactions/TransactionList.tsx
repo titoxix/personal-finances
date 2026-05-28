@@ -46,9 +46,9 @@ function groupByDate(rows: TransactionListRow[]): Section[] {
 	return Array.from(buckets.values())
 }
 
-type Props = { rows: TransactionListRow[] }
+type Props = { rows: TransactionListRow[]; belowSearch?: React.ReactNode }
 
-export function TransactionList({ rows }: Props) {
+export function TransactionList({ rows, belowSearch }: Props) {
 	const [query, setQuery] = useState('')
 
 	const filtered = query.trim()
@@ -74,6 +74,8 @@ export function TransactionList({ rows }: Props) {
 					className="w-full rounded-2xl border border-border bg-card py-3.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
 				/>
 			</div>
+
+			{belowSearch}
 
 			{/* Empty state */}
 			{sections.length === 0 && (
