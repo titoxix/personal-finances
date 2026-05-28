@@ -8,6 +8,7 @@ import {
 	Menu,
 	MoreVertical,
 	Receipt,
+	RefreshCw,
 	Settings,
 	Tag,
 	Target,
@@ -24,6 +25,7 @@ const STATIC_INNER_PAGES: Record<string, { title: string }> = {
 	'/categories/new': { title: 'Nueva Categoría' },
 	'/exchange-rates/new': { title: 'Nueva Tasa' },
 	'/budgets/new': { title: 'Nuevo Presupuesto' },
+	'/recurring-items/new': { title: 'Nuevo Recurrente' },
 }
 
 function getInnerPage(pathname: string): { title: string } | undefined {
@@ -35,6 +37,8 @@ function getInnerPage(pathname: string): { title: string } | undefined {
 		return { title: 'Editar Categoría' }
 	if (/^\/budgets\/\d+\/edit$/.test(pathname))
 		return { title: 'Editar Presupuesto' }
+	if (/^\/recurring-items\/\d+\/edit$/.test(pathname))
+		return { title: 'Editar Recurrente' }
 	return undefined
 }
 
@@ -43,6 +47,7 @@ const NAV_ITEMS = [
 	{ href: '/transactions', icon: Receipt, label: 'Transacciones' },
 	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/categories', icon: Tag, label: 'Categorías' },
+	{ href: '/recurring-items', icon: RefreshCw, label: 'Recurrentes' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics' },
 	{ href: '/settings', icon: Settings, label: 'Settings' },
