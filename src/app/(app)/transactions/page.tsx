@@ -1,13 +1,14 @@
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { transactionService, categoryService } from '@/lib/container'
+import { transactionService, categoryService, exchangeRateService } from '@/lib/container'
 import { TransactionList, type TransactionListRow } from '@/components/transactions/TransactionList'
 import { TransactionPageSidebar } from '@/components/transactions/TransactionPageSidebar'
 
 export default async function TransactionsPage() {
-	const [transactions, categories] = await Promise.all([
+	const [transactions, categories, latestRate] = await Promise.all([
 		transactionService.findAll(),
 		categoryService.findAll(),
+		exchangeRateService.findLatestBySource('itau'),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c.label]))
@@ -23,6 +24,26 @@ export default async function TransactionsPage() {
 			amountGs: tx.amountGs,
 			amountUsd: tx.amountUsd,
 		}))
+
+	const now = new Date()
+	const thisMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+	const nextMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
+	const gsRate = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
+
+	const spentMap = new Map<number, number>()
+	for (const tx of transactions) {
+		if (tx.date < thisMonthStart || tx.date >= nextMonthStart) continue
+		const gs = tx.amountGs ?? (tx.amountUsd ? tx.amountUsd * gsRate : 0)
+		spentMap.set(tx.categoryId, (spentMap.get(tx.categoryId) ?? 0) + gs)
+	}
+
+	const spendingByCategory = [...spentMap.entries()]
+		.map(([categoryId, amountGs]) => ({
+			label: categoryMap.get(categoryId) ?? 'Sin categoría',
+			amountGs: Math.round(amountGs),
+		}))
+		.sort((a, b) => b.amountGs - a.amountGs)
+		.slice(0, 5)
 
 	return (
 		<div>
@@ -44,7 +65,7 @@ export default async function TransactionsPage() {
 
 			<div className="lg:grid lg:grid-cols-[1fr_272px] lg:gap-6">
 				<TransactionList rows={rows} />
-				<TransactionPageSidebar />
+				<TransactionPageSidebar spendingByCategory={spendingByCategory} />
 			</div>
 		</div>
 	)

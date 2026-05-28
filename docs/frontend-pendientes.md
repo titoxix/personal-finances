@@ -19,12 +19,6 @@ _Sin items pendientes de alta prioridad._
 - Las tasas registradas son inmutables desde la UI.
 - **Fix esperado:** Agregar página de edición y acción de eliminación, siguiendo el mismo patrón que categorías.
 
-### TransactionPageSidebar — datos hardcodeados
-
-- **Archivo:** `src/components/transactions/TransactionPageSidebar.tsx`
-- **Problema:** "Gasto por Categoría" usa mock data estático (`SPENDING_BY_CATEGORY`). El botón "Ver detalle →" no hace nada.
-- **Fix esperado:** Recibir los datos reales como props desde `TransactionsPage` (gasto por categoría del mes actual, calculado igual que en `BudgetsPage`).
-
 ---
 
 ## Prioridad baja
@@ -77,6 +71,10 @@ if (comingSoon) {
 }
 ```
 
+### TransactionPageSidebar — datos reales ✅ (2026-05-28)
+
+`TransactionsPage` ahora filtra las transacciones del mes actual y construye `spendingByCategory` (`CategorySpend[]`), convirtiendo montos USD a Gs con el último tipo de cambio Itaú. Pasa el top 5 por gasto como prop al sidebar. Las barras usan el mayor gasto como referencia (100%). El botón "Ver detalle →" linkea a `/budgets`. Estado vacío ("Sin gastos registrados este mes.") si no hay transacciones en el mes.
+
 ### TopBar bugs de Ingresos ✅ (2026-05-28)
 
 - `STATIC_INNER_PAGES` ahora incluye `/incomes/new` → `'Nuevo Ingreso'`.
@@ -103,7 +101,7 @@ if (comingSoon) {
 | Item | Archivo(s) clave | Estado |
 |---|---|---|
 | Exchange rates edit/delete | `app/(app)/exchange-rates/` | Incompleto |
-| TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | Mock |
+| TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | ✅ Completo |
 | Analytics y Settings | `Sidebar.tsx`, `TopBar.tsx` | Deshabilitado (Pronto) |
 | InstallmentPlan UI | `app/(app)/installment-plans/` | No existe (sin wiring) |
 | MonthlySnapshot UI | `app/(app)/snapshots/` | No existe (wiring ✓) |
