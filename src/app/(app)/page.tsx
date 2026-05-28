@@ -7,6 +7,7 @@ import {
 	categoryService,
 	exchangeRateService,
 	incomeService,
+	installmentPlanService,
 	recurringItemService,
 	transactionService,
 } from '@/lib/container'
@@ -22,6 +23,7 @@ export default async function HomePage() {
 		latestRate,
 		income,
 		activeRecurring,
+		activePlans,
 	] = await Promise.all([
 		transactionService.findAll(),
 		categoryService.findAll(),
@@ -29,6 +31,7 @@ export default async function HomePage() {
 		exchangeRateService.findLatestBySource('itau'),
 		incomeService.findByMonth(currentMonth),
 		recurringItemService.findActive(),
+		installmentPlanService.findActive(),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c]))
@@ -113,13 +116,32 @@ export default async function HomePage() {
 		return sum + amountGs
 	}, 0)
 
+	// Cuotas activas con saldo pendiente: se suma el monto por cuota (Gs) al pendiente mensual.
+	// Mismo criterio conservador que los recurrentes: si ya registraste el pago como
+	// transacción, el libre queda ligeramente subestimado, pero nunca te dice que tenés más.
+	const pendingInstallmentsGs = activePlans
+		.filter((p) => p.installmentsPaid < p.installmentsTotal)
+		.reduce((sum, p) => {
+			const amountGs =
+				p.installmentAmountGs ??
+				(p.totalAmountGs
+					? p.totalAmountGs / p.installmentsTotal
+					: p.totalAmountUsd
+						? (p.totalAmountUsd * refRate) / p.installmentsTotal
+						: 0)
+			return sum + amountGs
+		}, 0)
+
 	const incomeGs = income
 		? {
 				grossGs: income.grossIncomeUsd * refRate,
 				investmentGs: income.automaticInvestmentUsd * refRate,
 				spentGs: totalSpentGs,
-				pendingGs: pendingRecurringGs,
-				freeGs: Math.max(capGs - totalSpentGs - pendingRecurringGs, 0),
+				pendingGs: pendingRecurringGs + pendingInstallmentsGs,
+				freeGs: Math.max(
+					capGs - totalSpentGs - pendingRecurringGs - pendingInstallmentsGs,
+					0,
+				),
 			}
 		: undefined
 	const alertCount = budgetItems.filter(
