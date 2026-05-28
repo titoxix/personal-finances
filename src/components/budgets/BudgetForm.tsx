@@ -8,7 +8,7 @@ import type {
 } from '@/app/(app)/budgets/actions'
 import type { Category } from '@/domain/entities/category'
 import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
-import { cn } from '@/lib/utils'
+import { cn, parseAmountInput, formatAmountDisplay } from '@/lib/utils'
 
 function currentMonthISO(): string {
 	const now = new Date()
@@ -126,7 +126,7 @@ export function BudgetForm(props: Props) {
 							<button
 								key={c}
 								type="button"
-								onClick={() => setCurrency(c)}
+								onClick={() => { setCurrency(c); setAmount('') }}
 								className={cn(
 									'rounded-full px-3 py-0.5 text-xs font-bold transition-colors',
 									currency === c
@@ -144,13 +144,12 @@ export function BudgetForm(props: Props) {
 						{currency === 'gs' ? '₲' : '$'}
 					</span>
 					<input
-						type="number"
-						value={amount}
-						onChange={(e) => setAmount(e.target.value)}
+						type="text"
+						inputMode={currency === 'gs' ? 'numeric' : 'decimal'}
+						value={formatAmountDisplay(amount, currency === 'usd')}
+						onChange={(e) => setAmount(parseAmountInput(e.target.value, currency === 'usd'))}
 						placeholder="0"
-						min="0"
-						step={currency === 'gs' ? '1000' : '1'}
-						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
 				</div>
 			</div>

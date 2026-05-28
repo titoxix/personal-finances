@@ -1,6 +1,7 @@
 'use client'
 
 import { CheckCircle2, Lock, PlusCircle } from 'lucide-react'
+import { parseAmountInput, formatAmountDisplay } from '@/lib/utils'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import type {
@@ -170,13 +171,12 @@ export function IncomeForm(props: Props) {
 				<div className="mt-3 flex items-baseline gap-2">
 					<span className="text-2xl font-bold text-muted-foreground">$</span>
 					<input
-						type="number"
-						value={grossIncomeUsd}
-						onChange={(e) => setGrossIncomeUsd(e.target.value)}
+						type="text"
+						inputMode="decimal"
+						value={formatAmountDisplay(grossIncomeUsd, true)}
+						onChange={(e) => setGrossIncomeUsd(parseAmountInput(e.target.value, true))}
 						placeholder="0"
-						min="0"
-						step="1"
-						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
 				</div>
 			</div>
@@ -193,13 +193,12 @@ export function IncomeForm(props: Props) {
 					<span className="text-sm font-bold text-muted-foreground">$</span>
 					<input
 						id="income-budget-cap"
-						type="number"
-						value={budgetCapUsd}
-						onChange={(e) => setBudgetCapUsd(e.target.value)}
+						type="text"
+						inputMode="decimal"
+						value={formatAmountDisplay(budgetCapUsd, true)}
+						onChange={(e) => setBudgetCapUsd(parseAmountInput(e.target.value, true))}
 						placeholder="0"
-						min="0"
-						step="1"
-						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
 				</div>
 			</div>
@@ -216,13 +215,12 @@ export function IncomeForm(props: Props) {
 					<span className="text-sm font-bold text-muted-foreground">$</span>
 					<input
 						id="income-auto-invest"
-						type="number"
-						value={automaticInvestmentUsd}
-						onChange={(e) => setAutomaticInvestmentUsd(e.target.value)}
+						type="text"
+						inputMode="decimal"
+						value={formatAmountDisplay(automaticInvestmentUsd, true)}
+						onChange={(e) => setAutomaticInvestmentUsd(parseAmountInput(e.target.value, true))}
 						placeholder="0"
-						min="0"
-						step="1"
-						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
 				</div>
 			</div>
@@ -257,13 +255,12 @@ export function IncomeForm(props: Props) {
 					<span className="text-sm font-bold text-muted-foreground">₲</span>
 					<input
 						id="income-exchange-rate"
-						type="number"
-						value={exchangeRate}
-						onChange={(e) => setExchangeRate(e.target.value)}
+						type="text"
+						inputMode="numeric"
+						value={formatAmountDisplay(exchangeRate)}
+						onChange={(e) => setExchangeRate(parseAmountInput(e.target.value))}
 						placeholder="0"
-						min="0"
-						step="100"
-						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
 				</div>
 

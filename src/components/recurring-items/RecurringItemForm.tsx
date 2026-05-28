@@ -1,6 +1,7 @@
 'use client'
 
 import { Check } from 'lucide-react'
+import { parseAmountInput, formatAmountDisplay } from '@/lib/utils'
 import { useState, useTransition } from 'react'
 import type {
 	CreateRecurringItemPayload,
@@ -360,10 +361,10 @@ export function RecurringItemForm(props: Props) {
 				</label>
 				<input
 					id="ri-amount-gs"
-					type="number"
-					min={0}
-					value={amountGs}
-					onChange={(e) => setAmountGs(e.target.value)}
+					type="text"
+					inputMode="numeric"
+					value={formatAmountDisplay(amountGs)}
+					onChange={(e) => setAmountGs(parseAmountInput(e.target.value))}
 					placeholder="0"
 					className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
 				/>
@@ -380,11 +381,10 @@ export function RecurringItemForm(props: Props) {
 				</label>
 				<input
 					id="ri-amount-usd"
-					type="number"
-					min={0}
-					step="0.01"
-					value={amountUsd}
-					onChange={(e) => setAmountUsd(e.target.value)}
+					type="text"
+					inputMode="decimal"
+					value={formatAmountDisplay(amountUsd, true)}
+					onChange={(e) => setAmountUsd(parseAmountInput(e.target.value, true))}
 					placeholder="0.00"
 					className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
 				/>

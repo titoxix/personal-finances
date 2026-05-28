@@ -71,6 +71,14 @@ if (comingSoon) {
 }
 ```
 
+### Inputs de monto formateados ✅ (2026-05-28)
+
+Todos los inputs de monto pasaron de `type="number"` a `type="text"` con `inputMode` y formateo con separadores de miles. Dos helpers en `lib/utils.ts`:
+- `parseAmountInput(value, decimal?)` — strip de formato al escribir, guarda valor raw
+- `formatAmountDisplay(raw, decimal?)` — formatea para display: punto como miles en Gs (`1.500.000`), coma en USD (`1,234.56`)
+
+Formularios actualizados: `TransactionForm`, `BudgetForm`, `RecurringItemForm`, `IncomeForm` (4 campos: grossIncomeUsd, budgetCapUsd, automaticInvestmentUsd, exchangeRate). El toggle Gs/USD en Transaction y Budget limpia el monto al cambiar de moneda. `isValid` y `handleSubmit` no cambiaron — siguen usando `Number(rawValue)`.
+
 ### TransactionPageSidebar — datos reales + vista mobile ✅ (2026-05-28)
 
 `TransactionsPage` filtra las transacciones del mes actual y construye `spendingByCategory` (`CategorySpend[]`), convirtiendo USD a Gs con el último tipo de cambio Itaú. Pasa el top 5 por gasto como prop. Las barras usan el mayor gasto como referencia (100%).
@@ -106,6 +114,7 @@ if (comingSoon) {
 | Item | Archivo(s) clave | Estado |
 |---|---|---|
 | Exchange rates edit/delete | `app/(app)/exchange-rates/` | Incompleto |
+| Inputs de monto formateados | `utils.ts`, 4 formularios | ✅ Completo |
 | TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | ✅ Completo |
 | Analytics y Settings | `Sidebar.tsx`, `TopBar.tsx` | Deshabilitado (Pronto) |
 | InstallmentPlan UI | `app/(app)/installment-plans/` | No existe (sin wiring) |
