@@ -27,14 +27,27 @@ type Props = {
 	incomeGs?: {
 		grossGs: number
 		investmentGs: number
-		remainingGs: number
+		spentGs: number
+		pendingGs: number
+		freeGs: number
 	}
 }
 
-export function MonthlyOverviewCard({ month, totalSpentGs, capGs, spentPct, incomeGs }: Props) {
+export function MonthlyOverviewCard({
+	month,
+	totalSpentGs,
+	capGs,
+	spentPct,
+	incomeGs,
+}: Props) {
 	const monthName = MONTHS[month.getUTCMonth()]
 	const year = month.getUTCFullYear()
-	const clampedPct = Math.min(spentPct, 100)
+
+	const spentPct2 = capGs > 0 ? Math.min((totalSpentGs / capGs) * 100, 100) : 0
+	const pendingPct =
+		incomeGs && capGs > 0
+			? Math.min((incomeGs.pendingGs / capGs) * 100, 100 - spentPct2)
+			: 0
 
 	return (
 		<div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0fba7c] to-[#065f46] p-5">
@@ -60,46 +73,73 @@ export function MonthlyOverviewCard({ month, totalSpentGs, capGs, spentPct, inco
 				{gs(totalSpentGs)} gastados de {gs(capGs)}
 			</p>
 
-			{/* Progress */}
+			{/* Progress — dos segmentos: gastado + pendiente */}
 			<div className="relative mt-4">
 				<div className="h-1.5 overflow-hidden rounded-full bg-white/30">
-					<div
-						className="h-full rounded-full bg-white transition-all duration-500"
-						style={{ width: `${clampedPct}%` }}
-					/>
+					<div className="relative h-full w-full">
+						{/* Gastado */}
+						<div
+							className="absolute left-0 top-0 h-full rounded-full bg-white transition-all duration-500"
+							style={{ width: `${spentPct2}%` }}
+						/>
+						{/* Pendiente (recurrentes no cobrados) */}
+						{pendingPct > 0 && (
+							<div
+								className="absolute top-0 h-full rounded-r-full bg-white/50 transition-all duration-500"
+								style={{ left: `${spentPct2}%`, width: `${pendingPct}%` }}
+							/>
+						)}
+					</div>
 				</div>
-				<p className="mt-1.5 text-center font-mono text-xs text-[#003824]/70">{spentPct}%</p>
+				<div className="mt-1.5 flex items-center justify-center gap-3 text-[10px] text-[#003824]/60">
+					<span className="font-mono">{spentPct}% gastado</span>
+					{pendingPct > 0 && (
+						<>
+							<span>·</span>
+							<span className="font-mono">
+								{Math.round(pendingPct)}% comprometido
+							</span>
+						</>
+					)}
+				</div>
 			</div>
 
-			{/* Income breakdown — solo cuando hay income registrado */}
+			{/* Breakdown — Gastado | Pendiente | Libre */}
 			{incomeGs && (
-				<div className="relative mt-4 flex items-center justify-between rounded-xl bg-white/10 px-3 py-2">
-					<div className="text-center">
-						<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-							Ingreso
-						</p>
-						<p className="font-mono text-sm font-bold text-[#003824]">
-							{gs(incomeGs.grossGs)}
-						</p>
+				<div className="relative mt-4 rounded-xl bg-white/10 px-3 py-2">
+					<div className="flex items-center justify-between">
+						<div className="text-center">
+							<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+								Gastado
+							</p>
+							<p className="font-mono text-sm font-bold text-[#003824]">
+								{gs(incomeGs.spentGs)}
+							</p>
+						</div>
+						<div className="h-6 w-px bg-white/20" />
+						<div className="text-center">
+							<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+								Pendiente
+							</p>
+							<p className="font-mono text-sm font-bold text-[#003824]">
+								{gs(incomeGs.pendingGs)}
+							</p>
+						</div>
+						<div className="h-6 w-px bg-white/20" />
+						<div className="text-center">
+							<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+								Libre
+							</p>
+							<p className="font-mono text-sm font-bold text-[#003824]">
+								{gs(incomeGs.freeGs)}
+							</p>
+						</div>
 					</div>
-					<div className="h-6 w-px bg-white/20" />
-					<div className="text-center">
-						<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-							Inversión
+					{incomeGs.pendingGs > 0 && (
+						<p className="mt-2 text-center text-[10px] text-[#003824]/50">
+							Recurrentes por cobrar este mes
 						</p>
-						<p className="font-mono text-sm font-bold text-[#003824]">
-							{gs(incomeGs.investmentGs)}
-						</p>
-					</div>
-					<div className="h-6 w-px bg-white/20" />
-					<div className="text-center">
-						<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-							Disponible
-						</p>
-						<p className="font-mono text-sm font-bold text-[#003824]">
-							{gs(incomeGs.remainingGs)}
-						</p>
-					</div>
+					)}
 				</div>
 			)}
 		</div>

@@ -1,6 +1,6 @@
 # Frontend — Pendientes
 
-> Revisado el 2026-05-27. Refleja el estado actual del código en `main`.
+> Revisado el 2026-05-28. Refleja el estado actual del código en `main`.
 
 ---
 
@@ -14,7 +14,7 @@
 
 ### Bug: TopBar drawer no incluye el link a Ingresos
 
-- **Archivo:** `src/components/layout/TopBar.tsx` línea ~41 (`NAV_ITEMS`)
+- **Archivo:** `src/components/layout/TopBar.tsx` (`NAV_ITEMS`)
 - **Problema:** `/incomes` (ícono Wallet) está en Sidebar y BottomNav pero no en el drawer del TopBar móvil.
 - **Fix esperado:** Agregar `{ href: '/incomes', icon: Wallet, label: 'Ingresos' }` al array `NAV_ITEMS` del TopBar.
 
@@ -50,15 +50,27 @@
 - Service, repositorio y API routes completos, pero no está wired en `lib/container.ts` ni tiene páginas.
 - Pantallas mínimas: lista (`/installment-plans`), crear, editar/eliminar.
 
-### RecurringItem — sin ninguna UI
-
-- Igual que InstallmentPlan: backend completo, cero frontend.
-- Pantallas mínimas: lista (`/recurring-items`), crear, editar/eliminar.
-
 ### MonthlySnapshot — solo lectura en UI
 
 - El balance del sidebar/topbar se lee del último snapshot, pero no hay forma de crear ni editar snapshots desde la app.
 - Pantallas mínimas: lista (`/snapshots`), crear.
+
+---
+
+## Completado
+
+### RecurringItem UI ✅ (2026-05-27)
+
+- Wired en `lib/container.ts`.
+- Páginas: lista (`/recurring-items`), crear, editar/desactivar.
+- Componentes: `RecurringItemForm`, `RecurringItemList`, `RecurringItemCard`.
+- Navegación: Sidebar + TopBar drawer + inner pages (new/edit) con botón de volver en móvil.
+
+### CU-01: Proyección de recurrentes en dashboard ✅ (2026-05-28)
+
+- `app/(app)/page.tsx` calcula los recurrentes activos cuyo `billingDay > hoy` como "pendientes del mes".
+- `MonthlyOverviewCard` muestra barra de dos segmentos (gastado + comprometido) y breakdown **Gastado | Pendiente | Libre**.
+- "Libre" = cap − gastado − pendiente recurrente → responde en tiempo real "¿cuánto puedo gastar hoy?".
 
 ---
 
@@ -73,5 +85,6 @@
 | Exchange rates edit/delete | `app/(app)/exchange-rates/` | Incompleto |
 | TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | Mock |
 | InstallmentPlan UI | `app/(app)/installment-plans/` | No existe |
-| RecurringItem UI | `app/(app)/recurring-items/` | No existe |
 | MonthlySnapshot UI | `app/(app)/snapshots/` | No existe |
+| RecurringItem UI | `app/(app)/recurring-items/` | ✅ Completo |
+| CU-01 proyección dashboard | `app/(app)/page.tsx`, `MonthlyOverviewCard.tsx` | ✅ Completo |
