@@ -52,3 +52,42 @@ export async function createExchangeRates(
 	revalidatePath('/exchange-rates')
 	redirect('/exchange-rates')
 }
+
+export type UpdateExchangeRatePayload = {
+	rateBuy: number | null
+	rateSell: number | null
+	rateMid: number | null
+	notes: string
+	recordedAt: string
+}
+
+export async function updateExchangeRate(
+	id: number,
+	payload: UpdateExchangeRatePayload,
+): Promise<{ error: string } | undefined> {
+	try {
+		await exchangeRateService.update(id, {
+			rateBuy: payload.rateBuy ?? undefined,
+			rateSell: payload.rateSell ?? undefined,
+			rateMid: payload.rateMid ?? undefined,
+			notes: payload.notes.trim() || undefined,
+			recordedAt: new Date(payload.recordedAt),
+		})
+	} catch (e) {
+		return { error: e instanceof Error ? e.message : 'Error al actualizar la tasa' }
+	}
+	revalidatePath('/exchange-rates')
+	redirect('/exchange-rates')
+}
+
+export async function deleteExchangeRate(
+	id: number,
+): Promise<{ error: string } | undefined> {
+	try {
+		await exchangeRateService.delete(id)
+	} catch (e) {
+		return { error: e instanceof Error ? e.message : 'Error al eliminar la tasa' }
+	}
+	revalidatePath('/exchange-rates')
+	redirect('/exchange-rates')
+}

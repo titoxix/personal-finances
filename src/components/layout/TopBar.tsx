@@ -43,6 +43,8 @@ function getInnerPage(pathname: string): { title: string } | undefined {
 		return { title: 'Editar Recurrente' }
 	if (/^\/incomes\/\d+\/edit$/.test(pathname))
 		return { title: 'Editar Ingreso' }
+	if (/^\/exchange-rates\/\d+\/edit$/.test(pathname))
+		return { title: 'Editar Tasa' }
 	return undefined
 }
 

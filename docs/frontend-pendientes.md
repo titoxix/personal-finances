@@ -12,12 +12,7 @@ _Sin items pendientes de alta prioridad._
 
 ## Prioridad media
 
-### Exchange Rates — solo create, sin edit ni delete
-
-- No existe `app/(app)/exchange-rates/[id]/edit/page.tsx`.
-- No hay acción `deleteExchangeRate` en `app/(app)/exchange-rates/actions.ts`.
-- Las tasas registradas son inmutables desde la UI.
-- **Fix esperado:** Agregar página de edición y acción de eliminación, siguiendo el mismo patrón que categorías.
+_Sin items pendientes de prioridad media._
 
 ---
 
@@ -71,6 +66,10 @@ if (comingSoon) {
 }
 ```
 
+### Exchange Rates edit/delete ✅ (2026-05-28)
+
+Toda la pila actualizada: `IExchangeRateRepository` + `PrismaExchangeRateRepository` + `ExchangeRateService` con `update` y `delete`. Actions: `updateExchangeRate`, `deleteExchangeRate`. Página `exchange-rates/[id]/edit/page.tsx` creada. `ExchangeRateForm` ampliado con `mode: 'edit'` — en edit muestra solo los campos del banco correspondiente (Itaú/Ueno → compra+venta, BCP → media) con valores pre-cargados y botón de eliminar. Las tarjetas en `ExchangeRateList` son ahora `<Link>` al edit page. `TopBar` cubre `/exchange-rates/\d+/edit` como inner page. Inputs de tasa actualizados a `type="text"` con `inputMode="numeric"` y formateo con `parseAmountInput`/`formatAmountDisplay`.
+
 ### Inputs de monto formateados ✅ (2026-05-28)
 
 Todos los inputs de monto pasaron de `type="number"` a `type="text"` con `inputMode` y formateo con separadores de miles. Dos helpers en `lib/utils.ts`:
@@ -113,7 +112,7 @@ Formularios actualizados: `TransactionForm`, `BudgetForm`, `RecurringItemForm`, 
 
 | Item | Archivo(s) clave | Estado |
 |---|---|---|
-| Exchange rates edit/delete | `app/(app)/exchange-rates/` | Incompleto |
+| Exchange rates edit/delete | `app/(app)/exchange-rates/` | ✅ Completo |
 | Inputs de monto formateados | `utils.ts`, 4 formularios | ✅ Completo |
 | TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | ✅ Completo |
 | Analytics y Settings | `Sidebar.tsx`, `TopBar.tsx` | Deshabilitado (Pronto) |

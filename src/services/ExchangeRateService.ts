@@ -1,6 +1,7 @@
 import type { ExchangeRate, ExchangeRateSource } from '@/domain/entities/exchange-rate'
 import type {
 	CreateExchangeRateInput,
+	UpdateExchangeRateInput,
 	IExchangeRateRepository,
 } from '@/domain/repositories/IExchangeRateRepository'
 
@@ -37,6 +38,18 @@ export function createExchangeRateService(repo: IExchangeRateRepository) {
 		create: async (input: CreateExchangeRateInput): Promise<ExchangeRate> => {
 			validateCreate(input)
 			return repo.create(input)
+		},
+
+		update: async (id: number, input: UpdateExchangeRateInput): Promise<ExchangeRate> => {
+			const existing = await repo.findById(id)
+			if (!existing) throw new Error('ExchangeRate not found')
+			return repo.update(id, input)
+		},
+
+		delete: async (id: number): Promise<void> => {
+			const existing = await repo.findById(id)
+			if (!existing) throw new Error('ExchangeRate not found')
+			return repo.delete(id)
 		},
 	}
 }

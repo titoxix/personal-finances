@@ -2,6 +2,7 @@ import type { PrismaClient } from '@/generated/prisma/client'
 import type { ExchangeRate, ExchangeRateSource } from '@/domain/entities/exchange-rate'
 import type {
 	CreateExchangeRateInput,
+	UpdateExchangeRateInput,
 	IExchangeRateRepository,
 } from '@/domain/repositories/IExchangeRateRepository'
 
@@ -56,6 +57,13 @@ export function createPrismaExchangeRateRepository(prisma: PrismaClient): IExcha
 		create: async (input: CreateExchangeRateInput) => {
 			const row = await prisma.exchangeRate.create({ data: input })
 			return toDomain(row)
+		},
+		update: async (id: number, input: UpdateExchangeRateInput) => {
+			const row = await prisma.exchangeRate.update({ where: { id }, data: input })
+			return toDomain(row)
+		},
+		delete: async (id: number) => {
+			await prisma.exchangeRate.delete({ where: { id } })
 		},
 	}
 }

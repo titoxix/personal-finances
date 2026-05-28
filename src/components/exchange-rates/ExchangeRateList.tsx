@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 
 const SOURCE_CONFIG = {
@@ -178,9 +180,10 @@ export function ExchangeRateList({ rates }: { rates: ExchangeRate[] }) {
 										: null
 
 								return (
-									<div
+									<Link
 										key={rate.id}
-										className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5"
+										href={`/exchange-rates/${rate.id}/edit`}
+										className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-card/80"
 									>
 										{/* Source badge + best badges (desktop inline) */}
 										<div className="flex shrink-0 flex-col gap-1">
@@ -239,7 +242,8 @@ export function ExchangeRateList({ rates }: { rates: ExchangeRate[] }) {
 										<span className="shrink-0 font-mono text-xs text-muted-foreground">
 											{formatTime(rate.recordedAt)}
 										</span>
-									</div>
+										<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+									</Link>
 								)
 							})}
 						</div>
