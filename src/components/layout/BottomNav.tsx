@@ -27,6 +27,8 @@ function isFormPage(pathname: string): boolean {
 	if (/^\/incomes\/\d+\/edit$/.test(pathname)) return true
 	if (pathname === '/installment-plans/new') return true
 	if (/^\/installment-plans\/\d+\/edit$/.test(pathname)) return true
+	if (pathname === '/snapshots/new') return true
+	if (/^\/snapshots\/\d+\/edit$/.test(pathname)) return true
 	return false
 }
 

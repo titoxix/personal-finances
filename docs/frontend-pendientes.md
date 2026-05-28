@@ -1,6 +1,6 @@
 # Frontend — Pendientes
 
-> Revisado el 2026-05-28. Refleja el estado actual del código en `main`.
+> Revisado el 2026-05-28. Actualizado el 2026-05-28 con MonthlySnapshot UI.
 
 ---
 
@@ -18,16 +18,12 @@ _Sin items pendientes de prioridad media._
 
 ## Prioridad baja
 
-### Analytics y Settings — implementación futura
+### Analytics y Settings — implementación futura (única prioridad baja restante)
 
 - Los links están visibles en Sidebar y TopBar drawer pero **no son clickeables** — muestran badge "PRONTO" y cursor deshabilitado.
 - Cuando se quiera implementar: crear `app/(app)/analytics/page.tsx` y `app/(app)/settings/page.tsx`, luego quitar `comingSoon: true` del item correspondiente en `NAV_ITEMS` de `Sidebar.tsx` y `TopBar.tsx`.
 
-### MonthlySnapshot — solo lectura en UI
-
-- `monthlySnapshotService` ya está wired en `lib/container.ts` ✓.
-- No hay forma de crear ni editar snapshots desde la app.
-- Pantallas mínimas: lista (`/snapshots`), crear.
+_Sin items pendientes de prioridad baja._
 
 ---
 
@@ -121,7 +117,7 @@ Formularios actualizados: `TransactionForm`, `BudgetForm`, `RecurringItemForm`, 
 | TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | ✅ Completo |
 | Analytics y Settings | `Sidebar.tsx`, `TopBar.tsx` | Deshabilitado (Pronto) |
 | InstallmentPlan UI | `app/(app)/installment-plans/` | ✅ Completo |
-| MonthlySnapshot UI | `app/(app)/snapshots/` | No existe (wiring ✓) |
+| MonthlySnapshot UI | `app/(app)/snapshots/` | ✅ Completo |
 | TopBar inner pages (incomes) | `TopBar.tsx` | ✅ Completo |
 | TopBar NAV_ITEMS (incomes) | `TopBar.tsx` | ✅ Completo |
 | RecurringItem UI | `app/(app)/recurring-items/` | ✅ Completo |
