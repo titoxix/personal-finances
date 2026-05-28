@@ -2,6 +2,7 @@
 
 import {
 	ArrowLeftRight,
+	CreditCard,
 	LayoutDashboard,
 	Receipt,
 	RefreshCw,
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
 	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/categories', icon: Tag, label: 'Categorías' },
 	{ href: '/recurring-items', icon: RefreshCw, label: 'Recurrentes' },
+	{ href: '/installment-plans', icon: CreditCard, label: 'Cuotas' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics', comingSoon: true },
 	{ href: '/settings', icon: Settings, label: 'Settings', comingSoon: true },

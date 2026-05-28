@@ -4,6 +4,7 @@ import {
 	ArrowLeft,
 	ArrowLeftRight,
 	Bell,
+	CreditCard,
 	LayoutDashboard,
 	Menu,
 	MoreVertical,
@@ -28,6 +29,7 @@ const STATIC_INNER_PAGES: Record<string, { title: string }> = {
 	'/budgets/new': { title: 'Nuevo Presupuesto' },
 	'/recurring-items/new': { title: 'Nuevo Recurrente' },
 	'/incomes/new': { title: 'Nuevo Ingreso' },
+	'/installment-plans/new': { title: 'Nuevo Plan' },
 }
 
 function getInnerPage(pathname: string): { title: string } | undefined {
@@ -45,6 +47,8 @@ function getInnerPage(pathname: string): { title: string } | undefined {
 		return { title: 'Editar Ingreso' }
 	if (/^\/exchange-rates\/\d+\/edit$/.test(pathname))
 		return { title: 'Editar Tasa' }
+	if (/^\/installment-plans\/\d+\/edit$/.test(pathname))
+		return { title: 'Editar Plan' }
 	return undefined
 }
 
@@ -55,6 +59,7 @@ const NAV_ITEMS = [
 	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/categories', icon: Tag, label: 'Categorías' },
 	{ href: '/recurring-items', icon: RefreshCw, label: 'Recurrentes' },
+	{ href: '/installment-plans', icon: CreditCard, label: 'Cuotas' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
 	{ href: '/analytics', icon: TrendingUp, label: 'Analytics', comingSoon: true },
 	{ href: '/settings', icon: Settings, label: 'Settings', comingSoon: true },

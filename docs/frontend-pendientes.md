@@ -23,12 +23,6 @@ _Sin items pendientes de prioridad media._
 - Los links están visibles en Sidebar y TopBar drawer pero **no son clickeables** — muestran badge "PRONTO" y cursor deshabilitado.
 - Cuando se quiera implementar: crear `app/(app)/analytics/page.tsx` y `app/(app)/settings/page.tsx`, luego quitar `comingSoon: true` del item correspondiente en `NAV_ITEMS` de `Sidebar.tsx` y `TopBar.tsx`.
 
-### InstallmentPlan — sin ninguna UI
-
-- Service, repositorio y API routes completos, pero **no está wired en `lib/container.ts`** ni tiene páginas UI.
-- Pantallas mínimas: lista (`/installment-plans`), crear, editar/eliminar.
-- Pasos: 1) agregar `installmentPlanService` en `container.ts`, 2) crear páginas y componentes.
-
 ### MonthlySnapshot — solo lectura en UI
 
 - `monthlySnapshotService` ya está wired en `lib/container.ts` ✓.
@@ -38,6 +32,16 @@ _Sin items pendientes de prioridad media._
 ---
 
 ## Completado
+
+### InstallmentPlan UI ✅ (2026-05-28)
+
+Pila completa desde el container hasta la UI:
+
+- `lib/container.ts` — wired `installmentPlanService`.
+- `app/(app)/installment-plans/actions.ts` — server actions: `createInstallmentPlan`, `updateInstallmentPlan`, `deactivateInstallmentPlan`.
+- Páginas: lista (`/installment-plans`), crear (`/installment-plans/new`), editar/desactivar (`/installment-plans/[id]/edit`).
+- Componentes: `InstallmentPlanForm` (create/edit unificado; en edit expone stepper ±1 para `installmentsPaid`), `InstallmentPlanCard` (barra de progreso de cuotas, fecha de fin, amounts), `InstallmentPlanList` (búsqueda + toggle inactivos + resumen).
+- Navegación: entrada "Cuotas" con ícono `CreditCard` en `Sidebar.tsx` y `TopBar.tsx` drawer; títulos de inner page (`Nuevo Plan` / `Editar Plan`) en `TopBar.tsx`; rutas new/edit agregadas a `isFormPage` en `BottomNav.tsx`.
 
 ### Analytics y Settings — links deshabilitados ✅ (2026-05-28)
 
@@ -116,7 +120,7 @@ Formularios actualizados: `TransactionForm`, `BudgetForm`, `RecurringItemForm`, 
 | Inputs de monto formateados | `utils.ts`, 4 formularios | ✅ Completo |
 | TransactionPageSidebar real data | `TransactionPageSidebar.tsx` | ✅ Completo |
 | Analytics y Settings | `Sidebar.tsx`, `TopBar.tsx` | Deshabilitado (Pronto) |
-| InstallmentPlan UI | `app/(app)/installment-plans/` | No existe (sin wiring) |
+| InstallmentPlan UI | `app/(app)/installment-plans/` | ✅ Completo |
 | MonthlySnapshot UI | `app/(app)/snapshots/` | No existe (wiring ✓) |
 | TopBar inner pages (incomes) | `TopBar.tsx` | ✅ Completo |
 | TopBar NAV_ITEMS (incomes) | `TopBar.tsx` | ✅ Completo |
