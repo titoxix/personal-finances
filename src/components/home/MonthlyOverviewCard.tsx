@@ -119,7 +119,7 @@ export function MonthlyOverviewCard({
 						<div className="h-6 w-px bg-white/20" />
 						<div className="text-center">
 							<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-								Pendiente
+								Recurrentes
 							</p>
 							<p className="font-mono text-sm font-bold text-[#003824]">
 								{gs(incomeGs.pendingGs)}
@@ -137,7 +137,7 @@ export function MonthlyOverviewCard({
 					</div>
 					{incomeGs.pendingGs > 0 && (
 						<p className="mt-2 text-center text-[10px] text-[#003824]/50">
-							Recurrentes por cobrar este mes
+							Libre estimado asumiendo recurrentes impagos
 						</p>
 					)}
 				</div>

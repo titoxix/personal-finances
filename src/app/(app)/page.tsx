@@ -96,17 +96,18 @@ export default async function HomePage() {
 		: totalBudgetedFromBudgetsGs
 	const spentPct = capGs > 0 ? Math.round((totalSpentGs / capGs) * 100) : 0
 
-	// Recurrentes pendientes: activos cuyo día de cobro aún no pasó este mes
-	const todayDay = now.getUTCDate()
+	// Compromisos recurrentes del mes: todos los activos mensuales +
+	// los anuales cuyo mes de cobro es el mes actual.
+	// Se muestra como referencia fija sin filtrar por día —
+	// el "libre" resultante es conservador (puede sobreestimar si ya
+	// registraste el pago como transacción, pero nunca te dice que
+	// tenés más de lo que realmente tenés).
 	const currentMonthNum = now.getUTCMonth() + 1 // 1-12
-	const pendingRecurring = activeRecurring.filter((item) => {
-		if (item.frequency === 'monthly') return (item.billingDay ?? 0) > todayDay
-		// annual: solo si el mes de cobro es el mes actual y el día no pasó
-		return (
-			item.billingMonth === currentMonthNum && (item.billingDay ?? 0) > todayDay
-		)
+	const monthlyRecurring = activeRecurring.filter((item) => {
+		if (item.frequency === 'monthly') return true
+		return item.billingMonth === currentMonthNum
 	})
-	const pendingRecurringGs = pendingRecurring.reduce((sum, item) => {
+	const pendingRecurringGs = monthlyRecurring.reduce((sum, item) => {
 		const amountGs =
 			item.amountGs ?? (item.amountUsd ? item.amountUsd * refRate : 0)
 		return sum + amountGs
