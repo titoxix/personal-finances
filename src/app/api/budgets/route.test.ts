@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaBudgetRepository', () => ({
@@ -22,7 +23,16 @@ vi.mock('@/services/BudgetService', () => ({
 
 const { GET, POST } = await import('./route')
 
-const budget = { id: 1, month: new Date('2026-05-01'), categoryId: 1, essentialityId: 1, budgetedUsd: 200, budgetedGs: null, notes: null, createdAt: new Date() }
+const budget = {
+	id: 1,
+	month: new Date('2026-05-01'),
+	categoryId: 1,
+	essentialityId: 1,
+	budgetedUsd: 200,
+	budgetedGs: null,
+	notes: null,
+	createdAt: new Date(),
+}
 
 describe('GET /api/budgets', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -41,7 +51,12 @@ describe('POST /api/budgets', () => {
 		mockService.create.mockResolvedValue(budget)
 		const request = new NextRequest('http://localhost/api/budgets', {
 			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01', categoryId: 1, essentialityId: 1, budgetedUsd: 200 }),
+			body: JSON.stringify({
+				month: '2026-05-01',
+				categoryId: 1,
+				essentialityId: 1,
+				budgetedUsd: 200,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
@@ -59,10 +74,17 @@ describe('POST /api/budgets', () => {
 	})
 
 	it('returns 409 when budget already exists for month+category', async () => {
-		mockService.create.mockRejectedValue(new Error('Budget already exists for this month and category'))
+		mockService.create.mockRejectedValue(
+			new Error('Budget already exists for this month and category'),
+		)
 		const request = new NextRequest('http://localhost/api/budgets', {
 			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01', categoryId: 1, essentialityId: 1, budgetedUsd: 200 }),
+			body: JSON.stringify({
+				month: '2026-05-01',
+				categoryId: 1,
+				essentialityId: 1,
+				budgetedUsd: 200,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
@@ -70,10 +92,16 @@ describe('POST /api/budgets', () => {
 	})
 
 	it('returns 422 when no amount provided', async () => {
-		mockService.create.mockRejectedValue(new Error('budget requires budgetedUsd or budgetedGs'))
+		mockService.create.mockRejectedValue(
+			new Error('budget requires budgetedUsd or budgetedGs'),
+		)
 		const request = new NextRequest('http://localhost/api/budgets', {
 			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01', categoryId: 1, essentialityId: 1 }),
+			body: JSON.stringify({
+				month: '2026-05-01',
+				categoryId: 1,
+				essentialityId: 1,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)

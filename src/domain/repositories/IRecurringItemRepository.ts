@@ -1,4 +1,8 @@
-import type { PaymentMethod, RecurringFrequency, RecurringItem } from '@/domain/entities/recurring-item'
+import type {
+	PaymentMethod,
+	RecurringFrequency,
+	RecurringItem,
+} from '@/domain/entities/recurring-item'
 
 export type CreateRecurringItemInput = {
 	description: string

@@ -1,14 +1,16 @@
-import type { ExchangeRate, ExchangeRateSource } from '@/domain/entities/exchange-rate'
+import type {
+	ExchangeRate,
+	ExchangeRateSource,
+} from '@/domain/entities/exchange-rate'
 import type {
 	CreateExchangeRateInput,
-	UpdateExchangeRateInput,
 	IExchangeRateRepository,
+	UpdateExchangeRateInput,
 } from '@/domain/repositories/IExchangeRateRepository'
 
 function validateCreate(input: CreateExchangeRateInput): void {
 	if (input.source === 'bcp') {
-		if (input.rateMid == null)
-			throw new Error('bcp rate requires rateMid')
+		if (input.rateMid == null) throw new Error('bcp rate requires rateMid')
 		if (input.rateBuy != null || input.rateSell != null)
 			throw new Error('bcp rate must not include rateBuy or rateSell')
 	} else {
@@ -32,15 +34,19 @@ export function createExchangeRateService(repo: IExchangeRateRepository) {
 		findBySource: (source: ExchangeRateSource): Promise<ExchangeRate[]> =>
 			repo.findBySource(source),
 
-		findLatestBySource: (source: ExchangeRateSource): Promise<ExchangeRate | null> =>
-			repo.findLatestBySource(source),
+		findLatestBySource: (
+			source: ExchangeRateSource,
+		): Promise<ExchangeRate | null> => repo.findLatestBySource(source),
 
 		create: async (input: CreateExchangeRateInput): Promise<ExchangeRate> => {
 			validateCreate(input)
 			return repo.create(input)
 		},
 
-		update: async (id: number, input: UpdateExchangeRateInput): Promise<ExchangeRate> => {
+		update: async (
+			id: number,
+			input: UpdateExchangeRateInput,
+		): Promise<ExchangeRate> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('ExchangeRate not found')
 			return repo.update(id, input)

@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaInstallmentPlanRepository', () => ({
@@ -22,7 +23,23 @@ vi.mock('@/services/InstallmentPlanService', () => ({
 
 const { GET, POST } = await import('./route')
 
-const plan = { id: 1, description: 'TV Samsung', totalAmountGs: null, totalAmountUsd: 500, installmentsTotal: 12, installmentsPaid: 0, installmentAmountGs: null, startDate: new Date('2026-01-01'), endDate: new Date('2027-01-01'), paymentMethod: 'itau_visa', categoryId: 1, essentialityId: 1, active: true, notes: null, createdAt: new Date() }
+const plan = {
+	id: 1,
+	description: 'TV Samsung',
+	totalAmountGs: null,
+	totalAmountUsd: 500,
+	installmentsTotal: 12,
+	installmentsPaid: 0,
+	installmentAmountGs: null,
+	startDate: new Date('2026-01-01'),
+	endDate: new Date('2027-01-01'),
+	paymentMethod: 'itau_visa',
+	categoryId: 1,
+	essentialityId: 1,
+	active: true,
+	notes: null,
+	createdAt: new Date(),
+}
 
 describe('GET /api/installment-plans', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -41,7 +58,15 @@ describe('POST /api/installment-plans', () => {
 		mockService.create.mockResolvedValue(plan)
 		const request = new NextRequest('http://localhost/api/installment-plans', {
 			method: 'POST',
-			body: JSON.stringify({ description: 'TV Samsung', installmentsTotal: 12, startDate: '2026-01-01', paymentMethod: 'itau_visa', categoryId: 1, essentialityId: 1, totalAmountUsd: 500 }),
+			body: JSON.stringify({
+				description: 'TV Samsung',
+				installmentsTotal: 12,
+				startDate: '2026-01-01',
+				paymentMethod: 'itau_visa',
+				categoryId: 1,
+				essentialityId: 1,
+				totalAmountUsd: 500,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
@@ -59,10 +84,19 @@ describe('POST /api/installment-plans', () => {
 	})
 
 	it('returns 422 for business rule violation', async () => {
-		mockService.create.mockRejectedValue(new Error('installmentsTotal must be at least 1'))
+		mockService.create.mockRejectedValue(
+			new Error('installmentsTotal must be at least 1'),
+		)
 		const request = new NextRequest('http://localhost/api/installment-plans', {
 			method: 'POST',
-			body: JSON.stringify({ description: 'TV Samsung', installmentsTotal: 12, startDate: '2026-01-01', paymentMethod: 'itau_visa', categoryId: 1, essentialityId: 1 }),
+			body: JSON.stringify({
+				description: 'TV Samsung',
+				installmentsTotal: 12,
+				startDate: '2026-01-01',
+				paymentMethod: 'itau_visa',
+				categoryId: 1,
+				essentialityId: 1,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)

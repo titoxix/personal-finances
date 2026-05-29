@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaCategoryRepository', () => ({
@@ -68,7 +69,9 @@ describe('PATCH /api/categories/[id]', () => {
 			headers: { 'Content-Type': 'application/json' },
 		})
 
-		const response = await PATCH(request, { params: Promise.resolve({ id: '1' }) })
+		const response = await PATCH(request, {
+			params: Promise.resolve({ id: '1' }),
+		})
 
 		expect(response.status).toBe(200)
 		const data = await response.json()
@@ -82,7 +85,9 @@ describe('PATCH /api/categories/[id]', () => {
 			headers: { 'Content-Type': 'application/json' },
 		})
 
-		const response = await PATCH(request, { params: Promise.resolve({ id: '1' }) })
+		const response = await PATCH(request, {
+			params: Promise.resolve({ id: '1' }),
+		})
 
 		expect(response.status).toBe(400)
 	})
@@ -96,7 +101,9 @@ describe('PATCH /api/categories/[id]', () => {
 			headers: { 'Content-Type': 'application/json' },
 		})
 
-		const response = await PATCH(request, { params: Promise.resolve({ id: '99' }) })
+		const response = await PATCH(request, {
+			params: Promise.resolve({ id: '99' }),
+		})
 
 		expect(response.status).toBe(404)
 	})
@@ -119,7 +126,9 @@ describe('DELETE /api/categories/[id]', () => {
 	it('returns 404 when category not found', async () => {
 		mockService.deactivate.mockRejectedValue(new Error('Category not found'))
 
-		const response = await DELETE(req, { params: Promise.resolve({ id: '99' }) })
+		const response = await DELETE(req, {
+			params: Promise.resolve({ id: '99' }),
+		})
 
 		expect(response.status).toBe(404)
 	})

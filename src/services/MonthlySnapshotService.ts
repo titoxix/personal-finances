@@ -15,17 +15,24 @@ export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
 			return snapshot
 		},
 
-		findByMonth: (month: Date): Promise<MonthlySnapshot | null> => repo.findByMonth(month),
+		findByMonth: (month: Date): Promise<MonthlySnapshot | null> =>
+			repo.findByMonth(month),
 
 		findLatest: (): Promise<MonthlySnapshot | null> => repo.findLatest(),
 
-		create: async (input: CreateMonthlySnapshotInput): Promise<MonthlySnapshot> => {
+		create: async (
+			input: CreateMonthlySnapshotInput,
+		): Promise<MonthlySnapshot> => {
 			const existing = await repo.findByMonth(input.month)
-			if (existing) throw new Error('MonthlySnapshot already exists for this month')
+			if (existing)
+				throw new Error('MonthlySnapshot already exists for this month')
 			return repo.create(input)
 		},
 
-		update: async (id: number, input: UpdateMonthlySnapshotInput): Promise<MonthlySnapshot> => {
+		update: async (
+			id: number,
+			input: UpdateMonthlySnapshotInput,
+		): Promise<MonthlySnapshot> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('MonthlySnapshot not found')
 			return repo.update(id, input)

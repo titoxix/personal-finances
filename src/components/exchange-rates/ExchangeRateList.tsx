@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 
 const SOURCE_CONFIG = {

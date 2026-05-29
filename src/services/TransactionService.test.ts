@@ -69,7 +69,9 @@ describe('createTransactionService', () => {
 		it('throws when transaction does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('Transaction not found')
+			await expect(service.findById(999)).rejects.toThrow(
+				'Transaction not found',
+			)
 		})
 	})
 
@@ -89,7 +91,10 @@ describe('createTransactionService', () => {
 			const txs = [makeTx()]
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(txs)
 
-			const result = await service.findByMonthAndCategory(new Date('2026-05-01'), 1)
+			const result = await service.findByMonthAndCategory(
+				new Date('2026-05-01'),
+				1,
+			)
 
 			expect(result).toBe(txs)
 		})
@@ -106,7 +111,9 @@ describe('createTransactionService', () => {
 			[22, 4],
 			[31, 4],
 		])('day %i → weekOfMonth %i', async (day, expectedWeek) => {
-			vi.mocked(repo.create).mockResolvedValue(makeTx({ weekOfMonth: expectedWeek }))
+			vi.mocked(repo.create).mockResolvedValue(
+				makeTx({ weekOfMonth: expectedWeek }),
+			)
 
 			await service.create({
 				date: new Date(`2026-05-${String(day).padStart(2, '0')}`),
@@ -169,7 +176,9 @@ describe('createTransactionService', () => {
 		it('throws when transaction does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { amountGs: 200000 })).rejects.toThrow('Transaction not found')
+			await expect(service.update(999, { amountGs: 200000 })).rejects.toThrow(
+				'Transaction not found',
+			)
 		})
 	})
 

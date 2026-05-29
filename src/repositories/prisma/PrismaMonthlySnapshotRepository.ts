@@ -1,10 +1,10 @@
-import type { PrismaClient } from '@/generated/prisma/client'
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
 import type {
 	CreateMonthlySnapshotInput,
 	IMonthlySnapshotRepository,
 	UpdateMonthlySnapshotInput,
 } from '@/domain/repositories/IMonthlySnapshotRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type Dec = { toNumber(): number } | null
 
@@ -73,7 +73,9 @@ export function createPrismaMonthlySnapshotRepository(
 ): IMonthlySnapshotRepository {
 	return {
 		findAll: async () => {
-			const rows = await prisma.monthlySnapshot.findMany({ orderBy: { month: 'desc' } })
+			const rows = await prisma.monthlySnapshot.findMany({
+				orderBy: { month: 'desc' },
+			})
 			return rows.map(toDomain)
 		},
 		findById: async (id) => {
@@ -85,7 +87,9 @@ export function createPrismaMonthlySnapshotRepository(
 			return row ? toDomain(row) : null
 		},
 		findLatest: async () => {
-			const row = await prisma.monthlySnapshot.findFirst({ orderBy: { month: 'desc' } })
+			const row = await prisma.monthlySnapshot.findFirst({
+				orderBy: { month: 'desc' },
+			})
 			return row ? toDomain(row) : null
 		},
 		create: async (input: CreateMonthlySnapshotInput) => {
@@ -93,7 +97,10 @@ export function createPrismaMonthlySnapshotRepository(
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateMonthlySnapshotInput) => {
-			const row = await prisma.monthlySnapshot.update({ where: { id }, data: input })
+			const row = await prisma.monthlySnapshot.update({
+				where: { id },
+				data: input,
+			})
 			return toDomain(row)
 		},
 	}

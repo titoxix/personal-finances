@@ -107,9 +107,7 @@ export default async function BudgetsPage({
 
 	const monthLabel = `${MONTHS_ES[targetDate.getUTCMonth()]} ${targetDate.getUTCFullYear()}`
 	const totalPct =
-		totalBudgetedGs > 0
-			? Math.round((totalSpentGs / totalBudgetedGs) * 100)
-			: 0
+		totalBudgetedGs > 0 ? Math.round((totalSpentGs / totalBudgetedGs) * 100) : 0
 	const totalOver = totalSpentGs > totalBudgetedGs
 
 	return (
@@ -226,7 +224,8 @@ export default async function BudgetsPage({
 								: 'bg-primary'
 						// Heredado = recurrente creado en un mes anterior
 						const isInherited =
-							budget.isRecurring && budget.month.getTime() !== targetDate.getTime()
+							budget.isRecurring &&
+							budget.month.getTime() !== targetDate.getTime()
 
 						return (
 							<Link

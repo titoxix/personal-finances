@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { CreateBudgetSchema } from '@/domain/entities/budget'
 import { prisma } from '@/lib/prisma'
 import { createPrismaBudgetRepository } from '@/repositories/prisma/PrismaBudgetRepository'
 import { createBudgetService } from '@/services/BudgetService'
-import { CreateBudgetSchema } from '@/domain/entities/budget'
 
 function makeService() {
 	return createBudgetService(createPrismaBudgetRepository(prisma))
@@ -24,7 +24,10 @@ export async function POST(request: NextRequest) {
 		if (error instanceof ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 })
 		}
-		if (error instanceof Error && error.message === 'Budget already exists for this month and category') {
+		if (
+			error instanceof Error &&
+			error.message === 'Budget already exists for this month and category'
+		) {
 			return Response.json({ error: error.message }, { status: 409 })
 		}
 		if (error instanceof Error) {

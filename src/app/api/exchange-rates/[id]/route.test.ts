@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaExchangeRateRepository', () => ({
@@ -22,7 +23,16 @@ vi.mock('@/services/ExchangeRateService', () => ({
 const { GET } = await import('./route')
 
 const req = new NextRequest('http://localhost/api/exchange-rates/1')
-const rate = { id: 1, recordedAt: new Date(), source: 'bcp', rateBuy: null, rateSell: null, rateMid: 7800, notes: null, createdAt: new Date() }
+const rate = {
+	id: 1,
+	recordedAt: new Date(),
+	source: 'bcp',
+	rateBuy: null,
+	rateSell: null,
+	rateMid: 7800,
+	notes: null,
+	createdAt: new Date(),
+}
 
 describe('GET /api/exchange-rates/[id]', () => {
 	beforeEach(() => vi.clearAllMocks())

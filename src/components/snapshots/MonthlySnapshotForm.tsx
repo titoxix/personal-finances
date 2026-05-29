@@ -96,7 +96,9 @@ function FieldRow({
 				inputMode={pct || decimal ? 'decimal' : 'numeric'}
 				value={pct ? value : formatAmountDisplay(value, decimal)}
 				onChange={(e) =>
-					onChange(pct ? e.target.value : parseAmountInput(e.target.value, decimal))
+					onChange(
+						pct ? e.target.value : parseAmountInput(e.target.value, decimal),
+					)
 				}
 				placeholder={placeholder}
 				className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
@@ -272,7 +274,7 @@ export function MonthlySnapshotForm(props: Props) {
 				</div>
 			) : (
 				<div className="rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground">
-					{formatMonthLabel(iv!.month)}
+					{iv?.month ? formatMonthLabel(iv.month) : '—'}
 				</div>
 			)}
 

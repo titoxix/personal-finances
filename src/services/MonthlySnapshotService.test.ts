@@ -14,7 +14,9 @@ const makeRepo = (): IMonthlySnapshotRepository => ({
 
 const MAY_2026 = new Date('2026-05-01')
 
-const makeSnapshot = (overrides: Partial<MonthlySnapshot> = {}): MonthlySnapshot => ({
+const makeSnapshot = (
+	overrides: Partial<MonthlySnapshot> = {},
+): MonthlySnapshot => ({
 	id: 1,
 	month: MAY_2026,
 	incomeUsd: 3000,
@@ -78,7 +80,9 @@ describe('createMonthlySnapshotService', () => {
 		it('throws when snapshot does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('MonthlySnapshot not found')
+			await expect(service.findById(999)).rejects.toThrow(
+				'MonthlySnapshot not found',
+			)
 		})
 	})
 
@@ -130,15 +134,18 @@ describe('createMonthlySnapshotService', () => {
 			const result = await service.create({ month: MAY_2026, incomeUsd: 3000 })
 
 			expect(result).toBe(snapshot)
-			expect(repo.create).toHaveBeenCalledWith({ month: MAY_2026, incomeUsd: 3000 })
+			expect(repo.create).toHaveBeenCalledWith({
+				month: MAY_2026,
+				incomeUsd: 3000,
+			})
 		})
 
 		it('throws when a snapshot already exists for the month', async () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue(makeSnapshot())
 
-			await expect(
-				service.create({ month: MAY_2026 }),
-			).rejects.toThrow('MonthlySnapshot already exists for this month')
+			await expect(service.create({ month: MAY_2026 })).rejects.toThrow(
+				'MonthlySnapshot already exists for this month',
+			)
 		})
 	})
 
@@ -158,7 +165,9 @@ describe('createMonthlySnapshotService', () => {
 		it('throws when snapshot does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { netWorthUsd: 19000 })).rejects.toThrow('MonthlySnapshot not found')
+			await expect(service.update(999, { netWorthUsd: 19000 })).rejects.toThrow(
+				'MonthlySnapshot not found',
+			)
 		})
 	})
 })

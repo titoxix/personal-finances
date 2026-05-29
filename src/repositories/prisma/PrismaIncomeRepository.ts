@@ -1,10 +1,10 @@
-import type { PrismaClient } from '@/generated/prisma/client'
 import type { Income } from '@/domain/entities/income'
 import type {
 	CreateIncomeInput,
 	IIncomeRepository,
 	UpdateIncomeInput,
 } from '@/domain/repositories/IIncomeRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type PrismaIncome = {
 	id: number
@@ -32,7 +32,9 @@ function toDomain(raw: PrismaIncome): Income {
 	}
 }
 
-export function createPrismaIncomeRepository(prisma: PrismaClient): IIncomeRepository {
+export function createPrismaIncomeRepository(
+	prisma: PrismaClient,
+): IIncomeRepository {
 	return {
 		findAll: async () => {
 			const rows = await prisma.income.findMany({ orderBy: { month: 'desc' } })

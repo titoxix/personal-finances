@@ -1,10 +1,14 @@
-import type { PrismaClient } from '@/generated/prisma/client'
-import type { PaymentMethod, RecurringFrequency, RecurringItem } from '@/domain/entities/recurring-item'
+import type {
+	PaymentMethod,
+	RecurringFrequency,
+	RecurringItem,
+} from '@/domain/entities/recurring-item'
 import type {
 	CreateRecurringItemInput,
 	IRecurringItemRepository,
 	UpdateRecurringItemInput,
 } from '@/domain/repositories/IRecurringItemRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type PrismaRecurringItem = {
 	id: number
@@ -42,7 +46,9 @@ function toDomain(raw: PrismaRecurringItem): RecurringItem {
 	}
 }
 
-export function createPrismaRecurringItemRepository(prisma: PrismaClient): IRecurringItemRepository {
+export function createPrismaRecurringItemRepository(
+	prisma: PrismaClient,
+): IRecurringItemRepository {
 	return {
 		findAll: async () => {
 			const rows = await prisma.recurringItem.findMany()
@@ -53,7 +59,9 @@ export function createPrismaRecurringItemRepository(prisma: PrismaClient): IRecu
 			return row ? toDomain(row) : null
 		},
 		findActive: async () => {
-			const rows = await prisma.recurringItem.findMany({ where: { active: true } })
+			const rows = await prisma.recurringItem.findMany({
+				where: { active: true },
+			})
 			return rows.map(toDomain)
 		},
 		create: async (input: CreateRecurringItemInput) => {
@@ -61,11 +69,17 @@ export function createPrismaRecurringItemRepository(prisma: PrismaClient): IRecu
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateRecurringItemInput) => {
-			const row = await prisma.recurringItem.update({ where: { id }, data: input })
+			const row = await prisma.recurringItem.update({
+				where: { id },
+				data: input,
+			})
 			return toDomain(row)
 		},
 		deactivate: async (id: number) => {
-			const row = await prisma.recurringItem.update({ where: { id }, data: { active: false } })
+			const row = await prisma.recurringItem.update({
+				where: { id },
+				data: { active: false },
+			})
 			return toDomain(row)
 		},
 	}

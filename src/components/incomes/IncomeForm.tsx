@@ -1,7 +1,6 @@
 'use client'
 
 import { CheckCircle2, Lock, PlusCircle } from 'lucide-react'
-import { parseAmountInput, formatAmountDisplay } from '@/lib/utils'
 import Link from 'next/link'
 import { useState, useTransition } from 'react'
 import type {
@@ -9,6 +8,7 @@ import type {
 	UpdateIncomePayload,
 } from '@/app/(app)/incomes/actions'
 import type { ExchangeRate } from '@/domain/entities/exchange-rate'
+import { formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 function currentMonthISO(): string {
 	const now = new Date()
@@ -174,7 +174,9 @@ export function IncomeForm(props: Props) {
 						type="text"
 						inputMode="decimal"
 						value={formatAmountDisplay(grossIncomeUsd, true)}
-						onChange={(e) => setGrossIncomeUsd(parseAmountInput(e.target.value, true))}
+						onChange={(e) =>
+							setGrossIncomeUsd(parseAmountInput(e.target.value, true))
+						}
 						placeholder="0"
 						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
@@ -196,7 +198,9 @@ export function IncomeForm(props: Props) {
 						type="text"
 						inputMode="decimal"
 						value={formatAmountDisplay(budgetCapUsd, true)}
-						onChange={(e) => setBudgetCapUsd(parseAmountInput(e.target.value, true))}
+						onChange={(e) =>
+							setBudgetCapUsd(parseAmountInput(e.target.value, true))
+						}
 						placeholder="0"
 						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
@@ -218,7 +222,9 @@ export function IncomeForm(props: Props) {
 						type="text"
 						inputMode="decimal"
 						value={formatAmountDisplay(automaticInvestmentUsd, true)}
-						onChange={(e) => setAutomaticInvestmentUsd(parseAmountInput(e.target.value, true))}
+						onChange={(e) =>
+							setAutomaticInvestmentUsd(parseAmountInput(e.target.value, true))
+						}
 						placeholder="0"
 						className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>

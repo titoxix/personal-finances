@@ -30,7 +30,13 @@ type Props = {
 	colorIndex: number
 }
 
-export function BudgetCard({ label, spent, budgeted, currency, colorIndex }: Props) {
+export function BudgetCard({
+	label,
+	spent,
+	budgeted,
+	currency,
+	colorIndex,
+}: Props) {
 	const fmt = currency === 'gs' ? fmtGs : fmtUsd
 	const pct = budgeted > 0 ? (spent / budgeted) * 100 : 0
 	const isOver = pct >= 100
@@ -40,7 +46,11 @@ export function BudgetCard({ label, spent, budgeted, currency, colorIndex }: Pro
 	const colorText = COLOR_VARIANTS[colorIdx]?.text ?? 'text-emerald-400'
 	const initial = label.charAt(0).toUpperCase()
 
-	const barClass = isOver ? 'bg-destructive' : isWarning ? 'bg-yellow-400' : 'bg-primary'
+	const barClass = isOver
+		? 'bg-destructive'
+		: isWarning
+			? 'bg-yellow-400'
+			: 'bg-primary'
 
 	return (
 		<div className="flex w-[148px] shrink-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4">
@@ -67,7 +77,10 @@ export function BudgetCard({ label, spent, budgeted, currency, colorIndex }: Pro
 			{/* Progress */}
 			<div className="h-1 overflow-hidden rounded-full bg-muted">
 				<div
-					className={cn('h-full rounded-full transition-all duration-500', barClass)}
+					className={cn(
+						'h-full rounded-full transition-all duration-500',
+						barClass,
+					)}
 					style={{ width: `${Math.min(pct, 100)}%` }}
 				/>
 			</div>

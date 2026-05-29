@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { Search } from 'lucide-react'
+import { useState } from 'react'
 import { TransactionItem } from '@/components/home/TransactionItem'
 
 export type TransactionListRow = {
@@ -18,7 +18,9 @@ type Section = { key: string; label: string; rows: TransactionListRow[] }
 
 function groupByDate(rows: TransactionListRow[]): Section[] {
 	const now = new Date()
-	const today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()))
+	const today = new Date(
+		Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
+	)
 	const yesterday = new Date(today)
 	yesterday.setUTCDate(yesterday.getUTCDate() - 1)
 
@@ -26,7 +28,9 @@ function groupByDate(rows: TransactionListRow[]): Section[] {
 
 	for (const row of rows) {
 		const d = row.date
-		const dayUTC = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
+		const dayUTC = new Date(
+			Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()),
+		)
 		let key: string
 		let label: string
 		if (dayUTC.getTime() === today.getTime()) {
@@ -40,7 +44,7 @@ function groupByDate(rows: TransactionListRow[]): Section[] {
 			label = d.toLocaleDateString('es-PY', { day: 'numeric', month: 'long' })
 		}
 		if (!buckets.has(key)) buckets.set(key, { key, label, rows: [] })
-		buckets.get(key)!.rows.push(row)
+		buckets.get(key)?.rows.push(row)
 	}
 
 	return Array.from(buckets.values())

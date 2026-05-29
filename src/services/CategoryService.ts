@@ -15,7 +15,8 @@ export function createCategoryService(repo: ICategoryRepository) {
 			return category
 		},
 
-		findByCode: (code: string): Promise<Category | null> => repo.findByCode(code),
+		findByCode: (code: string): Promise<Category | null> =>
+			repo.findByCode(code),
 
 		create: async (input: CreateCategoryInput): Promise<Category> => {
 			const existing = await repo.findByCode(input.code)
@@ -23,7 +24,10 @@ export function createCategoryService(repo: ICategoryRepository) {
 			return repo.create(input)
 		},
 
-		update: async (id: number, input: UpdateCategoryInput): Promise<Category> => {
+		update: async (
+			id: number,
+			input: UpdateCategoryInput,
+		): Promise<Category> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('Category not found')
 			return repo.update(id, input)

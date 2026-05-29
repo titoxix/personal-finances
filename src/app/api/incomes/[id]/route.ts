@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { UpdateIncomeSchema } from '@/domain/entities/income'
 import { prisma } from '@/lib/prisma'
 import { createPrismaIncomeRepository } from '@/repositories/prisma/PrismaIncomeRepository'
 import { createIncomeService } from '@/services/IncomeService'
-import { UpdateIncomeSchema } from '@/domain/entities/income'
 
 function makeService() {
 	return createIncomeService(createPrismaIncomeRepository(prisma))

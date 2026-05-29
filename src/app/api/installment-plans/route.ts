@@ -1,12 +1,14 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { CreateInstallmentPlanSchema } from '@/domain/entities/installment-plan'
 import { prisma } from '@/lib/prisma'
 import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
 import { createInstallmentPlanService } from '@/services/InstallmentPlanService'
-import { CreateInstallmentPlanSchema } from '@/domain/entities/installment-plan'
 
 function makeService() {
-	return createInstallmentPlanService(createPrismaInstallmentPlanRepository(prisma))
+	return createInstallmentPlanService(
+		createPrismaInstallmentPlanRepository(prisma),
+	)
 }
 
 export async function GET() {

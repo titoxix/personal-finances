@@ -23,8 +23,10 @@ export type UpdateBudgetPayload = {
 }
 
 function parseMonthDate(monthStr: string): Date {
-	const [year, month] = monthStr.split('-').map(Number)
-	return new Date(Date.UTC(year!, month! - 1, 1))
+	const parts = monthStr.split('-').map(Number)
+	const year = parts[0] ?? new Date().getUTCFullYear()
+	const month = parts[1] ?? 1
+	return new Date(Date.UTC(year, month - 1, 1))
 }
 
 export async function createBudget(

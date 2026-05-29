@@ -74,7 +74,9 @@ export async function updateExchangeRate(
 			recordedAt: new Date(payload.recordedAt),
 		})
 	} catch (e) {
-		return { error: e instanceof Error ? e.message : 'Error al actualizar la tasa' }
+		return {
+			error: e instanceof Error ? e.message : 'Error al actualizar la tasa',
+		}
 	}
 	revalidatePath('/exchange-rates')
 	redirect('/exchange-rates')
@@ -86,7 +88,9 @@ export async function deleteExchangeRate(
 	try {
 		await exchangeRateService.delete(id)
 	} catch (e) {
-		return { error: e instanceof Error ? e.message : 'Error al eliminar la tasa' }
+		return {
+			error: e instanceof Error ? e.message : 'Error al eliminar la tasa',
+		}
 	}
 	revalidatePath('/exchange-rates')
 	redirect('/exchange-rates')

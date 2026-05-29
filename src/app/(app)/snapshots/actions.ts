@@ -61,7 +61,9 @@ export async function createSnapshot(
 	try {
 		await monthlySnapshotService.create(payload)
 	} catch (e) {
-		return { error: e instanceof Error ? e.message : 'Error al crear el snapshot' }
+		return {
+			error: e instanceof Error ? e.message : 'Error al crear el snapshot',
+		}
 	}
 	revalidatePath('/snapshots')
 	redirect('/snapshots')

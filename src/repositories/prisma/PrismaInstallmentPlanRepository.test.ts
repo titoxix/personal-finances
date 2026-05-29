@@ -176,7 +176,9 @@ describe('PrismaInstallmentPlanRepository', () => {
 				data: baseplan(),
 			})
 
-			const result = await repository.update(created.id, { installmentsPaid: 3 })
+			const result = await repository.update(created.id, {
+				installmentsPaid: 3,
+			})
 
 			expect(result.installmentsPaid).toBe(3)
 			expect(result.description).toBe('Gym equipamiento')
@@ -187,7 +189,9 @@ describe('PrismaInstallmentPlanRepository', () => {
 				data: { ...baseplan(), totalAmountGs: 3600000, notes: 'nota original' },
 			})
 
-			const result = await repository.update(created.id, { notes: 'nota actualizada' })
+			const result = await repository.update(created.id, {
+				notes: 'nota actualizada',
+			})
 
 			expect(result.notes).toBe('nota actualizada')
 			expect(result.totalAmountGs).toBe(3600000)

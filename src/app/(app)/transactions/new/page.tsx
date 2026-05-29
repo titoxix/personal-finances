@@ -1,5 +1,5 @@
-import { categoryService, essentialityService } from '@/lib/container'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
+import { categoryService, essentialityService } from '@/lib/container'
 import { createTransaction } from '../actions'
 
 export default async function NewTransactionPage() {

@@ -124,10 +124,17 @@ describe('PrismaEssentialityLevelRepository', () => {
 
 		it('updates only the provided fields', async () => {
 			const created = await prismaTest.essentialityLevel.create({
-				data: { code: 'opcional', label: 'Opcional', sortOrder: 3, description: 'desc original' },
+				data: {
+					code: 'opcional',
+					label: 'Opcional',
+					sortOrder: 3,
+					description: 'desc original',
+				},
 			})
 
-			const result = await repository.update(created.id, { label: 'Nuevo label' })
+			const result = await repository.update(created.id, {
+				label: 'Nuevo label',
+			})
 
 			expect(result.label).toBe('Nuevo label')
 			expect(result.description).toBe('desc original')

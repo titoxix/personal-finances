@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useTransition } from 'react'
 import { CalendarDays, CheckCircle2, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
-import { cn, parseAmountInput, formatAmountDisplay } from '@/lib/utils'
+import { useState, useTransition } from 'react'
+import type { CreateTransactionPayload } from '@/app/(app)/transactions/actions'
 import type { Category } from '@/domain/entities/category'
 import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
-import type { CreateTransactionPayload } from '@/app/(app)/transactions/actions'
+import { cn, formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
 	{ value: 'itau_visa', label: 'Itaú Visa' },
@@ -22,9 +22,11 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
 type Props = {
 	categories: Category[]
 	essentialityLevels: EssentialityLevel[]
-	onSubmit: (payload: CreateTransactionPayload) => Promise<{ error: string } | void>
+	onSubmit: (
+		payload: CreateTransactionPayload,
+	) => Promise<{ error: string } | undefined>
 	initialValues?: CreateTransactionPayload
-	onDelete?: () => Promise<{ error: string } | void>
+	onDelete?: () => Promise<{ error: string } | undefined>
 }
 
 function todayISO() {
@@ -38,10 +40,16 @@ export function TransactionForm({
 	initialValues,
 	onDelete,
 }: Props) {
-	const [currency, setCurrency] = useState<'gs' | 'usd'>(initialValues?.currency ?? 'gs')
+	const [currency, setCurrency] = useState<'gs' | 'usd'>(
+		initialValues?.currency ?? 'gs',
+	)
 	const [amount, setAmount] = useState(initialValues?.amount?.toString() ?? '')
-	const [description, setDescription] = useState(initialValues?.description ?? '')
-	const [categoryId, setCategoryId] = useState<number | ''>(initialValues?.categoryId ?? '')
+	const [description, setDescription] = useState(
+		initialValues?.description ?? '',
+	)
+	const [categoryId, setCategoryId] = useState<number | ''>(
+		initialValues?.categoryId ?? '',
+	)
 	const [essentialityId, setEssentialityId] = useState<number | null>(
 		initialValues?.essentialityId ?? null,
 	)
@@ -102,7 +110,10 @@ export function TransactionForm({
 							<button
 								key={c}
 								type="button"
-								onClick={() => { setCurrency(c); setAmount('') }}
+								onClick={() => {
+									setCurrency(c)
+									setAmount('')
+								}}
 								className={cn(
 									'rounded-full px-3 py-0.5 text-xs font-bold transition-colors',
 									currency === c
@@ -124,7 +135,9 @@ export function TransactionForm({
 						type="text"
 						inputMode={currency === 'gs' ? 'numeric' : 'decimal'}
 						value={formatAmountDisplay(amount, currency === 'usd')}
-						onChange={(e) => setAmount(parseAmountInput(e.target.value, currency === 'usd'))}
+						onChange={(e) =>
+							setAmount(parseAmountInput(e.target.value, currency === 'usd'))
+						}
 						placeholder="0"
 						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>
@@ -133,8 +146,14 @@ export function TransactionForm({
 
 			{/* ── Description ── */}
 			<div className="space-y-2">
-				<label className="text-sm font-semibold text-foreground">Descripción</label>
+				<label
+					htmlFor="description"
+					className="text-sm font-semibold text-foreground"
+				>
+					Descripción
+				</label>
 				<input
+					id="description"
 					type="text"
 					value={description}
 					onChange={(e) => setDescription(e.target.value)}
@@ -145,11 +164,19 @@ export function TransactionForm({
 
 			{/* ── Category ── */}
 			<div className="space-y-2">
-				<label className="text-sm font-semibold text-foreground">Categoría</label>
+				<label
+					htmlFor="category"
+					className="text-sm font-semibold text-foreground"
+				>
+					Categoría
+				</label>
 				<div className="relative">
 					<select
+						id="category"
 						value={categoryId}
-						onChange={(e) => setCategoryId(e.target.value === '' ? '' : Number(e.target.value))}
+						onChange={(e) =>
+							setCategoryId(e.target.value === '' ? '' : Number(e.target.value))
+						}
 						className="w-full appearance-none rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/60 transition-colors"
 					>
 						<option value="" disabled>
@@ -162,7 +189,15 @@ export function TransactionForm({
 						))}
 					</select>
 					<div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+						<svg
+							aria-hidden="true"
+							width="16"
+							height="16"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth="2"
+						>
 							<path d="m6 9 6 6 6-6" />
 						</svg>
 					</div>
@@ -178,7 +213,7 @@ export function TransactionForm({
 
 			{/* ── Priority ── */}
 			<div className="space-y-2">
-				<label className="text-sm font-semibold text-foreground">Prioridad</label>
+				<p className="text-sm font-semibold text-foreground">Prioridad</p>
 				<div className="flex flex-wrap gap-2">
 					{essentialityLevels.map((level) => (
 						<button
@@ -200,7 +235,7 @@ export function TransactionForm({
 
 			{/* ── Payment method ── */}
 			<div className="space-y-2">
-				<label className="text-sm font-semibold text-foreground">Método de Pago</label>
+				<p className="text-sm font-semibold text-foreground">Método de Pago</p>
 				<div className="flex flex-wrap gap-2">
 					{PAYMENT_METHODS.map(({ value, label }) => (
 						<button
@@ -222,9 +257,12 @@ export function TransactionForm({
 
 			{/* ── Date ── */}
 			<div className="space-y-2">
-				<label className="text-sm font-semibold text-foreground">Fecha</label>
+				<label htmlFor="date" className="text-sm font-semibold text-foreground">
+					Fecha
+				</label>
 				<div className="relative">
 					<input
+						id="date"
 						type="date"
 						value={date}
 						onChange={(e) => setDate(e.target.value)}

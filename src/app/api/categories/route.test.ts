@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaCategoryRepository', () => ({
@@ -100,7 +101,9 @@ describe('POST /api/categories', () => {
 	})
 
 	it('returns 409 when code already exists', async () => {
-		mockService.create.mockRejectedValue(new Error('Category code already exists'))
+		mockService.create.mockRejectedValue(
+			new Error('Category code already exists'),
+		)
 
 		const request = new NextRequest('http://localhost/api/categories', {
 			method: 'POST',

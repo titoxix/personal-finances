@@ -1,10 +1,13 @@
-import type { PrismaClient } from '@/generated/prisma/client'
-import type { ExchangeRate, ExchangeRateSource } from '@/domain/entities/exchange-rate'
+import type {
+	ExchangeRate,
+	ExchangeRateSource,
+} from '@/domain/entities/exchange-rate'
 import type {
 	CreateExchangeRateInput,
-	UpdateExchangeRateInput,
 	IExchangeRateRepository,
+	UpdateExchangeRateInput,
 } from '@/domain/repositories/IExchangeRateRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type PrismaExchangeRate = {
 	id: number
@@ -30,10 +33,14 @@ function toDomain(raw: PrismaExchangeRate): ExchangeRate {
 	}
 }
 
-export function createPrismaExchangeRateRepository(prisma: PrismaClient): IExchangeRateRepository {
+export function createPrismaExchangeRateRepository(
+	prisma: PrismaClient,
+): IExchangeRateRepository {
 	return {
 		findAll: async () => {
-			const rows = await prisma.exchangeRate.findMany({ orderBy: { recordedAt: 'desc' } })
+			const rows = await prisma.exchangeRate.findMany({
+				orderBy: { recordedAt: 'desc' },
+			})
 			return rows.map(toDomain)
 		},
 		findById: async (id) => {
@@ -59,7 +66,10 @@ export function createPrismaExchangeRateRepository(prisma: PrismaClient): IExcha
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateExchangeRateInput) => {
-			const row = await prisma.exchangeRate.update({ where: { id }, data: input })
+			const row = await prisma.exchangeRate.update({
+				where: { id },
+				data: input,
+			})
 			return toDomain(row)
 		},
 		delete: async (id: number) => {

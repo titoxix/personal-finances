@@ -1,5 +1,5 @@
-import type { Transaction } from '@/domain/entities/transaction'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
+import type { Transaction } from '@/domain/entities/transaction'
 
 export type CreateTransactionInput = {
 	date: Date
@@ -43,7 +43,10 @@ export interface ITransactionRepository {
 	findAll(): Promise<Transaction[]>
 	findById(id: number): Promise<Transaction | null>
 	findByMonth(month: Date): Promise<Transaction[]>
-	findByMonthAndCategory(month: Date, categoryId: number): Promise<Transaction[]>
+	findByMonthAndCategory(
+		month: Date,
+		categoryId: number,
+	): Promise<Transaction[]>
 	create(input: CreateTransactionInput): Promise<Transaction>
 	update(id: number, input: UpdateTransactionInput): Promise<Transaction>
 	delete(id: number): Promise<void>

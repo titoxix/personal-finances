@@ -33,8 +33,12 @@ describe('PrismaIncomeRepository', () => {
 		})
 
 		it('returns all records ordered by month descending', async () => {
-			await prismaTest.income.create({ data: { ...baseIncome, month: APR_2026 } })
-			await prismaTest.income.create({ data: { ...baseIncome, month: MAY_2026 } })
+			await prismaTest.income.create({
+				data: { ...baseIncome, month: APR_2026 },
+			})
+			await prismaTest.income.create({
+				data: { ...baseIncome, month: MAY_2026 },
+			})
 
 			const result = await repository.findAll()
 
@@ -44,7 +48,9 @@ describe('PrismaIncomeRepository', () => {
 		})
 
 		it('returns numeric values for Decimal fields', async () => {
-			await prismaTest.income.create({ data: { ...baseIncome, month: MAY_2026 } })
+			await prismaTest.income.create({
+				data: { ...baseIncome, month: MAY_2026 },
+			})
 
 			const result = await repository.findAll()
 
@@ -80,8 +86,12 @@ describe('PrismaIncomeRepository', () => {
 
 	describe('findByMonth', () => {
 		it('returns the income record for the given month', async () => {
-			await prismaTest.income.create({ data: { ...baseIncome, month: MAY_2026 } })
-			await prismaTest.income.create({ data: { ...baseIncome, month: APR_2026 } })
+			await prismaTest.income.create({
+				data: { ...baseIncome, month: MAY_2026 },
+			})
+			await prismaTest.income.create({
+				data: { ...baseIncome, month: APR_2026 },
+			})
 
 			const result = await repository.findByMonth(MAY_2026)
 

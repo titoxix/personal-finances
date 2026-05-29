@@ -15,7 +15,8 @@ export function createIncomeService(repo: IIncomeRepository) {
 			return income
 		},
 
-		findByMonth: (month: Date): Promise<Income | null> => repo.findByMonth(month),
+		findByMonth: (month: Date): Promise<Income | null> =>
+			repo.findByMonth(month),
 
 		create: async (input: CreateIncomeInput): Promise<Income> => {
 			const existing = await repo.findByMonth(input.month)

@@ -112,7 +112,9 @@ describe('PrismaBudgetRepository', () => {
 			const result = await repository.findByMonth(MAY_2026)
 
 			expect(result).toHaveLength(2)
-			expect(result.every((b) => b.month.getTime() === MAY_2026.getTime())).toBe(true)
+			expect(
+				result.every((b) => b.month.getTime() === MAY_2026.getTime()),
+			).toBe(true)
 		})
 
 		it('returns empty array when no budgets exist for that month', async () => {
@@ -126,11 +128,19 @@ describe('PrismaBudgetRepository', () => {
 			await prismaTest.budget.createMany({
 				data: [
 					{ month: MAY_2026, categoryId, essentialityId, budgetedUsd: 500 },
-					{ month: MAY_2026, categoryId: category2Id, essentialityId, budgetedUsd: 1200 },
+					{
+						month: MAY_2026,
+						categoryId: category2Id,
+						essentialityId,
+						budgetedUsd: 1200,
+					},
 				],
 			})
 
-			const result = await repository.findByMonthAndCategory(MAY_2026, categoryId)
+			const result = await repository.findByMonthAndCategory(
+				MAY_2026,
+				categoryId,
+			)
 
 			expect(result).not.toBeNull()
 			expect(result?.categoryId).toBe(categoryId)
@@ -138,7 +148,10 @@ describe('PrismaBudgetRepository', () => {
 		})
 
 		it('returns null when no match exists', async () => {
-			const result = await repository.findByMonthAndCategory(MAY_2026, categoryId)
+			const result = await repository.findByMonthAndCategory(
+				MAY_2026,
+				categoryId,
+			)
 			expect(result).toBeNull()
 		})
 	})

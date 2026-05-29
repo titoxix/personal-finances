@@ -27,7 +27,12 @@ const NAV_ITEMS = [
 	{ href: '/installment-plans', icon: CreditCard, label: 'Cuotas' },
 	{ href: '/snapshots', icon: BarChart2, label: 'Snapshots' },
 	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
-	{ href: '/analytics', icon: TrendingUp, label: 'Analytics', comingSoon: true },
+	{
+		href: '/analytics',
+		icon: TrendingUp,
+		label: 'Analytics',
+		comingSoon: true,
+	},
 	{ href: '/settings', icon: Settings, label: 'Settings', comingSoon: true },
 ]
 

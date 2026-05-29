@@ -23,10 +23,18 @@ describe('PrismaExchangeRateRepository', () => {
 
 		it('returns all records ordered by recordedAt descending', async () => {
 			await prismaTest.exchangeRate.create({
-				data: { source: 'itau', rateSell: 7800, recordedAt: new Date('2024-01-01T09:00:00Z') },
+				data: {
+					source: 'itau',
+					rateSell: 7800,
+					recordedAt: new Date('2024-01-01T09:00:00Z'),
+				},
 			})
 			await prismaTest.exchangeRate.create({
-				data: { source: 'ueno', rateSell: 7820, recordedAt: new Date('2024-01-02T09:00:00Z') },
+				data: {
+					source: 'ueno',
+					rateSell: 7820,
+					recordedAt: new Date('2024-01-02T09:00:00Z'),
+				},
 			})
 
 			const result = await repository.findAll()
@@ -71,10 +79,18 @@ describe('PrismaExchangeRateRepository', () => {
 	describe('findBySource', () => {
 		it('returns only records for the given source, ordered by recordedAt descending', async () => {
 			await prismaTest.exchangeRate.create({
-				data: { source: 'itau', rateSell: 7800, recordedAt: new Date('2024-01-01T09:00:00Z') },
+				data: {
+					source: 'itau',
+					rateSell: 7800,
+					recordedAt: new Date('2024-01-01T09:00:00Z'),
+				},
 			})
 			await prismaTest.exchangeRate.create({
-				data: { source: 'itau', rateSell: 7820, recordedAt: new Date('2024-01-02T09:00:00Z') },
+				data: {
+					source: 'itau',
+					rateSell: 7820,
+					recordedAt: new Date('2024-01-02T09:00:00Z'),
+				},
 			})
 			await prismaTest.exchangeRate.create({
 				data: { source: 'ueno', rateSell: 7830 },
@@ -97,13 +113,25 @@ describe('PrismaExchangeRateRepository', () => {
 	describe('findLatestBySource', () => {
 		it('returns the most recent record for the given source', async () => {
 			await prismaTest.exchangeRate.create({
-				data: { source: 'itau', rateSell: 7800, recordedAt: new Date('2024-01-01T09:00:00Z') },
+				data: {
+					source: 'itau',
+					rateSell: 7800,
+					recordedAt: new Date('2024-01-01T09:00:00Z'),
+				},
 			})
 			await prismaTest.exchangeRate.create({
-				data: { source: 'itau', rateSell: 7850, recordedAt: new Date('2024-01-03T09:00:00Z') },
+				data: {
+					source: 'itau',
+					rateSell: 7850,
+					recordedAt: new Date('2024-01-03T09:00:00Z'),
+				},
 			})
 			await prismaTest.exchangeRate.create({
-				data: { source: 'itau', rateSell: 7820, recordedAt: new Date('2024-01-02T09:00:00Z') },
+				data: {
+					source: 'itau',
+					rateSell: 7820,
+					recordedAt: new Date('2024-01-02T09:00:00Z'),
+				},
 			})
 
 			const result = await repository.findLatestBySource('itau')

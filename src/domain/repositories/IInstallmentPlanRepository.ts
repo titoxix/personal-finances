@@ -33,6 +33,9 @@ export interface IInstallmentPlanRepository {
 	findById(id: number): Promise<InstallmentPlan | null>
 	findActive(): Promise<InstallmentPlan[]>
 	create(input: CreateInstallmentPlanInput): Promise<InstallmentPlan>
-	update(id: number, input: UpdateInstallmentPlanInput): Promise<InstallmentPlan>
+	update(
+		id: number,
+		input: UpdateInstallmentPlanInput,
+	): Promise<InstallmentPlan>
 	deactivate(id: number): Promise<InstallmentPlan>
 }

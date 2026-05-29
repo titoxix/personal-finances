@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { IncomeForm } from '@/components/incomes/IncomeForm'
-import { incomeService, exchangeRateService } from '@/lib/container'
+import { exchangeRateService, incomeService } from '@/lib/container'
 import type { UpdateIncomePayload } from '../../actions'
 import { updateIncome } from '../../actions'
 
@@ -35,10 +35,7 @@ export default async function EditIncomePage({
 	])
 	if (!income) notFound()
 
-	const latestRates = [
-		...(itau ? [itau] : []),
-		...(ueno ? [ueno] : []),
-	]
+	const latestRates = [...(itau ? [itau] : []), ...(ueno ? [ueno] : [])]
 
 	const monthLabel = `${MONTHS_ES[income.month.getUTCMonth()]} ${income.month.getUTCFullYear()}`
 

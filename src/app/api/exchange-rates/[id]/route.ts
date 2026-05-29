@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createPrismaExchangeRateRepository } from '@/repositories/prisma/PrismaExchangeRateRepository'
 import { createExchangeRateService } from '@/services/ExchangeRateService'

@@ -52,10 +52,18 @@ describe('PrismaTransactionRepository', () => {
 
 		it('returns all transactions ordered by date descending', async () => {
 			await prismaTest.transaction.create({
-				data: { ...baseTx(), date: new Date('2026-05-05'), description: 'Farmacia' },
+				data: {
+					...baseTx(),
+					date: new Date('2026-05-05'),
+					description: 'Farmacia',
+				},
 			})
 			await prismaTest.transaction.create({
-				data: { ...baseTx(), date: new Date('2026-05-10'), description: 'Supermercado' },
+				data: {
+					...baseTx(),
+					date: new Date('2026-05-10'),
+					description: 'Supermercado',
+				},
 			})
 
 			const result = await repository.findAll()
@@ -67,7 +75,12 @@ describe('PrismaTransactionRepository', () => {
 
 		it('returns numeric values for Decimal fields', async () => {
 			await prismaTest.transaction.create({
-				data: { ...baseTx(), amountGs: 150000, amountUsd: 19.23, exchangeRateValue: 7800 },
+				data: {
+					...baseTx(),
+					amountGs: 150000,
+					amountUsd: 19.23,
+					exchangeRateValue: 7800,
+				},
 			})
 
 			const result = await repository.findAll()
@@ -118,7 +131,11 @@ describe('PrismaTransactionRepository', () => {
 				data: { ...baseTx(), date: new Date('2026-05-31') },
 			})
 			await prismaTest.transaction.create({
-				data: { ...baseTx(), date: new Date('2026-04-30'), description: 'Otro mes' },
+				data: {
+					...baseTx(),
+					date: new Date('2026-04-30'),
+					description: 'Otro mes',
+				},
 			})
 
 			const result = await repository.findByMonth(new Date('2026-05-01'))
@@ -137,21 +154,46 @@ describe('PrismaTransactionRepository', () => {
 		it('returns transactions for the given month and category', async () => {
 			await prismaTest.transaction.createMany({
 				data: [
-					{ ...baseTx(), date: new Date('2026-05-10'), description: 'Super', categoryId },
-					{ ...baseTx(), date: new Date('2026-05-15'), description: 'Almuerzo', categoryId },
-					{ ...baseTx(), date: new Date('2026-05-12'), categoryId: category2Id },
-					{ ...baseTx(), date: new Date('2026-04-10'), description: 'Otro mes', categoryId },
+					{
+						...baseTx(),
+						date: new Date('2026-05-10'),
+						description: 'Super',
+						categoryId,
+					},
+					{
+						...baseTx(),
+						date: new Date('2026-05-15'),
+						description: 'Almuerzo',
+						categoryId,
+					},
+					{
+						...baseTx(),
+						date: new Date('2026-05-12'),
+						categoryId: category2Id,
+					},
+					{
+						...baseTx(),
+						date: new Date('2026-04-10'),
+						description: 'Otro mes',
+						categoryId,
+					},
 				],
 			})
 
-			const result = await repository.findByMonthAndCategory(new Date('2026-05-01'), categoryId)
+			const result = await repository.findByMonthAndCategory(
+				new Date('2026-05-01'),
+				categoryId,
+			)
 
 			expect(result).toHaveLength(2)
 			expect(result.every((t) => t.categoryId === categoryId)).toBe(true)
 		})
 
 		it('returns empty array when no matches', async () => {
-			const result = await repository.findByMonthAndCategory(new Date('2026-05-01'), categoryId)
+			const result = await repository.findByMonthAndCategory(
+				new Date('2026-05-01'),
+				categoryId,
+			)
 			expect(result).toEqual([])
 		})
 	})
@@ -242,7 +284,10 @@ describe('PrismaTransactionRepository', () => {
 				data: { ...baseTx(), amountGs: 150000, notes: 'nota' },
 			})
 
-			const result = await repository.update(created.id, { amountGs: null, notes: null })
+			const result = await repository.update(created.id, {
+				amountGs: null,
+				notes: null,
+			})
 
 			expect(result.amountGs).toBeNull()
 			expect(result.notes).toBeNull()
@@ -257,7 +302,9 @@ describe('PrismaTransactionRepository', () => {
 
 			await repository.delete(created.id)
 
-			const gone = await prismaTest.transaction.findUnique({ where: { id: created.id } })
+			const gone = await prismaTest.transaction.findUnique({
+				where: { id: created.id },
+			})
 			expect(gone).toBeNull()
 		})
 	})

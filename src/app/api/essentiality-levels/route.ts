@@ -1,12 +1,14 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { CreateEssentialityLevelSchema } from '@/domain/entities/essentiality-level'
 import { prisma } from '@/lib/prisma'
 import { createPrismaEssentialityLevelRepository } from '@/repositories/prisma/PrismaEssentialityLevelRepository'
 import { createEssentialityLevelService } from '@/services/EssentialityLevelService'
-import { CreateEssentialityLevelSchema } from '@/domain/entities/essentiality-level'
 
 function makeService() {
-	return createEssentialityLevelService(createPrismaEssentialityLevelRepository(prisma))
+	return createEssentialityLevelService(
+		createPrismaEssentialityLevelRepository(prisma),
+	)
 }
 
 export async function GET() {
@@ -24,7 +26,10 @@ export async function POST(request: NextRequest) {
 		if (error instanceof ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 })
 		}
-		if (error instanceof Error && error.message === 'EssentialityLevel code already exists') {
+		if (
+			error instanceof Error &&
+			error.message === 'EssentialityLevel code already exists'
+		) {
 			return Response.json({ error: error.message }, { status: 409 })
 		}
 		return Response.json({ error: 'Internal server error' }, { status: 500 })

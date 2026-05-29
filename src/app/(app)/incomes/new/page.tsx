@@ -8,10 +8,13 @@ export default async function NewIncomePage() {
 		exchangeRateService.findLatestBySource('ueno'),
 	])
 
-	const latestRates = [
-		...(itau ? [itau] : []),
-		...(ueno ? [ueno] : []),
-	]
+	const latestRates = [...(itau ? [itau] : []), ...(ueno ? [ueno] : [])]
 
-	return <IncomeForm mode="create" onSubmit={createIncome} latestRates={latestRates} />
+	return (
+		<IncomeForm
+			mode="create"
+			onSubmit={createIncome}
+			latestRates={latestRates}
+		/>
+	)
 }

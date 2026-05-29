@@ -1,11 +1,11 @@
-import type { PrismaClient } from '@/generated/prisma/client'
-import type { Transaction } from '@/domain/entities/transaction'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
+import type { Transaction } from '@/domain/entities/transaction'
 import type {
 	CreateTransactionInput,
 	ITransactionRepository,
 	UpdateTransactionInput,
 } from '@/domain/repositories/ITransactionRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type PrismaTransaction = {
 	id: number
@@ -52,15 +52,23 @@ function toDomain(raw: PrismaTransaction): Transaction {
 }
 
 function monthRange(month: Date): { gte: Date; lt: Date } {
-	const start = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1))
-	const end = new Date(Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1))
+	const start = new Date(
+		Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1),
+	)
+	const end = new Date(
+		Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1),
+	)
 	return { gte: start, lt: end }
 }
 
-export function createPrismaTransactionRepository(prisma: PrismaClient): ITransactionRepository {
+export function createPrismaTransactionRepository(
+	prisma: PrismaClient,
+): ITransactionRepository {
 	return {
 		findAll: async () => {
-			const rows = await prisma.transaction.findMany({ orderBy: { date: 'desc' } })
+			const rows = await prisma.transaction.findMany({
+				orderBy: { date: 'desc' },
+			})
 			return rows.map(toDomain)
 		},
 		findById: async (id) => {
@@ -86,7 +94,10 @@ export function createPrismaTransactionRepository(prisma: PrismaClient): ITransa
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateTransactionInput) => {
-			const row = await prisma.transaction.update({ where: { id }, data: input })
+			const row = await prisma.transaction.update({
+				where: { id },
+				data: input,
+			})
 			return toDomain(row)
 		},
 		delete: async (id: number) => {

@@ -1,4 +1,3 @@
-import type { PrismaClient } from '@/generated/prisma/client'
 import type { InstallmentPlan } from '@/domain/entities/installment-plan'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
 import type {
@@ -6,6 +5,7 @@ import type {
 	IInstallmentPlanRepository,
 	UpdateInstallmentPlanInput,
 } from '@/domain/repositories/IInstallmentPlanRepository'
+import type { PrismaClient } from '@/generated/prisma/client'
 
 type PrismaInstallmentPlan = {
 	id: number
@@ -58,7 +58,9 @@ export function createPrismaInstallmentPlanRepository(
 			return row ? toDomain(row) : null
 		},
 		findActive: async () => {
-			const rows = await prisma.installmentPlan.findMany({ where: { active: true } })
+			const rows = await prisma.installmentPlan.findMany({
+				where: { active: true },
+			})
 			return rows.map(toDomain)
 		},
 		create: async (input: CreateInstallmentPlanInput) => {
@@ -66,11 +68,17 @@ export function createPrismaInstallmentPlanRepository(
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateInstallmentPlanInput) => {
-			const row = await prisma.installmentPlan.update({ where: { id }, data: input })
+			const row = await prisma.installmentPlan.update({
+				where: { id },
+				data: input,
+			})
 			return toDomain(row)
 		},
 		deactivate: async (id: number) => {
-			const row = await prisma.installmentPlan.update({ where: { id }, data: { active: false } })
+			const row = await prisma.installmentPlan.update({
+				where: { id },
+				data: { active: false },
+			})
 			return toDomain(row)
 		},
 	}

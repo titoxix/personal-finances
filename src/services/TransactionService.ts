@@ -23,10 +23,13 @@ export function createTransactionService(repo: ITransactionRepository) {
 			return tx
 		},
 
-		findByMonth: (month: Date): Promise<Transaction[]> => repo.findByMonth(month),
+		findByMonth: (month: Date): Promise<Transaction[]> =>
+			repo.findByMonth(month),
 
-		findByMonthAndCategory: (month: Date, categoryId: number): Promise<Transaction[]> =>
-			repo.findByMonthAndCategory(month, categoryId),
+		findByMonthAndCategory: (
+			month: Date,
+			categoryId: number,
+		): Promise<Transaction[]> => repo.findByMonthAndCategory(month, categoryId),
 
 		create: async (input: CreateTransactionInput): Promise<Transaction> => {
 			if (input.amountGs == null && input.amountUsd == null)
@@ -35,7 +38,10 @@ export function createTransactionService(repo: ITransactionRepository) {
 			return repo.create({ ...input, weekOfMonth })
 		},
 
-		update: async (id: number, input: UpdateTransactionInput): Promise<Transaction> => {
+		update: async (
+			id: number,
+			input: UpdateTransactionInput,
+		): Promise<Transaction> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('Transaction not found')
 			return repo.update(id, input)

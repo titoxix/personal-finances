@@ -86,7 +86,9 @@ describe('PrismaMonthlySnapshotRepository', () => {
 	describe('findByMonth', () => {
 		it('returns the snapshot for the given month', async () => {
 			await prismaTest.monthlySnapshot.create({ data: { month: APR_2026 } })
-			await prismaTest.monthlySnapshot.create({ data: { month: MAY_2026, incomeUsd: 5433 } })
+			await prismaTest.monthlySnapshot.create({
+				data: { month: MAY_2026, incomeUsd: 5433 },
+			})
 
 			const result = await repository.findByMonth(MAY_2026)
 
@@ -104,7 +106,9 @@ describe('PrismaMonthlySnapshotRepository', () => {
 	describe('findLatest', () => {
 		it('returns the most recent snapshot', async () => {
 			await prismaTest.monthlySnapshot.create({ data: { month: MAR_2026 } })
-			await prismaTest.monthlySnapshot.create({ data: { month: MAY_2026, incomeUsd: 5433 } })
+			await prismaTest.monthlySnapshot.create({
+				data: { month: MAY_2026, incomeUsd: 5433 },
+			})
 			await prismaTest.monthlySnapshot.create({ data: { month: APR_2026 } })
 
 			const result = await repository.findLatest()

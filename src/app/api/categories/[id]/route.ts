@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { UpdateCategorySchema } from '@/domain/entities/category'
 import { prisma } from '@/lib/prisma'
 import { createPrismaCategoryRepository } from '@/repositories/prisma/PrismaCategoryRepository'
 import { createCategoryService } from '@/services/CategoryService'
-import { UpdateCategorySchema } from '@/domain/entities/category'
 
 function makeService() {
 	return createCategoryService(createPrismaCategoryRepository(prisma))

@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaIncomeRepository', () => ({
@@ -21,7 +22,17 @@ vi.mock('@/services/IncomeService', () => ({
 
 const { GET, POST } = await import('./route')
 
-const income = { id: 1, month: new Date('2026-05-01'), grossIncomeUsd: 3000, budgetCapUsd: 2000, automaticInvestmentUsd: 500, automaticDest: 'ETF', exchangeRate: 7800, notes: null, createdAt: new Date() }
+const income = {
+	id: 1,
+	month: new Date('2026-05-01'),
+	grossIncomeUsd: 3000,
+	budgetCapUsd: 2000,
+	automaticInvestmentUsd: 500,
+	automaticDest: 'ETF',
+	exchangeRate: 7800,
+	notes: null,
+	createdAt: new Date(),
+}
 
 describe('GET /api/incomes', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -40,7 +51,14 @@ describe('POST /api/incomes', () => {
 		mockService.create.mockResolvedValue(income)
 		const request = new NextRequest('http://localhost/api/incomes', {
 			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01', grossIncomeUsd: 3000, budgetCapUsd: 2000, automaticInvestmentUsd: 500, automaticDest: 'ETF', exchangeRate: 7800 }),
+			body: JSON.stringify({
+				month: '2026-05-01',
+				grossIncomeUsd: 3000,
+				budgetCapUsd: 2000,
+				automaticInvestmentUsd: 500,
+				automaticDest: 'ETF',
+				exchangeRate: 7800,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
@@ -58,10 +76,19 @@ describe('POST /api/incomes', () => {
 	})
 
 	it('returns 409 when income already exists for month', async () => {
-		mockService.create.mockRejectedValue(new Error('Income already exists for this month'))
+		mockService.create.mockRejectedValue(
+			new Error('Income already exists for this month'),
+		)
 		const request = new NextRequest('http://localhost/api/incomes', {
 			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01', grossIncomeUsd: 3000, budgetCapUsd: 2000, automaticInvestmentUsd: 500, automaticDest: 'ETF', exchangeRate: 7800 }),
+			body: JSON.stringify({
+				month: '2026-05-01',
+				grossIncomeUsd: 3000,
+				budgetCapUsd: 2000,
+				automaticInvestmentUsd: 500,
+				automaticDest: 'ETF',
+				exchangeRate: 7800,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)

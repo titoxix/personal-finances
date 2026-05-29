@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { CreateTransactionSchema } from '@/domain/entities/transaction'
 import { prisma } from '@/lib/prisma'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
 import { createTransactionService } from '@/services/TransactionService'
-import { CreateTransactionSchema } from '@/domain/entities/transaction'
 
 function makeService() {
 	return createTransactionService(createPrismaTransactionRepository(prisma))

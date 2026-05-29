@@ -19,9 +19,13 @@ export function TransactionPageSidebar({ spendingByCategory }: Props) {
 	return (
 		<aside className="hidden lg:flex lg:flex-col lg:gap-4 lg:self-start">
 			<div className="rounded-2xl border border-border bg-card p-5">
-				<p className="mb-4 text-sm font-bold text-foreground">Gasto por Categoría</p>
+				<p className="mb-4 text-sm font-bold text-foreground">
+					Gasto por Categoría
+				</p>
 				{spendingByCategory.length === 0 ? (
-					<p className="text-xs text-muted-foreground">Sin gastos registrados este mes.</p>
+					<p className="text-xs text-muted-foreground">
+						Sin gastos registrados este mes.
+					</p>
 				) : (
 					<div className="space-y-3.5">
 						{spendingByCategory.map(({ label, amountGs }) => (

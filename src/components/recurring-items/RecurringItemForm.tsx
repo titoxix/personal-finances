@@ -1,7 +1,6 @@
 'use client'
 
 import { Check } from 'lucide-react'
-import { parseAmountInput, formatAmountDisplay } from '@/lib/utils'
 import { useState, useTransition } from 'react'
 import type {
 	CreateRecurringItemPayload,
@@ -14,6 +13,7 @@ import type {
 	RecurringFrequency,
 	RecurringItem,
 } from '@/domain/entities/recurring-item'
+import { formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
 	{ value: 'itau_visa', label: 'Itaú Visa' },

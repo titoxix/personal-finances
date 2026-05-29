@@ -23,14 +23,22 @@ export default async function HomePage({
 }) {
 	const { month: monthParam } = await searchParams
 	const now = new Date()
-	const realCurrentMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+	const realCurrentMonth = new Date(
+		Date.UTC(now.getFullYear(), now.getMonth(), 1),
+	)
 	const maxMonth = new Date(
-		Date.UTC(realCurrentMonth.getUTCFullYear(), realCurrentMonth.getUTCMonth() + 1, 1),
+		Date.UTC(
+			realCurrentMonth.getUTCFullYear(),
+			realCurrentMonth.getUTCMonth() + 1,
+			1,
+		),
 	)
 
 	let currentMonth: Date
 	if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-		const [y, m] = monthParam.split('-').map(Number)
+		const parts = monthParam.split('-').map(Number)
+		const y = parts[0] ?? realCurrentMonth.getUTCFullYear()
+		const m = parts[1] ?? realCurrentMonth.getUTCMonth() + 1
 		const parsed = new Date(Date.UTC(y, m - 1, 1))
 		currentMonth = parsed > maxMonth ? maxMonth : parsed
 	} else {

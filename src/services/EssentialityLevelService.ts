@@ -5,7 +5,9 @@ import type {
 	UpdateEssentialityLevelInput,
 } from '@/domain/repositories/IEssentialityLevelRepository'
 
-export function createEssentialityLevelService(repo: IEssentialityLevelRepository) {
+export function createEssentialityLevelService(
+	repo: IEssentialityLevelRepository,
+) {
 	return {
 		findAll: (): Promise<EssentialityLevel[]> => repo.findAll(),
 
@@ -15,15 +17,21 @@ export function createEssentialityLevelService(repo: IEssentialityLevelRepositor
 			return level
 		},
 
-		findByCode: (code: string): Promise<EssentialityLevel | null> => repo.findByCode(code),
+		findByCode: (code: string): Promise<EssentialityLevel | null> =>
+			repo.findByCode(code),
 
-		create: async (input: CreateEssentialityLevelInput): Promise<EssentialityLevel> => {
+		create: async (
+			input: CreateEssentialityLevelInput,
+		): Promise<EssentialityLevel> => {
 			const existing = await repo.findByCode(input.code)
 			if (existing) throw new Error('EssentialityLevel code already exists')
 			return repo.create(input)
 		},
 
-		update: async (id: number, input: UpdateEssentialityLevelInput): Promise<EssentialityLevel> => {
+		update: async (
+			id: number,
+			input: UpdateEssentialityLevelInput,
+		): Promise<EssentialityLevel> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('EssentialityLevel not found')
 			return repo.update(id, input)

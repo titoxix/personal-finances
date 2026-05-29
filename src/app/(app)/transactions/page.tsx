@@ -1,8 +1,15 @@
-import Link from 'next/link'
 import { Plus } from 'lucide-react'
-import { transactionService, categoryService, exchangeRateService } from '@/lib/container'
-import { TransactionList, type TransactionListRow } from '@/components/transactions/TransactionList'
+import Link from 'next/link'
+import {
+	TransactionList,
+	type TransactionListRow,
+} from '@/components/transactions/TransactionList'
 import { TransactionPageSidebar } from '@/components/transactions/TransactionPageSidebar'
+import {
+	categoryService,
+	exchangeRateService,
+	transactionService,
+} from '@/lib/container'
 
 export default async function TransactionsPage() {
 	const [transactions, categories, latestRate] = await Promise.all([
@@ -26,8 +33,12 @@ export default async function TransactionsPage() {
 		}))
 
 	const now = new Date()
-	const thisMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
-	const nextMonthStart = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1))
+	const thisMonthStart = new Date(
+		Date.UTC(now.getFullYear(), now.getMonth(), 1),
+	)
+	const nextMonthStart = new Date(
+		Date.UTC(now.getFullYear(), now.getMonth() + 1, 1),
+	)
 	const gsRate = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
 
 	const spentMap = new Map<number, number>()
@@ -80,7 +91,9 @@ export default async function TransactionsPage() {
 											key={label}
 											className="w-[136px] flex-none rounded-2xl border border-border bg-card px-4 py-3"
 										>
-											<p className="truncate text-xs text-muted-foreground">{label}</p>
+											<p className="truncate text-xs text-muted-foreground">
+												{label}
+											</p>
 											<p className="mt-1 font-mono text-sm font-bold text-foreground">
 												{amountGs >= 1_000_000
 													? `₲${(amountGs / 1_000_000).toFixed(1)}M`

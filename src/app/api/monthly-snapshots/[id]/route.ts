@@ -1,12 +1,14 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { UpdateMonthlySnapshotSchema } from '@/domain/entities/monthly-snapshot'
 import { prisma } from '@/lib/prisma'
 import { createPrismaMonthlySnapshotRepository } from '@/repositories/prisma/PrismaMonthlySnapshotRepository'
 import { createMonthlySnapshotService } from '@/services/MonthlySnapshotService'
-import { UpdateMonthlySnapshotSchema } from '@/domain/entities/monthly-snapshot'
 
 function makeService() {
-	return createMonthlySnapshotService(createPrismaMonthlySnapshotRepository(prisma))
+	return createMonthlySnapshotService(
+		createPrismaMonthlySnapshotRepository(prisma),
+	)
 }
 
 export async function GET(
@@ -18,7 +20,10 @@ export async function GET(
 		const snapshot = await makeService().findById(Number(id))
 		return Response.json(snapshot)
 	} catch (error) {
-		if (error instanceof Error && error.message === 'MonthlySnapshot not found') {
+		if (
+			error instanceof Error &&
+			error.message === 'MonthlySnapshot not found'
+		) {
 			return Response.json({ error: error.message }, { status: 404 })
 		}
 		return Response.json({ error: 'Internal server error' }, { status: 500 })
@@ -39,7 +44,10 @@ export async function PATCH(
 		if (error instanceof ZodError) {
 			return Response.json({ error: error.issues }, { status: 400 })
 		}
-		if (error instanceof Error && error.message === 'MonthlySnapshot not found') {
+		if (
+			error instanceof Error &&
+			error.message === 'MonthlySnapshot not found'
+		) {
 			return Response.json({ error: error.message }, { status: 404 })
 		}
 		return Response.json({ error: 'Internal server error' }, { status: 500 })

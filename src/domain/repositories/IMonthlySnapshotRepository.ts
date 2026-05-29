@@ -59,5 +59,8 @@ export interface IMonthlySnapshotRepository {
 	findByMonth(month: Date): Promise<MonthlySnapshot | null>
 	findLatest(): Promise<MonthlySnapshot | null>
 	create(input: CreateMonthlySnapshotInput): Promise<MonthlySnapshot>
-	update(id: number, input: UpdateMonthlySnapshotInput): Promise<MonthlySnapshot>
+	update(
+		id: number,
+		input: UpdateMonthlySnapshotInput,
+	): Promise<MonthlySnapshot>
 }

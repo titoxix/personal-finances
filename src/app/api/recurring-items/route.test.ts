@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaRecurringItemRepository', () => ({
@@ -22,7 +23,22 @@ vi.mock('@/services/RecurringItemService', () => ({
 
 const { GET, POST } = await import('./route')
 
-const item = { id: 1, description: 'Netflix', amountGs: null, amountUsd: 15, categoryId: 1, essentialityId: 1, paymentMethod: 'itau_visa', frequency: 'monthly', billingDay: 15, billingMonth: null, isVariable: false, active: true, notes: null, createdAt: new Date() }
+const item = {
+	id: 1,
+	description: 'Netflix',
+	amountGs: null,
+	amountUsd: 15,
+	categoryId: 1,
+	essentialityId: 1,
+	paymentMethod: 'itau_visa',
+	frequency: 'monthly',
+	billingDay: 15,
+	billingMonth: null,
+	isVariable: false,
+	active: true,
+	notes: null,
+	createdAt: new Date(),
+}
 
 describe('GET /api/recurring-items', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -41,7 +57,15 @@ describe('POST /api/recurring-items', () => {
 		mockService.create.mockResolvedValue(item)
 		const request = new NextRequest('http://localhost/api/recurring-items', {
 			method: 'POST',
-			body: JSON.stringify({ description: 'Netflix', categoryId: 1, essentialityId: 1, paymentMethod: 'itau_visa', frequency: 'monthly', amountUsd: 15, billingDay: 15 }),
+			body: JSON.stringify({
+				description: 'Netflix',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'itau_visa',
+				frequency: 'monthly',
+				amountUsd: 15,
+				billingDay: 15,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
@@ -51,7 +75,13 @@ describe('POST /api/recurring-items', () => {
 	it('returns 400 for invalid paymentMethod', async () => {
 		const request = new NextRequest('http://localhost/api/recurring-items', {
 			method: 'POST',
-			body: JSON.stringify({ description: 'Netflix', categoryId: 1, essentialityId: 1, paymentMethod: 'invalid', frequency: 'monthly' }),
+			body: JSON.stringify({
+				description: 'Netflix',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'invalid',
+				frequency: 'monthly',
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
@@ -59,10 +89,19 @@ describe('POST /api/recurring-items', () => {
 	})
 
 	it('returns 422 for missing billingDay on monthly', async () => {
-		mockService.create.mockRejectedValue(new Error('monthly item requires billingDay'))
+		mockService.create.mockRejectedValue(
+			new Error('monthly item requires billingDay'),
+		)
 		const request = new NextRequest('http://localhost/api/recurring-items', {
 			method: 'POST',
-			body: JSON.stringify({ description: 'Netflix', categoryId: 1, essentialityId: 1, paymentMethod: 'itau_visa', frequency: 'monthly', amountUsd: 15 }),
+			body: JSON.stringify({
+				description: 'Netflix',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'itau_visa',
+				frequency: 'monthly',
+				amountUsd: 15,
+			}),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)

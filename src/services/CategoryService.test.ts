@@ -33,7 +33,10 @@ describe('createCategoryService', () => {
 
 	describe('findAll', () => {
 		it('returns all categories from repository', async () => {
-			const categories = [makeCategory(), makeCategory({ id: 2, code: 'vivienda', label: 'Vivienda' })]
+			const categories = [
+				makeCategory(),
+				makeCategory({ id: 2, code: 'vivienda', label: 'Vivienda' }),
+			]
 			vi.mocked(repo.findAll).mockResolvedValue(categories)
 
 			const result = await service.findAll()
@@ -85,10 +88,16 @@ describe('createCategoryService', () => {
 			vi.mocked(repo.findByCode).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(category)
 
-			const result = await service.create({ code: 'alimentacion', label: 'Alimentación' })
+			const result = await service.create({
+				code: 'alimentacion',
+				label: 'Alimentación',
+			})
 
 			expect(result).toBe(category)
-			expect(repo.create).toHaveBeenCalledWith({ code: 'alimentacion', label: 'Alimentación' })
+			expect(repo.create).toHaveBeenCalledWith({
+				code: 'alimentacion',
+				label: 'Alimentación',
+			})
 		})
 
 		it('throws when code is already taken', async () => {
@@ -107,16 +116,22 @@ describe('createCategoryService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { label: 'Alimentación actualizada' })
+			const result = await service.update(1, {
+				label: 'Alimentación actualizada',
+			})
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { label: 'Alimentación actualizada' })
+			expect(repo.update).toHaveBeenCalledWith(1, {
+				label: 'Alimentación actualizada',
+			})
 		})
 
 		it('throws when category does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { label: 'x' })).rejects.toThrow('Category not found')
+			await expect(service.update(999, { label: 'x' })).rejects.toThrow(
+				'Category not found',
+			)
 		})
 	})
 
@@ -136,7 +151,9 @@ describe('createCategoryService', () => {
 		it('throws when category does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.deactivate(999)).rejects.toThrow('Category not found')
+			await expect(service.deactivate(999)).rejects.toThrow(
+				'Category not found',
+			)
 		})
 	})
 })

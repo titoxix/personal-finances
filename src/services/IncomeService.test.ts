@@ -134,7 +134,9 @@ describe('createIncomeService', () => {
 		it('throws when income does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { grossIncomeUsd: 3500 })).rejects.toThrow('Income not found')
+			await expect(
+				service.update(999, { grossIncomeUsd: 3500 }),
+			).rejects.toThrow('Income not found')
 		})
 	})
 })

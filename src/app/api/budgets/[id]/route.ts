@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { UpdateBudgetSchema } from '@/domain/entities/budget'
 import { prisma } from '@/lib/prisma'
 import { createPrismaBudgetRepository } from '@/repositories/prisma/PrismaBudgetRepository'
 import { createBudgetService } from '@/services/BudgetService'
-import { UpdateBudgetSchema } from '@/domain/entities/budget'
 
 function makeService() {
 	return createBudgetService(createPrismaBudgetRepository(prisma))

@@ -12,7 +12,9 @@ const makeRepo = (): IInstallmentPlanRepository => ({
 	deactivate: vi.fn(),
 })
 
-const makePlan = (overrides: Partial<InstallmentPlan> = {}): InstallmentPlan => ({
+const makePlan = (
+	overrides: Partial<InstallmentPlan> = {},
+): InstallmentPlan => ({
 	id: 1,
 	description: 'iPhone 16',
 	totalAmountGs: null,
@@ -65,7 +67,9 @@ describe('createInstallmentPlanService', () => {
 		it('throws when plan does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('InstallmentPlan not found')
+			await expect(service.findById(999)).rejects.toThrow(
+				'InstallmentPlan not found',
+			)
 		})
 	})
 
@@ -125,7 +129,10 @@ describe('createInstallmentPlanService', () => {
 		})
 
 		it('handles month overflow correctly (e.g. 6 months from Aug)', async () => {
-			const plan = makePlan({ startDate: new Date('2026-08-01'), endDate: new Date('2027-02-01') })
+			const plan = makePlan({
+				startDate: new Date('2026-08-01'),
+				endDate: new Date('2027-02-01'),
+			})
 			vi.mocked(repo.create).mockResolvedValue(plan)
 
 			await service.create({
@@ -174,7 +181,9 @@ describe('createInstallmentPlanService', () => {
 		it('throws when plan does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { installmentsPaid: 3 })).rejects.toThrow('InstallmentPlan not found')
+			await expect(
+				service.update(999, { installmentsPaid: 3 }),
+			).rejects.toThrow('InstallmentPlan not found')
 		})
 	})
 
@@ -194,7 +203,9 @@ describe('createInstallmentPlanService', () => {
 		it('throws when plan does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.deactivate(999)).rejects.toThrow('InstallmentPlan not found')
+			await expect(service.deactivate(999)).rejects.toThrow(
+				'InstallmentPlan not found',
+			)
 		})
 	})
 })

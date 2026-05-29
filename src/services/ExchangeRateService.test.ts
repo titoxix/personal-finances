@@ -9,6 +9,8 @@ const makeRepo = (): IExchangeRateRepository => ({
 	findBySource: vi.fn(),
 	findLatestBySource: vi.fn(),
 	create: vi.fn(),
+	update: vi.fn(),
+	delete: vi.fn(),
 })
 
 const makeRate = (overrides: Partial<ExchangeRate> = {}): ExchangeRate => ({
@@ -34,7 +36,16 @@ describe('createExchangeRateService', () => {
 
 	describe('findAll', () => {
 		it('returns all rates from repository', async () => {
-			const rates = [makeRate(), makeRate({ id: 2, source: 'bcp', rateBuy: null, rateSell: null, rateMid: 7850 })]
+			const rates = [
+				makeRate(),
+				makeRate({
+					id: 2,
+					source: 'bcp',
+					rateBuy: null,
+					rateSell: null,
+					rateMid: 7850,
+				}),
+			]
 			vi.mocked(repo.findAll).mockResolvedValue(rates)
 
 			const result = await service.findAll()
@@ -57,7 +68,9 @@ describe('createExchangeRateService', () => {
 		it('throws when rate does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('ExchangeRate not found')
+			await expect(service.findById(999)).rejects.toThrow(
+				'ExchangeRate not found',
+			)
 		})
 	})
 
@@ -97,14 +110,27 @@ describe('createExchangeRateService', () => {
 			const rate = makeRate()
 			vi.mocked(repo.create).mockResolvedValue(rate)
 
-			const result = await service.create({ source: 'itau', rateBuy: 7800, rateSell: 7900 })
+			const result = await service.create({
+				source: 'itau',
+				rateBuy: 7800,
+				rateSell: 7900,
+			})
 
 			expect(result).toBe(rate)
-			expect(repo.create).toHaveBeenCalledWith({ source: 'itau', rateBuy: 7800, rateSell: 7900 })
+			expect(repo.create).toHaveBeenCalledWith({
+				source: 'itau',
+				rateBuy: 7800,
+				rateSell: 7900,
+			})
 		})
 
 		it('creates a BCP rate with rateMid', async () => {
-			const rate = makeRate({ source: 'bcp', rateBuy: null, rateSell: null, rateMid: 7850 })
+			const rate = makeRate({
+				source: 'bcp',
+				rateBuy: null,
+				rateSell: null,
+				rateMid: 7850,
+			})
 			vi.mocked(repo.create).mockResolvedValue(rate)
 
 			const result = await service.create({ source: 'bcp', rateMid: 7850 })
@@ -113,9 +139,9 @@ describe('createExchangeRateService', () => {
 		})
 
 		it('throws when a bank rate has no rateBuy or rateSell', async () => {
-			await expect(
-				service.create({ source: 'itau' }),
-			).rejects.toThrow('itau rate requires rateBuy or rateSell')
+			await expect(service.create({ source: 'itau' })).rejects.toThrow(
+				'itau rate requires rateBuy or rateSell',
+			)
 		})
 
 		it('throws when a bank rate includes rateMid', async () => {

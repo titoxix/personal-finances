@@ -1,9 +1,9 @@
-import { type NextRequest } from 'next/server'
+import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
+import { CreateRecurringItemSchema } from '@/domain/entities/recurring-item'
 import { prisma } from '@/lib/prisma'
 import { createPrismaRecurringItemRepository } from '@/repositories/prisma/PrismaRecurringItemRepository'
 import { createRecurringItemService } from '@/services/RecurringItemService'
-import { CreateRecurringItemSchema } from '@/domain/entities/recurring-item'
 
 function makeService() {
 	return createRecurringItemService(createPrismaRecurringItemRepository(prisma))

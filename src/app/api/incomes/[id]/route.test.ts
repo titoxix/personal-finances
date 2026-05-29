@@ -1,6 +1,7 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import { NextRequest } from 'next/server'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaIncomeRepository', () => ({
@@ -22,7 +23,17 @@ vi.mock('@/services/IncomeService', () => ({
 const { GET, PATCH } = await import('./route')
 
 const req = new NextRequest('http://localhost/api/incomes/1')
-const income = { id: 1, month: new Date('2026-05-01'), grossIncomeUsd: 3000, budgetCapUsd: 2000, automaticInvestmentUsd: 500, automaticDest: 'ETF', exchangeRate: 7800, notes: null, createdAt: new Date() }
+const income = {
+	id: 1,
+	month: new Date('2026-05-01'),
+	grossIncomeUsd: 3000,
+	budgetCapUsd: 2000,
+	automaticInvestmentUsd: 500,
+	automaticDest: 'ETF',
+	exchangeRate: 7800,
+	notes: null,
+	createdAt: new Date(),
+}
 
 describe('GET /api/incomes/[id]', () => {
 	beforeEach(() => vi.clearAllMocks())
@@ -50,7 +61,9 @@ describe('PATCH /api/incomes/[id]', () => {
 			body: JSON.stringify({ grossIncomeUsd: 3500 }),
 			headers: { 'Content-Type': 'application/json' },
 		})
-		const response = await PATCH(request, { params: Promise.resolve({ id: '1' }) })
+		const response = await PATCH(request, {
+			params: Promise.resolve({ id: '1' }),
+		})
 		expect(response.status).toBe(200)
 	})
 
@@ -61,7 +74,9 @@ describe('PATCH /api/incomes/[id]', () => {
 			body: JSON.stringify({ grossIncomeUsd: 3500 }),
 			headers: { 'Content-Type': 'application/json' },
 		})
-		const response = await PATCH(request, { params: Promise.resolve({ id: '99' }) })
+		const response = await PATCH(request, {
+			params: Promise.resolve({ id: '99' }),
+		})
 		expect(response.status).toBe(404)
 	})
 })

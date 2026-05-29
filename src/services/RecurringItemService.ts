@@ -7,7 +7,8 @@ import type {
 
 function validateCreate(input: CreateRecurringItemInput): void {
 	if (input.frequency === 'monthly') {
-		if (input.billingDay == null) throw new Error('monthly item requires billingDay')
+		if (input.billingDay == null)
+			throw new Error('monthly item requires billingDay')
 	} else {
 		if (input.billingDay == null || input.billingMonth == null)
 			throw new Error('annual item requires billingDay and billingMonth')
@@ -34,7 +35,10 @@ export function createRecurringItemService(repo: IRecurringItemRepository) {
 			return repo.create(input)
 		},
 
-		update: async (id: number, input: UpdateRecurringItemInput): Promise<RecurringItem> => {
+		update: async (
+			id: number,
+			input: UpdateRecurringItemInput,
+		): Promise<RecurringItem> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('RecurringItem not found')
 			return repo.update(id, input)

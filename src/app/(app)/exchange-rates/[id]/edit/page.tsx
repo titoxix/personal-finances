@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
-import { exchangeRateService } from '@/lib/container'
 import { ExchangeRateForm } from '@/components/exchange-rates/ExchangeRateForm'
-import { updateExchangeRate, deleteExchangeRate } from '../../actions'
+import { exchangeRateService } from '@/lib/container'
+import { deleteExchangeRate, updateExchangeRate } from '../../actions'
 
 export default async function EditExchangeRatePage({
 	params,
@@ -15,7 +15,9 @@ export default async function EditExchangeRatePage({
 	const rate = await exchangeRateService.findById(id).catch(() => null)
 	if (!rate) notFound()
 
-	async function handleUpdate(payload: Parameters<typeof updateExchangeRate>[1]) {
+	async function handleUpdate(
+		payload: Parameters<typeof updateExchangeRate>[1],
+	) {
 		'use server'
 		return updateExchangeRate(id, payload)
 	}

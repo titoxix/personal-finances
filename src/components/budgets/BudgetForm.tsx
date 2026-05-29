@@ -8,7 +8,7 @@ import type {
 } from '@/app/(app)/budgets/actions'
 import type { Category } from '@/domain/entities/category'
 import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
-import { cn, parseAmountInput, formatAmountDisplay } from '@/lib/utils'
+import { cn, formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 function currentMonthISO(): string {
 	const now = new Date()
@@ -126,7 +126,10 @@ export function BudgetForm(props: Props) {
 							<button
 								key={c}
 								type="button"
-								onClick={() => { setCurrency(c); setAmount('') }}
+								onClick={() => {
+									setCurrency(c)
+									setAmount('')
+								}}
 								className={cn(
 									'rounded-full px-3 py-0.5 text-xs font-bold transition-colors',
 									currency === c
@@ -147,7 +150,9 @@ export function BudgetForm(props: Props) {
 						type="text"
 						inputMode={currency === 'gs' ? 'numeric' : 'decimal'}
 						value={formatAmountDisplay(amount, currency === 'usd')}
-						onChange={(e) => setAmount(parseAmountInput(e.target.value, currency === 'usd'))}
+						onChange={(e) =>
+							setAmount(parseAmountInput(e.target.value, currency === 'usd'))
+						}
 						placeholder="0"
 						className="w-full bg-transparent text-4xl font-bold text-foreground outline-none placeholder:text-muted-foreground/40"
 					/>

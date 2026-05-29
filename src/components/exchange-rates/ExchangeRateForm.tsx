@@ -2,22 +2,26 @@
 
 import { Check, Trash2 } from 'lucide-react'
 import { useState, useTransition } from 'react'
-import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 import type {
 	CreateExchangeRatesPayload,
 	UpdateExchangeRatePayload,
 } from '@/app/(app)/exchange-rates/actions'
-import { parseAmountInput, formatAmountDisplay } from '@/lib/utils'
+import type { ExchangeRate } from '@/domain/entities/exchange-rate'
+import { formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 type CreateProps = {
 	mode?: 'create'
-	onSubmit: (payload: CreateExchangeRatesPayload) => Promise<{ error: string } | undefined>
+	onSubmit: (
+		payload: CreateExchangeRatesPayload,
+	) => Promise<{ error: string } | undefined>
 }
 
 type EditProps = {
 	mode: 'edit'
 	initialValues: ExchangeRate
-	onSubmit: (payload: UpdateExchangeRatePayload) => Promise<{ error: string } | undefined>
+	onSubmit: (
+		payload: UpdateExchangeRatePayload,
+	) => Promise<{ error: string } | undefined>
 	onDelete: () => Promise<{ error: string } | undefined>
 }
 
@@ -36,7 +40,11 @@ function parseRate(value: string): number | null {
 	return Number.isFinite(n) && n > 0 ? n : null
 }
 
-const SOURCE_LABEL: Record<string, string> = { itau: 'Itaú', ueno: 'Ueno', bcp: 'BCP' }
+const SOURCE_LABEL: Record<string, string> = {
+	itau: 'Itaú',
+	ueno: 'Ueno',
+	bcp: 'BCP',
+}
 
 export function ExchangeRateForm(props: Props) {
 	const isEdit = props.mode === 'edit'
@@ -68,7 +76,11 @@ export function ExchangeRateForm(props: Props) {
 
 		if (isEdit) {
 			const source = props.initialValues.source
-			if (source !== 'bcp' && parseRate(buyValue) == null && parseRate(sellValue) == null) {
+			if (
+				source !== 'bcp' &&
+				parseRate(buyValue) == null &&
+				parseRate(sellValue) == null
+			) {
 				setError(`${SOURCE_LABEL[source]} requiere al menos Compra o Venta.`)
 				return
 			}
@@ -92,8 +104,14 @@ export function ExchangeRateForm(props: Props) {
 		// Create mode
 		const itauValid = parseRate(itauBuy) != null || parseRate(itauSell) != null
 		const uenoValid = parseRate(uenoBuy) != null || parseRate(uenoBell) != null
-		if (!itauValid) { setError('Itaú requiere al menos Compra o Venta.'); return }
-		if (!uenoValid) { setError('Ueno requiere al menos Compra o Venta.'); return }
+		if (!itauValid) {
+			setError('Itaú requiere al menos Compra o Venta.')
+			return
+		}
+		if (!uenoValid) {
+			setError('Ueno requiere al menos Compra o Venta.')
+			return
+		}
 
 		startTransition(async () => {
 			const result = await props.onSubmit({
@@ -151,7 +169,9 @@ export function ExchangeRateForm(props: Props) {
 					<div className="space-y-2">
 						<p className="text-sm font-semibold text-foreground">
 							BCP{' '}
-							<span className="font-normal text-muted-foreground">(Opcional)</span>
+							<span className="font-normal text-muted-foreground">
+								(Opcional)
+							</span>
 						</p>
 						<div className="rounded-2xl border border-border bg-card p-4">
 							<label
@@ -176,7 +196,10 @@ export function ExchangeRateForm(props: Props) {
 
 			{/* ── Fecha y hora ── */}
 			<div className="space-y-2">
-				<label htmlFor="recorded-at" className="text-sm font-semibold text-foreground">
+				<label
+					htmlFor="recorded-at"
+					className="text-sm font-semibold text-foreground"
+				>
 					Fecha y hora
 				</label>
 				<input
@@ -190,7 +213,10 @@ export function ExchangeRateForm(props: Props) {
 
 			{/* ── Notas ── */}
 			<div className="space-y-2">
-				<label htmlFor="rate-notes" className="text-sm font-semibold text-foreground">
+				<label
+					htmlFor="rate-notes"
+					className="text-sm font-semibold text-foreground"
+				>
 					Notas{' '}
 					<span className="font-normal text-muted-foreground">(Opcional)</span>
 				</label>

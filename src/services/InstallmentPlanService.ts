@@ -27,13 +27,20 @@ export function createInstallmentPlanService(repo: IInstallmentPlanRepository) {
 
 		findActive: (): Promise<InstallmentPlan[]> => repo.findActive(),
 
-		create: async (input: CreateInstallmentPlanInput): Promise<InstallmentPlan> => {
-			if (input.installmentsTotal < 1) throw new Error('installmentsTotal must be at least 1')
-			const endDate = input.endDate ?? calcEndDate(input.startDate, input.installmentsTotal)
+		create: async (
+			input: CreateInstallmentPlanInput,
+		): Promise<InstallmentPlan> => {
+			if (input.installmentsTotal < 1)
+				throw new Error('installmentsTotal must be at least 1')
+			const endDate =
+				input.endDate ?? calcEndDate(input.startDate, input.installmentsTotal)
 			return repo.create({ ...input, endDate })
 		},
 
-		update: async (id: number, input: UpdateInstallmentPlanInput): Promise<InstallmentPlan> => {
+		update: async (
+			id: number,
+			input: UpdateInstallmentPlanInput,
+		): Promise<InstallmentPlan> => {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('InstallmentPlan not found')
 			return repo.update(id, input)

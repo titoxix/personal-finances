@@ -1,4 +1,7 @@
-import type { ExchangeRate, ExchangeRateSource } from '@/domain/entities/exchange-rate'
+import type {
+	ExchangeRate,
+	ExchangeRateSource,
+} from '@/domain/entities/exchange-rate'
 
 export type CreateExchangeRateInput = {
 	source: ExchangeRateSource

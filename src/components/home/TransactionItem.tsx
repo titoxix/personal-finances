@@ -1,5 +1,5 @@
-import Link from 'next/link'
 import { ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 const AVATAR_COLORS = [
@@ -19,9 +19,15 @@ type Props = {
 	amountGs: number | null
 }
 
-function formatAmount(amountUsd: number | null, amountGs: number | null): string {
+function formatAmount(
+	amountUsd: number | null,
+	amountGs: number | null,
+): string {
 	if (amountUsd != null) {
-		return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amountUsd)
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: 'USD',
+		}).format(amountUsd)
 	}
 	return new Intl.NumberFormat('es-PY', {
 		style: 'currency',
@@ -30,13 +36,26 @@ function formatAmount(amountUsd: number | null, amountGs: number | null): string
 	}).format(amountGs ?? 0)
 }
 
-export function TransactionItem({ id, description, date, categoryLabel, amountUsd, amountGs }: Props) {
-	const avatarColor = AVATAR_COLORS[id % AVATAR_COLORS.length]!
+export function TransactionItem({
+	id,
+	description,
+	date,
+	categoryLabel,
+	amountUsd,
+	amountGs,
+}: Props) {
+	const avatarColor = AVATAR_COLORS[id % AVATAR_COLORS.length] ?? ''
 	const initials = description.slice(0, 2).toUpperCase()
 	const amount = formatAmount(amountUsd, amountGs)
 
-	const dateStr = date.toLocaleDateString('es-PY', { month: 'short', day: 'numeric' })
-	const timeStr = date.toLocaleTimeString('es-PY', { hour: '2-digit', minute: '2-digit' })
+	const dateStr = date.toLocaleDateString('es-PY', {
+		month: 'short',
+		day: 'numeric',
+	})
+	const timeStr = date.toLocaleTimeString('es-PY', {
+		hour: '2-digit',
+		minute: '2-digit',
+	})
 
 	return (
 		<Link
@@ -52,12 +71,20 @@ export function TransactionItem({ id, description, date, categoryLabel, amountUs
 				{initials}
 			</div>
 			<div className="min-w-0 flex-1">
-				<p className="truncate text-sm font-semibold text-foreground">{description}</p>
-				<p className="truncate text-xs text-muted-foreground">{categoryLabel}</p>
-				<p className="text-xs text-muted-foreground/70">{dateStr}, {timeStr}</p>
+				<p className="truncate text-sm font-semibold text-foreground">
+					{description}
+				</p>
+				<p className="truncate text-xs text-muted-foreground">
+					{categoryLabel}
+				</p>
+				<p className="text-xs text-muted-foreground/70">
+					{dateStr}, {timeStr}
+				</p>
 			</div>
 			<div className="flex items-center gap-1.5">
-				<span className="font-mono text-sm font-semibold text-foreground tabular-nums">{amount}</span>
+				<span className="font-mono text-sm font-semibold text-foreground tabular-nums">
+					{amount}
+				</span>
 				<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
 			</div>
 		</Link>

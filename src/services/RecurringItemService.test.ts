@@ -64,7 +64,9 @@ describe('createRecurringItemService', () => {
 		it('throws when item does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('RecurringItem not found')
+			await expect(service.findById(999)).rejects.toThrow(
+				'RecurringItem not found',
+			)
 		})
 	})
 
@@ -204,7 +206,9 @@ describe('createRecurringItemService', () => {
 		it('throws when item does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { amountUsd: 18 })).rejects.toThrow('RecurringItem not found')
+			await expect(service.update(999, { amountUsd: 18 })).rejects.toThrow(
+				'RecurringItem not found',
+			)
 		})
 	})
 
@@ -224,7 +228,9 @@ describe('createRecurringItemService', () => {
 		it('throws when item does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.deactivate(999)).rejects.toThrow('RecurringItem not found')
+			await expect(service.deactivate(999)).rejects.toThrow(
+				'RecurringItem not found',
+			)
 		})
 	})
 })

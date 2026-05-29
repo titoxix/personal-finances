@@ -11,6 +11,7 @@ const makeRepo = (): IBudgetRepository => ({
 	findRecurring: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
+	softDelete: vi.fn(),
 })
 
 const MAY_2026 = new Date('2026-05-01')
@@ -25,6 +26,8 @@ const makeBudget = (overrides: Partial<Budget> = {}): Budget => ({
 	budgetedGs: null,
 	isRecurring: false,
 	notes: null,
+	deletedAt: null,
+	deleteReason: null,
 	createdAt: new Date(),
 	...overrides,
 })
@@ -80,7 +83,12 @@ describe('createBudgetService', () => {
 
 		it('fills missing categories with recurring budgets from previous months', async () => {
 			const specificCategory2 = makeBudget({ id: 2, categoryId: 2 })
-			const recurringCategory1 = makeBudget({ id: 10, month: APR_2026, categoryId: 1, isRecurring: true })
+			const recurringCategory1 = makeBudget({
+				id: 10,
+				month: APR_2026,
+				categoryId: 1,
+				isRecurring: true,
+			})
 			vi.mocked(repo.findByMonth).mockResolvedValue([specificCategory2])
 			vi.mocked(repo.findRecurring).mockResolvedValue([recurringCategory1])
 
@@ -93,7 +101,12 @@ describe('createBudgetService', () => {
 
 		it('does not add recurring budget when specific already exists for that category', async () => {
 			const specific = makeBudget({ categoryId: 1 })
-			const recurring = makeBudget({ id: 10, month: APR_2026, categoryId: 1, isRecurring: true })
+			const recurring = makeBudget({
+				id: 10,
+				month: APR_2026,
+				categoryId: 1,
+				isRecurring: true,
+			})
 			vi.mocked(repo.findByMonth).mockResolvedValue([specific])
 			vi.mocked(repo.findRecurring).mockResolvedValue([recurring])
 
@@ -143,7 +156,12 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(makeBudget())
 
 			await expect(
-				service.create({ month: MAY_2026, categoryId: 1, essentialityId: 1, budgetedUsd: 500 }),
+				service.create({
+					month: MAY_2026,
+					categoryId: 1,
+					essentialityId: 1,
+					budgetedUsd: 500,
+				}),
 			).rejects.toThrow('Budget already exists for this month and category')
 		})
 
@@ -172,7 +190,9 @@ describe('createBudgetService', () => {
 		it('throws when budget does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { budgetedUsd: 600 })).rejects.toThrow('Budget not found')
+			await expect(service.update(999, { budgetedUsd: 600 })).rejects.toThrow(
+				'Budget not found',
+			)
 		})
 	})
 })

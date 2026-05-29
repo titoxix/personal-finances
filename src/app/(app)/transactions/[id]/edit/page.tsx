@@ -1,8 +1,12 @@
 import { notFound } from 'next/navigation'
-import { transactionService, categoryService, essentialityService } from '@/lib/container'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
-import { updateTransaction, deleteTransaction } from '../../actions'
+import {
+	categoryService,
+	essentialityService,
+	transactionService,
+} from '@/lib/container'
 import type { CreateTransactionPayload } from '../../actions'
+import { deleteTransaction, updateTransaction } from '../../actions'
 
 export default async function EditTransactionPage({
 	params,
