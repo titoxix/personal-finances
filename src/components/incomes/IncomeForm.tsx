@@ -60,12 +60,12 @@ function fmtDate(date: Date | string): string {
 export function IncomeForm(props: Props) {
 	const latestRates = props.latestRates ?? []
 
-	// El mejor tipo de cambio es el que tiene mayor rateSell (más Gs por USD al cambiar)
+	// El mejor tipo de cambio es el que tiene mayor rateBuy (más Gs por USD al vender al banco)
 	const bestRateId = latestRates.reduce<number | null>((bestId, rate) => {
-		if (rate.rateSell == null) return bestId
+		if (rate.rateBuy == null) return bestId
 		if (bestId === null) return rate.id
 		const best = latestRates.find((r) => r.id === bestId)
-		return (rate.rateSell ?? 0) > (best?.rateSell ?? 0) ? rate.id : bestId
+		return (rate.rateBuy ?? 0) > (best?.rateBuy ?? 0) ? rate.id : bestId
 	}, null)
 
 	const [month, setMonth] = useState(currentMonthISO())
@@ -276,7 +276,7 @@ export function IncomeForm(props: Props) {
 					<div className="flex gap-2 pt-1">
 						{latestRates.map((rate) => {
 							const isBest = rate.id === bestRateId
-							const displayRate = rate.rateSell ?? rate.rateMid
+							const displayRate = rate.rateBuy ?? rate.rateMid
 							if (displayRate == null) return null
 							const isSelected = exchangeRate === displayRate.toString()
 
