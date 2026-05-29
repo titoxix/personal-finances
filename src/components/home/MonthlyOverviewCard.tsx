@@ -1,4 +1,5 @@
-import { Calendar } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 
 const MONTHS = [
 	'Enero',
@@ -24,6 +25,8 @@ type Props = {
 	totalSpentGs: number
 	capGs: number
 	spentPct: number
+	prevHref: string
+	nextHref?: string
 	incomeGs?: {
 		grossGs: number
 		investmentGs: number
@@ -38,6 +41,8 @@ export function MonthlyOverviewCard({
 	totalSpentGs,
 	capGs,
 	spentPct,
+	prevHref,
+	nextHref,
 	incomeGs,
 }: Props) {
 	const monthName = MONTHS[month.getUTCMonth()]
@@ -63,10 +68,28 @@ export function MonthlyOverviewCard({
 				<Calendar className="h-4 w-4 text-[#003824]/70" />
 			</div>
 
-			{/* Month */}
-			<h2 className="relative mt-1 text-2xl font-bold tracking-tight text-[#003824] lg:text-3xl">
-				{monthName} {year}
-			</h2>
+			{/* Month with navigation */}
+			<div className="relative mt-1 flex items-center gap-1">
+				<Link
+					href={prevHref}
+					className="rounded-full p-0.5 text-[#003824]/60 transition-colors hover:bg-white/20 hover:text-[#003824]"
+				>
+					<ChevronLeft className="h-5 w-5" />
+				</Link>
+				<h2 className="flex-1 text-center text-2xl font-bold tracking-tight text-[#003824] lg:text-3xl">
+					{monthName} {year}
+				</h2>
+				{nextHref ? (
+					<Link
+						href={nextHref}
+						className="rounded-full p-0.5 text-[#003824]/60 transition-colors hover:bg-white/20 hover:text-[#003824]"
+					>
+						<ChevronRight className="h-5 w-5" />
+					</Link>
+				) : (
+					<div className="h-6 w-6" />
+				)}
+			</div>
 
 			{/* Amounts */}
 			<p className="relative mt-1 font-mono text-sm text-[#003824]/80">

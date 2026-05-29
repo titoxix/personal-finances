@@ -12,9 +12,40 @@ import {
 	transactionService,
 } from '@/lib/container'
 
-export default async function HomePage() {
+function monthHref(d: Date) {
+	return `/?month=${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+}
+
+export default async function HomePage({
+	searchParams,
+}: {
+	searchParams: Promise<{ month?: string }>
+}) {
+	const { month: monthParam } = await searchParams
 	const now = new Date()
-	const currentMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+	const realCurrentMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth(), 1))
+	const maxMonth = new Date(
+		Date.UTC(realCurrentMonth.getUTCFullYear(), realCurrentMonth.getUTCMonth() + 1, 1),
+	)
+
+	let currentMonth: Date
+	if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+		const [y, m] = monthParam.split('-').map(Number)
+		const parsed = new Date(Date.UTC(y, m - 1, 1))
+		currentMonth = parsed > maxMonth ? maxMonth : parsed
+	} else {
+		currentMonth = realCurrentMonth
+	}
+
+	const prevMonthDate = new Date(
+		Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() - 1, 1),
+	)
+	const nextMonthDate = new Date(
+		Date.UTC(currentMonth.getUTCFullYear(), currentMonth.getUTCMonth() + 1, 1),
+	)
+	const prevHref = monthHref(prevMonthDate)
+	const nextHref =
+		nextMonthDate <= maxMonth ? monthHref(nextMonthDate) : undefined
 
 	const [
 		allTransactions,
@@ -105,7 +136,7 @@ export default async function HomePage() {
 	// el "libre" resultante es conservador (puede sobreestimar si ya
 	// registraste el pago como transacción, pero nunca te dice que
 	// tenés más de lo que realmente tenés).
-	const currentMonthNum = now.getUTCMonth() + 1 // 1-12
+	const currentMonthNum = currentMonth.getUTCMonth() + 1 // 1-12
 	const monthlyRecurring = activeRecurring.filter((item) => {
 		if (item.frequency === 'monthly') return true
 		return item.billingMonth === currentMonthNum
@@ -169,6 +200,8 @@ export default async function HomePage() {
 				capGs={capGs}
 				spentPct={spentPct}
 				incomeGs={incomeGs}
+				prevHref={prevHref}
+				nextHref={nextHref}
 			/>
 			<BudgetSection items={budgetItems} alertCount={alertCount} />
 			<TransactionSection transactions={recentTransactions} />
