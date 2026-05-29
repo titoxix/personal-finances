@@ -6,6 +6,20 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
+# Definition of Done
+
+**Every task is complete only when all three checks pass.** Run them in this order after any change, before reporting the task as done:
+
+```bash
+pnpm check          # Biome: lint + format (0 errors required)
+pnpm typecheck      # TypeScript: tsc --noEmit (0 type errors required)
+pnpm test:run       # Vitest: all tests must pass
+```
+
+If any check fails, fix the issue and re-run before proceeding. Do not skip, suppress, or work around a failing check — fix the root cause.
+
+---
+
 # Architecture
 
 Personal finance PWA (mobile-first). Backend and frontend live in the same Next.js project.
