@@ -48,8 +48,8 @@ const SOURCE_LABEL: Record<string, string> = {
 	bcp: 'BCP',
 }
 
-function fmtDate(date: Date): string {
-	return date.toLocaleDateString('es-PY', {
+function fmtDate(date: Date | string): string {
+	return new Date(date).toLocaleDateString('es-PY', {
 		day: '2-digit',
 		month: 'short',
 		hour: '2-digit',
