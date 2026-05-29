@@ -1,73 +1,73 @@
 # Personal Finances
 
-PWA mobile-first para el control de finanzas personales.
+Mobile-first PWA for personal finance tracking.
 
 ## Stack
 
 - **Framework:** Next.js 16 (App Router)
 - **ORM:** Prisma 7
-- **Validación:** Zod 4
+- **Validation:** Zod 4
 - **UI:** shadcn/ui (Radix, Nova preset) + Tailwind CSS 4
 - **Testing:** Vitest + React Testing Library
-- **Linting/Formato:** Biome 2
-- **Lenguaje:** TypeScript
+- **Linting/Formatting:** Biome 2
+- **Language:** TypeScript
 - **Node:** 22.20.0
 
-## Requisitos
+## Requirements
 
-- Node 22.20.0 (usar `nvm use`)
+- Node 22.20.0 (use `nvm use`)
 - pnpm
 - Docker
 
-## Desarrollo
+## Development
 
 ```bash
-pnpm install       # instalar dependencias
-pnpm db:up         # levantar PostgreSQL con Docker
-pnpm dev           # iniciar servidor de desarrollo
+pnpm install       # install dependencies
+pnpm db:up         # start PostgreSQL with Docker
+pnpm dev           # start development server
 ```
 
-Abre [http://localhost:3000](http://localhost:3000) en el navegador.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Base de datos
+## Database
 
-Dos instancias PostgreSQL via Docker Compose:
+Two PostgreSQL instances via Docker Compose:
 
-| Instancia | Puerto | Base de datos | Uso |
+| Instance | Port | Database | Purpose |
 |---|---|---|---|
-| `db` | `5432` | `personal_finances` | Desarrollo |
+| `db` | `5432` | `personal_finances` | Development |
 | `db_test` | `5433` | `personal_finances_test` | Tests |
 
-Credenciales por defecto (ver `.env.example`): usuario `postgres`, contraseña `postgres`.
+Default credentials (see `.env.example`): user `postgres`, password `postgres`.
 
 ```bash
-pnpm db:up         # levantar contenedores
-pnpm db:down       # detener contenedores
-pnpm db:reset      # borrar volúmenes y reiniciar limpio
+pnpm db:up         # start containers
+pnpm db:down       # stop containers
+pnpm db:reset      # delete volumes and restart clean
 ```
 
-Migraciones:
+Migrations:
 
 ```bash
-pnpm prisma migrate dev   # aplicar migraciones en dev
-pnpm prisma generate      # regenerar cliente Prisma
+pnpm prisma migrate dev   # apply migrations in dev
+pnpm prisma generate      # regenerate Prisma client
 ```
 
 ## Scripts
 
-| Comando | Descripción |
+| Command | Description |
 |---|---|
-| `pnpm dev` | Servidor de desarrollo |
-| `pnpm build` | Build de producción |
-| `pnpm test` | Tests en modo watch |
-| `pnpm test:run` | Tests en modo CI |
-| `pnpm test:coverage` | Tests con reporte de coverage |
-| `pnpm check` | Lint + formato (read-only) |
-| `pnpm check:fix` | Lint + formato con auto-fix |
-| `pnpm db:up` | Levantar bases de datos |
-| `pnpm db:down` | Detener bases de datos |
-| `pnpm db:reset` | Resetear bases de datos |
+| `pnpm dev` | Development server |
+| `pnpm build` | Production build |
+| `pnpm test` | Tests in watch mode |
+| `pnpm test:run` | Tests in CI mode |
+| `pnpm test:coverage` | Tests with coverage report |
+| `pnpm check` | Lint + format (read-only) |
+| `pnpm check:fix` | Lint + format with auto-fix |
+| `pnpm db:up` | Start databases |
+| `pnpm db:down` | Stop databases |
+| `pnpm db:reset` | Reset databases |
 
-## Arquitectura
+## Architecture
 
-Ver [AGENTS.md](./AGENTS.md) para la documentación completa de arquitectura y convenciones.
+See [AGENTS.md](./AGENTS.md) for the full architecture and conventions documentation.
