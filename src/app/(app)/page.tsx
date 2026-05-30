@@ -197,10 +197,10 @@ export default async function HomePage({
 		(b) => b.budgeted > 0 && b.spent / b.budgeted >= 0.75,
 	).length
 
-	// Últimas 5 transacciones (todos los tiempos)
-	const recentTransactions: TransactionRow[] = [...allTransactions]
+	// Últimas 5 transacciones del mes seleccionado
+	const recentTransactions: TransactionRow[] = [...monthTransactions]
 		.sort((a, b) => b.date.getTime() - a.date.getTime())
-		.slice(0, 5)
+		.slice(0, 10)
 		.map((tx) => ({
 			id: tx.id,
 			description: tx.description,
