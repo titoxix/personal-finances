@@ -183,14 +183,17 @@ export default async function HomePage({
 				investmentGs: income.automaticInvestmentUsd * refRate,
 				spentGs: totalSpentGs,
 				pendingGs: pendingRecurringGs + pendingInstallmentsGs,
-				freeGs: Math.max(
+				freeGs:
 					capGs - totalSpentGs - pendingRecurringGs - pendingInstallmentsGs,
-					0,
-				),
 				projectedGs:
 					pendingRecurringGs +
 					pendingInstallmentsGs +
 					totalBudgetedFromBudgetsGs,
+				libreProyectadoGs:
+					capGs -
+					(pendingRecurringGs +
+						pendingInstallmentsGs +
+						totalBudgetedFromBudgetsGs),
 			}
 		: undefined
 	const alertCount = budgetItems.filter(

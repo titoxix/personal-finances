@@ -21,6 +21,12 @@ function gs(amount: number) {
 	return `₲ ${new Intl.NumberFormat('es-PY').format(Math.round(amount))}`
 }
 
+function freeColor(amount: number, cap: number): string {
+	if (amount < 0) return 'text-red-400'
+	if (cap > 0 && amount / cap < 0.15) return 'text-orange-300'
+	return 'text-[#003824]'
+}
+
 type Props = {
 	month: Date
 	totalSpentGs: number
@@ -35,6 +41,7 @@ type Props = {
 		pendingGs: number
 		freeGs: number
 		projectedGs: number
+		libreProyectadoGs: number
 	}
 }
 
@@ -159,7 +166,9 @@ export function MonthlyOverviewCard({
 								<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
 									Libre
 								</p>
-								<p className="font-mono text-sm font-bold text-[#003824]">
+								<p
+									className={`font-mono text-sm font-bold ${freeColor(incomeGs.freeGs, capGs)}`}
+								>
 									{gs(incomeGs.freeGs)}
 								</p>
 							</div>
@@ -191,6 +200,16 @@ export function MonthlyOverviewCard({
 									{gs(incomeGs.spentGs)} (
 									{Math.round((incomeGs.spentGs / incomeGs.projectedGs) * 100)}
 									%)
+								</span>
+							</div>
+							<div className="mt-1 flex items-center justify-between">
+								<span className="text-[10px] text-[#003824]/50">
+									Libre proyectado
+								</span>
+								<span
+									className={`font-mono text-[10px] font-semibold ${freeColor(incomeGs.libreProyectadoGs, capGs)}`}
+								>
+									{gs(incomeGs.libreProyectadoGs)}
 								</span>
 							</div>
 						</div>
