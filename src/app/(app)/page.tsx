@@ -159,7 +159,13 @@ export default async function HomePage({
 	// Mismo criterio conservador que los recurrentes: si ya registraste el pago como
 	// transacción, el libre queda ligeramente subestimado, pero nunca te dice que tenés más.
 	const pendingInstallmentsGs = activePlans
-		.filter((p) => p.installmentsPaid < p.installmentsTotal)
+		.filter((p) => {
+			if (p.installmentsPaid >= p.installmentsTotal) return false
+			const planStartMonth = new Date(
+				Date.UTC(p.startDate.getUTCFullYear(), p.startDate.getUTCMonth(), 1),
+			)
+			return planStartMonth <= currentMonth
+		})
 		.reduce((sum, p) => {
 			const amountGs =
 				p.installmentAmountGs ??
@@ -181,6 +187,10 @@ export default async function HomePage({
 					capGs - totalSpentGs - pendingRecurringGs - pendingInstallmentsGs,
 					0,
 				),
+				projectedGs:
+					pendingRecurringGs +
+					pendingInstallmentsGs +
+					totalBudgetedFromBudgetsGs,
 			}
 		: undefined
 	const alertCount = budgetItems.filter(
