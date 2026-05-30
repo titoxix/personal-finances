@@ -1,5 +1,6 @@
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+import { InfoPopover } from './InfoPopover'
 
 const MONTHS = [
 	'Enero',
@@ -143,9 +144,12 @@ export function MonthlyOverviewCard({
 							</div>
 							<div className="h-6 w-px bg-white/20" />
 							<div className="text-center">
-								<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-									Recurrentes
-								</p>
+								<div className="inline-flex items-center gap-0.5">
+									<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+										Recurrentes
+									</p>
+									<InfoPopover content="Recurrentes + cuotas" />
+								</div>
 								<p className="font-mono text-sm font-bold text-[#003824]">
 									{gs(incomeGs.pendingGs)}
 								</p>
@@ -171,8 +175,9 @@ export function MonthlyOverviewCard({
 					{incomeGs.projectedGs > 0 && (
 						<div className="relative mt-3 rounded-xl bg-white/10 px-3 py-2">
 							<div className="flex items-center justify-between">
-								<span className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+								<span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
 									Proyectado del mes
+									<InfoPopover content="Recurrentes + cuotas + suma de presupuestos del mes." />
 								</span>
 								<span className="font-mono text-sm font-bold text-[#003824]">
 									{gs(incomeGs.projectedGs)}
