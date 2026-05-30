@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { BottomNav } from '@/components/layout/BottomNav'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
