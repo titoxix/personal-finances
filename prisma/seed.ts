@@ -1,7 +1,9 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { PrismaClient } from '../src/generated/prisma/client'
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
+const connectionString = process.env.DATABASE_URL
+if (!connectionString) throw new Error('DATABASE_URL is not set')
+const adapter = new PrismaPg({ connectionString })
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
@@ -15,13 +17,15 @@ async function seedEssentialityLevels() {
 		{
 			code: 'esencial',
 			label: 'Esencial',
-			description: 'No cortable. Sin esto no funciona la vida básica del hogar.',
+			description:
+				'No cortable. Sin esto no funciona la vida básica del hogar.',
 			sortOrder: 1,
 		},
 		{
 			code: 'importante',
 			label: 'Importante',
-			description: 'Cortable con dolor. Se reconsideraría solo en crisis seria.',
+			description:
+				'Cortable con dolor. Se reconsideraría solo en crisis seria.',
 			sortOrder: 2,
 		},
 		{
@@ -41,7 +45,11 @@ async function seedEssentialityLevels() {
 	for (const level of levels) {
 		await prisma.essentialityLevel.upsert({
 			where: { code: level.code },
-			update: { label: level.label, description: level.description, sortOrder: level.sortOrder },
+			update: {
+				label: level.label,
+				description: level.description,
+				sortOrder: level.sortOrder,
+			},
 			create: level,
 		})
 	}
@@ -51,18 +59,66 @@ async function seedEssentialityLevels() {
 
 async function seedCategories() {
 	const categories = [
-		{ code: 'vivienda',        label: 'Vivienda',        description: 'Alquiler, electricidad, internet' },
-		{ code: 'salud',           label: 'Salud',           description: 'Seguros médicos, consultas, gym' },
-		{ code: 'alimentacion',    label: 'Alimentación',    description: 'Supermercado, almuerzo, delivery' },
-		{ code: 'transporte',      label: 'Transporte',      description: 'Seguro auto, nafta, car wash, parking' },
-		{ code: 'educacion',       label: 'Educación',       description: 'Cursos, plataformas, idiomas' },
-		{ code: 'familia',         label: 'Familia',         description: 'Babysitter, gastos del bebé' },
-		{ code: 'digital',         label: 'Digital',         description: 'Suscripciones y servicios digitales' },
-		{ code: 'ocio',            label: 'Ocio',            description: 'Restaurantes, cine, bares, entretenimiento' },
-		{ code: 'impuestos',       label: 'Impuestos',       description: 'IRP y obligaciones fiscales' },
-		{ code: 'compras_grandes', label: 'Compras grandes', description: 'Compras no recurrentes mayores a $200' },
-		{ code: 'inversion',       label: 'Inversión',       description: 'ETFs, fondos mutuos, activos financieros' },
-		{ code: 'otros',           label: 'Otros',           description: 'Lo que no entra en ninguna categoría' },
+		{
+			code: 'vivienda',
+			label: 'Vivienda',
+			description: 'Alquiler, electricidad, internet',
+		},
+		{
+			code: 'salud',
+			label: 'Salud',
+			description: 'Seguros médicos, consultas, gym',
+		},
+		{
+			code: 'alimentacion',
+			label: 'Alimentación',
+			description: 'Supermercado, almuerzo, delivery',
+		},
+		{
+			code: 'transporte',
+			label: 'Transporte',
+			description: 'Seguro auto, nafta, car wash, parking',
+		},
+		{
+			code: 'educacion',
+			label: 'Educación',
+			description: 'Cursos, plataformas, idiomas',
+		},
+		{
+			code: 'familia',
+			label: 'Familia',
+			description: 'Babysitter, gastos del bebé',
+		},
+		{
+			code: 'digital',
+			label: 'Digital',
+			description: 'Suscripciones y servicios digitales',
+		},
+		{
+			code: 'ocio',
+			label: 'Ocio',
+			description: 'Restaurantes, cine, bares, entretenimiento',
+		},
+		{
+			code: 'impuestos',
+			label: 'Impuestos',
+			description: 'IRP y obligaciones fiscales',
+		},
+		{
+			code: 'compras_grandes',
+			label: 'Compras grandes',
+			description: 'Compras no recurrentes mayores a $200',
+		},
+		{
+			code: 'inversion',
+			label: 'Inversión',
+			description: 'ETFs, fondos mutuos, activos financieros',
+		},
+		{
+			code: 'otros',
+			label: 'Otros',
+			description: 'Lo que no entra en ninguna categoría',
+		},
 	]
 
 	for (const category of categories) {
@@ -95,9 +151,9 @@ async function seedExchangeRates() {
 
 	await prisma.exchangeRate.createMany({
 		data: [
-			{ source: 'itau', rateBuy: 6025.00, rateSell: 6290.00 },
-			{ source: 'ueno', rateBuy: 6080.00, rateSell: 6280.00 },
-			{ source: 'bcp',  rateMid: 6187.88 },
+			{ source: 'itau', rateBuy: 6025.0, rateSell: 6290.0 },
+			{ source: 'ueno', rateBuy: 6080.0, rateSell: 6280.0 },
+			{ source: 'bcp', rateMid: 6187.88 },
 		],
 	})
 
