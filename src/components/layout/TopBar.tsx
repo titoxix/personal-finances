@@ -6,6 +6,7 @@ import {
 	BarChart2,
 	Bell,
 	CreditCard,
+	Layers,
 	LayoutDashboard,
 	Menu,
 	MoreVertical,
@@ -28,6 +29,7 @@ const STATIC_INNER_PAGES: Record<string, { title: string }> = {
 	'/categories/new': { title: 'Nueva Categoría' },
 	'/exchange-rates/new': { title: 'Nueva Tasa' },
 	'/budgets/new': { title: 'Nuevo Presupuesto' },
+	'/essentiality-levels/new': { title: 'Nuevo Nivel' },
 	'/recurring-items/new': { title: 'Nuevo Recurrente' },
 	'/incomes/new': { title: 'Nuevo Ingreso' },
 	'/installment-plans/new': { title: 'Nuevo Plan' },
@@ -41,6 +43,8 @@ function getInnerPage(pathname: string): { title: string } | undefined {
 		return { title: 'Editar Transacción' }
 	if (/^\/categories\/\d+\/edit$/.test(pathname))
 		return { title: 'Editar Categoría' }
+	if (/^\/essentiality-levels\/\d+\/edit$/.test(pathname))
+		return { title: 'Editar Nivel' }
 	if (/^\/budgets\/\d+\/edit$/.test(pathname))
 		return { title: 'Editar Presupuesto' }
 	if (/^\/recurring-items\/\d+\/edit$/.test(pathname))
@@ -62,6 +66,7 @@ const NAV_ITEMS = [
 	{ href: '/incomes', icon: Wallet, label: 'Ingresos' },
 	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
 	{ href: '/categories', icon: Tag, label: 'Categorías' },
+	{ href: '/essentiality-levels', icon: Layers, label: 'Esencialidad' },
 	{ href: '/recurring-items', icon: RefreshCw, label: 'Recurrentes' },
 	{ href: '/installment-plans', icon: CreditCard, label: 'Cuotas' },
 	{ href: '/snapshots', icon: BarChart2, label: 'Snapshots' },

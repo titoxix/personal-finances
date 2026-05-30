@@ -20,6 +20,8 @@ function isFormPage(pathname: string): boolean {
 	if (/^\/transactions\/\d+\/edit$/.test(pathname)) return true
 	if (pathname === '/categories/new') return true
 	if (/^\/categories\/\d+\/edit$/.test(pathname)) return true
+	if (pathname === '/essentiality-levels/new') return true
+	if (/^\/essentiality-levels\/\d+\/edit$/.test(pathname)) return true
 	if (pathname === '/exchange-rates/new') return true
 	if (pathname === '/budgets/new') return true
 	if (/^\/budgets\/\d+\/edit$/.test(pathname)) return true
