@@ -10,7 +10,7 @@ const manrope = Manrope({
 const jetbrainsMono = JetBrains_Mono({
 	variable: '--font-jetbrains-mono',
 	subsets: ['latin'],
-	display: 'optional',
+	display: 'swap',
 	preload: false,
 })
 
