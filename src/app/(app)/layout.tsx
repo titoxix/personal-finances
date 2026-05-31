@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { BottomNav } from '@/components/layout/BottomNav'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { SidebarLoader } from '@/components/layout/SidebarLoader'
 import { TopBar } from '@/components/layout/TopBar'
 import { monthlySnapshotService } from '@/lib/container'
 
@@ -15,7 +15,7 @@ export default async function AppLayout({
 
 	return (
 		<div className="flex min-h-screen bg-background">
-			<Sidebar balance={balance} />
+			<SidebarLoader balance={balance} />
 			<div className="flex min-w-0 flex-1 flex-col lg:ml-[240px]">
 				<TopBar balance={balance} />
 				<main className="flex-1 overflow-x-hidden px-5 py-5 pb-28 lg:px-8 lg:py-8 lg:pb-10">
