@@ -2,9 +2,9 @@ import type { MetadataRoute } from 'next'
 
 export default function manifest(): MetadataRoute.Manifest {
 	return {
-		name: 'Personal Finances',
-		short_name: 'Finanzas',
-		description: 'Seguimiento de finanzas personales',
+		name: 'Kashi - Smart Finance',
+		short_name: 'Kashi',
+		description: 'AI-powered personal finance tracker',
 		start_url: '/',
 		display: 'standalone',
 		background_color: '#0b1326',

@@ -13,12 +13,12 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-	title: 'Personal Finances',
-	description: 'Seguimiento de finanzas personales',
+	title: 'Kashi - Smart Finance',
+	description: 'AI-powered personal finance tracker',
 	appleWebApp: {
 		capable: true,
 		statusBarStyle: 'black-translucent',
-		title: 'Finanzas',
+		title: 'Kashi',
 	},
 }
 
