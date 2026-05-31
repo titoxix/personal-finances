@@ -231,46 +231,72 @@ CREATE TABLE budgets (
 ### `monthly_snapshot`
 Foto del patrimonio al cierre de cada mes. Se llena una vez al mes (~5 minutos).
 
+**Flujo de carga:**
+1. El usuario ingresa los campos manuales (ingresos, saldos bancarios, inversiones, deudas de tarjeta).
+2. El backend calcula automáticamente los campos derivados antes de persistir.
+3. El usuario nunca toca los campos calculados — son outputs, no inputs.
+
+**Campos manuales (input del usuario):**
+- Ingresos y tipo de cambio
+- Saldos de cuentas bancarias (Itaú, Ueno, Mango, GNB)
+- Saldo fondo de emergencia Investor (USD y Gs) + rendimiento
+- Valor portafolio ETF XTB + rendimiento
+- Deuda tarjeta Itaú y Ueno
+- Cuotas futuras pendientes
+
+**Campos calculados automáticamente por el backend:**
+
+| Campo | Fórmula |
+|---|---|
+| `total_debt_usd` | `(itau_card_gs + ueno_card_gs + gnb_card_gs + pending_installments_gs) / exchange_rate` |
+| `total_invested_usd` | `etf_portfolio_usd + investor_fund_usd + (investor_fund_gs / exchange_rate)` |
+| `net_worth_usd` | `activos_totales_usd − total_debt_usd` |
+| `savings_rate_pct` | `(total_invested_usd_delta / income_usd) * 100` — cuánto del ingreso bruto fue a inversión este mes |
+
+donde `activos_totales_usd` = `balance_itau_usd + (balance_itau_gs / exchange_rate) + balance_ueno_usd + (balance_ueno_gs / exchange_rate) + (balance_mango_gs / exchange_rate) + (balance_gnb_gs / exchange_rate) + total_invested_usd`
+
+> El crédito auto GNB **no se incluye en `total_debt_usd`** — está a nombre de la esposa y ella lo paga. Incluirlo distorsionaría el patrimonio neto real.
+
 ```sql
 CREATE TABLE monthly_snapshot (
   id                       SERIAL PRIMARY KEY,
   month                    DATE NOT NULL UNIQUE,       -- primer día del mes
 
-  -- Ingresos
+  -- Ingresos (manual)
   income_usd               DECIMAL(10,2),
   exchange_rate            DECIMAL(10,2),              -- tasa de referencia del mes
-  exchange_rate_id         INTEGER REFERENCES exchange_rates(id), -- referencia al registro de tasa del mes
+  exchange_rate_id         INTEGER REFERENCES exchange_rates(id),
 
-  -- Cash operativo
+  -- Cash operativo (manual)
   balance_itau_usd         DECIMAL(10,2),
   balance_itau_gs          DECIMAL(15,2),
   balance_ueno_usd         DECIMAL(10,2),
   balance_ueno_gs          DECIMAL(15,2),
   balance_mango_gs         DECIMAL(15,2),
 
-  -- GNB (compras digitales)
+  -- GNB (manual)
   balance_gnb_gs           DECIMAL(15,2),             -- saldo cuenta corriente GNB
   gnb_card_gs              DECIMAL(15,2),             -- saldo tarjeta GNB (debería ser siempre bajo)
 
-  -- Fondo de emergencia (Investor)
+  -- Fondo de emergencia Investor (manual)
   investor_fund_usd        DECIMAL(10,2),
   investor_fund_gs         DECIMAL(15,2),
   investor_return_pct      DECIMAL(5,2),              -- rendimiento últimos 12m en %
 
-  -- Inversiones largo plazo
+  -- Inversiones largo plazo (manual)
   etf_portfolio_usd        DECIMAL(10,2),
   etf_return_pct           DECIMAL(5,2),              -- rendimiento últimos 12m en %
 
-  -- Deuda
+  -- Deuda de tarjetas (manual)
   itau_card_gs             DECIMAL(15,2),             -- saldo tarjeta Itaú
   ueno_card_gs             DECIMAL(15,2),             -- saldo tarjeta Ueno
   pending_installments_gs  DECIMAL(15,2),             -- suma cuotas futuras pendientes
 
-  -- Calculados (la AI los puede calcular, pero guardarlos acelera queries históricas)
-  net_worth_usd            DECIMAL(10,2),
-  total_invested_usd       DECIMAL(10,2),
-  total_debt_usd           DECIMAL(10,2),
-  savings_rate_pct         DECIMAL(5,2),              -- % del ingreso bruto que fue a inversión/ahorro
+  -- CALCULADOS AUTOMÁTICAMENTE POR EL BACKEND — no se ingresan manualmente
+  net_worth_usd            DECIMAL(10,2),             -- activos totales − deudas totales
+  total_invested_usd       DECIMAL(10,2),             -- ETF + Investor (USD + Gs convertidos)
+  total_debt_usd           DECIMAL(10,2),             -- tarjetas + cuotas pendientes en USD
+  savings_rate_pct         DECIMAL(5,2),              -- % del ingreso bruto que fue a inversión
 
   notes                    TEXT,
   created_at               TIMESTAMP DEFAULT NOW()
