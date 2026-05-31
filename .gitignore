@@ -39,3 +39,9 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# serwist / PWA
+/public/sw.js
+/public/sw.js.map
+/public/serwist-*.js
+/public/serwist-*.js.map

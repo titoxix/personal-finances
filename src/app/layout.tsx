@@ -14,7 +14,12 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
 	title: 'Personal Finances',
-	description: 'Track your personal finances',
+	description: 'Seguimiento de finanzas personales',
+	appleWebApp: {
+		capable: true,
+		statusBarStyle: 'black-translucent',
+		title: 'Finanzas',
+	},
 }
 
 export default function RootLayout({
@@ -27,7 +32,9 @@ export default function RootLayout({
 			lang="es"
 			className={`${manrope.variable} ${jetbrainsMono.variable} h-full antialiased dark`}
 		>
-			<body className="min-h-full">{children}</body>
+			<body className="min-h-full" suppressHydrationWarning>
+				{children}
+			</body>
 		</html>
 	)
 }
