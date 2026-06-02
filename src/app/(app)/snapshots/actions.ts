@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
 import { monthlySnapshotService } from '@/lib/container'
 
 export type CreateSnapshotPayload = {
@@ -15,11 +16,6 @@ export type CreateSnapshotPayload = {
 	balanceMangoGs?: number
 	balanceGnbGs?: number
 	gnbCardGs?: number
-	investorFundUsd?: number
-	investorFundGs?: number
-	investorReturnPct?: number
-	etfPortfolioUsd?: number
-	etfReturnPct?: number
 	itauCardGs?: number
 	uenoCardGs?: number
 	pendingInstallmentsGs?: number
@@ -28,6 +24,7 @@ export type CreateSnapshotPayload = {
 	totalDebtUsd?: number
 	savingsRatePct?: number
 	notes?: string
+	investments?: CreateSnapshotInvestmentInput[]
 }
 
 export type UpdateSnapshotPayload = {
@@ -40,11 +37,6 @@ export type UpdateSnapshotPayload = {
 	balanceMangoGs?: number | null
 	balanceGnbGs?: number | null
 	gnbCardGs?: number | null
-	investorFundUsd?: number | null
-	investorFundGs?: number | null
-	investorReturnPct?: number | null
-	etfPortfolioUsd?: number | null
-	etfReturnPct?: number | null
 	itauCardGs?: number | null
 	uenoCardGs?: number | null
 	pendingInstallmentsGs?: number | null
@@ -53,6 +45,7 @@ export type UpdateSnapshotPayload = {
 	totalDebtUsd?: number | null
 	savingsRatePct?: number | null
 	notes?: string | null
+	investments?: CreateSnapshotInvestmentInput[]
 }
 
 export async function createSnapshot(

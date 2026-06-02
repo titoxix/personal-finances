@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import {
+	CreateSnapshotInvestmentSchema,
+	SnapshotInvestmentSchema,
+} from './snapshot-investment'
 
 export type SnapshotRawFields = {
 	incomeUsd?: number | null
@@ -10,9 +14,6 @@ export type SnapshotRawFields = {
 	balanceMangoGs?: number | null
 	balanceGnbGs?: number | null
 	gnbCardGs?: number | null
-	investorFundUsd?: number | null
-	investorFundGs?: number | null
-	etfPortfolioUsd?: number | null
 	itauCardGs?: number | null
 	uenoCardGs?: number | null
 	pendingInstallmentsGs?: number | null
@@ -28,6 +29,7 @@ export type SnapshotDerivedMetrics = {
 export function calculateDerivedMetrics(
 	fields: SnapshotRawFields,
 	previousTotalInvestedUsd: number | null,
+	currentTotalInvestedUsd = 0,
 ): SnapshotDerivedMetrics {
 	const n = (v: number | null | undefined): number => v ?? 0
 	const rate = fields.exchangeRateValue
@@ -48,10 +50,7 @@ export function calculateDerivedMetrics(
 			n(fields.pendingInstallmentsGs)) /
 		rate
 
-	const totalInvestedUsd =
-		n(fields.etfPortfolioUsd) +
-		n(fields.investorFundUsd) +
-		n(fields.investorFundGs) / rate
+	const totalInvestedUsd = currentTotalInvestedUsd
 
 	const activosTotalesUsd =
 		n(fields.balanceItauUsd) +
@@ -86,11 +85,6 @@ export const MonthlySnapshotSchema = z.object({
 	balanceMangoGs: z.number().nullable(),
 	balanceGnbGs: z.number().nullable(),
 	gnbCardGs: z.number().nullable(),
-	investorFundUsd: z.number().nullable(),
-	investorFundGs: z.number().nullable(),
-	investorReturnPct: z.number().nullable(),
-	etfPortfolioUsd: z.number().nullable(),
-	etfReturnPct: z.number().nullable(),
 	itauCardGs: z.number().nullable(),
 	uenoCardGs: z.number().nullable(),
 	pendingInstallmentsGs: z.number().nullable(),
@@ -100,6 +94,7 @@ export const MonthlySnapshotSchema = z.object({
 	savingsRatePct: z.number().nullable(),
 	notes: z.string().nullable(),
 	createdAt: z.date(),
+	investments: z.array(SnapshotInvestmentSchema),
 })
 export type MonthlySnapshot = z.infer<typeof MonthlySnapshotSchema>
 
@@ -115,15 +110,11 @@ export const CreateMonthlySnapshotSchema = z.object({
 	balanceMangoGs: z.number().optional(),
 	balanceGnbGs: z.number().optional(),
 	gnbCardGs: z.number().optional(),
-	investorFundUsd: z.number().optional(),
-	investorFundGs: z.number().optional(),
-	investorReturnPct: z.number().optional(),
-	etfPortfolioUsd: z.number().optional(),
-	etfReturnPct: z.number().optional(),
 	itauCardGs: z.number().optional(),
 	uenoCardGs: z.number().optional(),
 	pendingInstallmentsGs: z.number().optional(),
 	notes: z.string().optional(),
+	investments: z.array(CreateSnapshotInvestmentSchema).optional(),
 })
 export type CreateMonthlySnapshot = z.infer<typeof CreateMonthlySnapshotSchema>
 
@@ -138,14 +129,10 @@ export const UpdateMonthlySnapshotSchema = z.object({
 	balanceMangoGs: z.number().nullable().optional(),
 	balanceGnbGs: z.number().nullable().optional(),
 	gnbCardGs: z.number().nullable().optional(),
-	investorFundUsd: z.number().nullable().optional(),
-	investorFundGs: z.number().nullable().optional(),
-	investorReturnPct: z.number().nullable().optional(),
-	etfPortfolioUsd: z.number().nullable().optional(),
-	etfReturnPct: z.number().nullable().optional(),
 	itauCardGs: z.number().nullable().optional(),
 	uenoCardGs: z.number().nullable().optional(),
 	pendingInstallmentsGs: z.number().nullable().optional(),
 	notes: z.string().nullable().optional(),
+	investments: z.array(CreateSnapshotInvestmentSchema).optional(),
 })
 export type UpdateMonthlySnapshot = z.infer<typeof UpdateMonthlySnapshotSchema>

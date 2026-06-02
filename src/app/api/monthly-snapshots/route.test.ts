@@ -36,11 +36,6 @@ const snapshot = {
 	balanceMangoGs: null,
 	balanceGnbGs: null,
 	gnbCardGs: null,
-	investorFundUsd: null,
-	investorFundGs: null,
-	investorReturnPct: null,
-	etfPortfolioUsd: null,
-	etfReturnPct: null,
 	itauCardGs: null,
 	uenoCardGs: null,
 	pendingInstallmentsGs: null,
@@ -49,6 +44,7 @@ const snapshot = {
 	totalDebtUsd: null,
 	savingsRatePct: null,
 	notes: null,
+	investments: [],
 	createdAt: new Date(),
 }
 
@@ -84,6 +80,35 @@ describe('POST /api/monthly-snapshots', () => {
 		})
 		const response = await POST(request)
 		expect(response.status).toBe(400)
+	})
+
+	it('creates snapshot with investments and returns 201', async () => {
+		mockService.create.mockResolvedValue({
+			...snapshot,
+			investments: [
+				{
+					id: 1,
+					snapshotId: 1,
+					name: 'Investor',
+					currency: 'USD',
+					value: 10000,
+					returnPct: 3.2,
+					createdAt: new Date(),
+				},
+			],
+		})
+		const request = new NextRequest('http://localhost/api/monthly-snapshots', {
+			method: 'POST',
+			body: JSON.stringify({
+				month: '2026-05-01',
+				investments: [
+					{ name: 'Investor', currency: 'USD', value: 10000, returnPct: 3.2 },
+				],
+			}),
+			headers: { 'Content-Type': 'application/json' },
+		})
+		const response = await POST(request)
+		expect(response.status).toBe(201)
 	})
 
 	it('returns 409 when snapshot already exists for month', async () => {

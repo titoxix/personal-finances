@@ -37,11 +37,6 @@ const snapshot = {
 	balanceMangoGs: null,
 	balanceGnbGs: null,
 	gnbCardGs: null,
-	investorFundUsd: null,
-	investorFundGs: null,
-	investorReturnPct: null,
-	etfPortfolioUsd: null,
-	etfReturnPct: null,
 	itauCardGs: null,
 	uenoCardGs: null,
 	pendingInstallmentsGs: null,
@@ -50,6 +45,7 @@ const snapshot = {
 	totalDebtUsd: null,
 	savingsRatePct: null,
 	notes: null,
+	investments: [],
 	createdAt: new Date(),
 }
 
@@ -81,6 +77,39 @@ describe('PATCH /api/monthly-snapshots/[id]', () => {
 			{
 				method: 'PATCH',
 				body: JSON.stringify({ incomeUsd: 3500 }),
+				headers: { 'Content-Type': 'application/json' },
+			},
+		)
+		const response = await PATCH(request, {
+			params: Promise.resolve({ id: '1' }),
+		})
+		expect(response.status).toBe(200)
+	})
+
+	it('updates investments and returns 200', async () => {
+		mockService.update.mockResolvedValue({
+			...snapshot,
+			investments: [
+				{
+					id: 2,
+					snapshotId: 1,
+					name: 'ETF',
+					currency: 'USD',
+					value: 25000,
+					returnPct: 11,
+					createdAt: new Date(),
+				},
+			],
+		})
+		const request = new NextRequest(
+			'http://localhost/api/monthly-snapshots/1',
+			{
+				method: 'PATCH',
+				body: JSON.stringify({
+					investments: [
+						{ name: 'ETF', currency: 'USD', value: 25000, returnPct: 11 },
+					],
+				}),
 				headers: { 'Content-Type': 'application/json' },
 			},
 		)

@@ -8,6 +8,16 @@ import type { PrismaClient } from '@/generated/prisma/client'
 
 type Dec = { toNumber(): number } | null
 
+type PrismaSnapshotInvestment = {
+	id: number
+	snapshotId: number
+	name: string
+	currency: 'USD' | 'GS'
+	value: { toNumber(): number }
+	returnPct: { toNumber(): number } | null
+	createdAt: Date
+}
+
 type PrismaMonthlySnapshot = {
 	id: number
 	month: Date
@@ -21,11 +31,6 @@ type PrismaMonthlySnapshot = {
 	balanceMangoGs: Dec
 	balanceGnbGs: Dec
 	gnbCardGs: Dec
-	investorFundUsd: Dec
-	investorFundGs: Dec
-	investorReturnPct: Dec
-	etfPortfolioUsd: Dec
-	etfReturnPct: Dec
 	itauCardGs: Dec
 	uenoCardGs: Dec
 	pendingInstallmentsGs: Dec
@@ -35,6 +40,7 @@ type PrismaMonthlySnapshot = {
 	savingsRatePct: Dec
 	notes: string | null
 	createdAt: Date
+	investments: PrismaSnapshotInvestment[]
 }
 
 function toDomain(raw: PrismaMonthlySnapshot): MonthlySnapshot {
@@ -51,11 +57,6 @@ function toDomain(raw: PrismaMonthlySnapshot): MonthlySnapshot {
 		balanceMangoGs: raw.balanceMangoGs?.toNumber() ?? null,
 		balanceGnbGs: raw.balanceGnbGs?.toNumber() ?? null,
 		gnbCardGs: raw.gnbCardGs?.toNumber() ?? null,
-		investorFundUsd: raw.investorFundUsd?.toNumber() ?? null,
-		investorFundGs: raw.investorFundGs?.toNumber() ?? null,
-		investorReturnPct: raw.investorReturnPct?.toNumber() ?? null,
-		etfPortfolioUsd: raw.etfPortfolioUsd?.toNumber() ?? null,
-		etfReturnPct: raw.etfReturnPct?.toNumber() ?? null,
 		itauCardGs: raw.itauCardGs?.toNumber() ?? null,
 		uenoCardGs: raw.uenoCardGs?.toNumber() ?? null,
 		pendingInstallmentsGs: raw.pendingInstallmentsGs?.toNumber() ?? null,
@@ -65,6 +66,15 @@ function toDomain(raw: PrismaMonthlySnapshot): MonthlySnapshot {
 		savingsRatePct: raw.savingsRatePct?.toNumber() ?? null,
 		notes: raw.notes,
 		createdAt: raw.createdAt,
+		investments: raw.investments.map((inv) => ({
+			id: inv.id,
+			snapshotId: inv.snapshotId,
+			name: inv.name,
+			currency: inv.currency,
+			value: inv.value.toNumber(),
+			returnPct: inv.returnPct?.toNumber() ?? null,
+			createdAt: inv.createdAt,
+		})),
 	}
 }
 
@@ -75,31 +85,53 @@ export function createPrismaMonthlySnapshotRepository(
 		findAll: async () => {
 			const rows = await prisma.monthlySnapshot.findMany({
 				orderBy: { month: 'desc' },
+				include: { investments: true },
 			})
 			return rows.map(toDomain)
 		},
 		findById: async (id) => {
-			const row = await prisma.monthlySnapshot.findUnique({ where: { id } })
+			const row = await prisma.monthlySnapshot.findUnique({
+				where: { id },
+				include: { investments: true },
+			})
 			return row ? toDomain(row) : null
 		},
 		findByMonth: async (month: Date) => {
-			const row = await prisma.monthlySnapshot.findUnique({ where: { month } })
+			const row = await prisma.monthlySnapshot.findUnique({
+				where: { month },
+				include: { investments: true },
+			})
 			return row ? toDomain(row) : null
 		},
 		findLatest: async () => {
 			const row = await prisma.monthlySnapshot.findFirst({
 				orderBy: { month: 'desc' },
+				include: { investments: true },
 			})
 			return row ? toDomain(row) : null
 		},
 		create: async (input: CreateMonthlySnapshotInput) => {
-			const row = await prisma.monthlySnapshot.create({ data: input })
+			const { investments, ...snapshotData } = input
+			const row = await prisma.monthlySnapshot.create({
+				data: {
+					...snapshotData,
+					...(investments?.length && { investments: { create: investments } }),
+				},
+				include: { investments: true },
+			})
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateMonthlySnapshotInput) => {
+			const { investments, ...snapshotData } = input
 			const row = await prisma.monthlySnapshot.update({
 				where: { id },
-				data: input,
+				data: {
+					...snapshotData,
+					...(investments !== undefined && {
+						investments: { deleteMany: {}, create: investments },
+					}),
+				},
+				include: { investments: true },
 			})
 			return toDomain(row)
 		},

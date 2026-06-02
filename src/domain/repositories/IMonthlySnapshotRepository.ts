@@ -1,4 +1,5 @@
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
+import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
 
 export type CreateMonthlySnapshotInput = {
 	month: Date
@@ -12,11 +13,6 @@ export type CreateMonthlySnapshotInput = {
 	balanceMangoGs?: number
 	balanceGnbGs?: number
 	gnbCardGs?: number
-	investorFundUsd?: number
-	investorFundGs?: number
-	investorReturnPct?: number
-	etfPortfolioUsd?: number
-	etfReturnPct?: number
 	itauCardGs?: number
 	uenoCardGs?: number
 	pendingInstallmentsGs?: number
@@ -25,6 +21,7 @@ export type CreateMonthlySnapshotInput = {
 	totalDebtUsd?: number
 	savingsRatePct?: number
 	notes?: string
+	investments?: CreateSnapshotInvestmentInput[]
 }
 
 export type UpdateMonthlySnapshotInput = {
@@ -38,11 +35,6 @@ export type UpdateMonthlySnapshotInput = {
 	balanceMangoGs?: number | null
 	balanceGnbGs?: number | null
 	gnbCardGs?: number | null
-	investorFundUsd?: number | null
-	investorFundGs?: number | null
-	investorReturnPct?: number | null
-	etfPortfolioUsd?: number | null
-	etfReturnPct?: number | null
 	itauCardGs?: number | null
 	uenoCardGs?: number | null
 	pendingInstallmentsGs?: number | null
@@ -51,6 +43,7 @@ export type UpdateMonthlySnapshotInput = {
 	totalDebtUsd?: number | null
 	savingsRatePct?: number | null
 	notes?: string | null
+	investments?: CreateSnapshotInvestmentInput[]
 }
 
 export interface IMonthlySnapshotRepository {

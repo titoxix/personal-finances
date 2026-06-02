@@ -6,6 +6,16 @@ import {
 } from '@/domain/entities/monthly-snapshot'
 import type { IMonthlySnapshotRepository } from '@/domain/repositories/IMonthlySnapshotRepository'
 
+function computeInvestedUsd(
+	investments: ReadonlyArray<{ currency: string; value: number }>,
+	exchangeRate: number | null | undefined,
+): number {
+	if (!exchangeRate || investments.length === 0) return 0
+	return investments.reduce((sum, inv) => {
+		return sum + (inv.currency === 'USD' ? inv.value : inv.value / exchangeRate)
+	}, 0)
+}
+
 export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
 	return {
 		findAll: (): Promise<MonthlySnapshot[]> => repo.findAll(),
@@ -29,9 +39,14 @@ export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
 			if (existing)
 				throw new Error('MonthlySnapshot already exists for this month')
 
+			const currentTotalInvestedUsd = computeInvestedUsd(
+				input.investments ?? [],
+				input.exchangeRateValue,
+			)
 			const derived = calculateDerivedMetrics(
 				input,
 				previous?.totalInvestedUsd ?? null,
+				currentTotalInvestedUsd,
 			)
 
 			return repo.create({
@@ -71,9 +86,6 @@ export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
 				balanceMangoGs: m(input.balanceMangoGs, existing.balanceMangoGs),
 				balanceGnbGs: m(input.balanceGnbGs, existing.balanceGnbGs),
 				gnbCardGs: m(input.gnbCardGs, existing.gnbCardGs),
-				investorFundUsd: m(input.investorFundUsd, existing.investorFundUsd),
-				investorFundGs: m(input.investorFundGs, existing.investorFundGs),
-				etfPortfolioUsd: m(input.etfPortfolioUsd, existing.etfPortfolioUsd),
 				itauCardGs: m(input.itauCardGs, existing.itauCardGs),
 				uenoCardGs: m(input.uenoCardGs, existing.uenoCardGs),
 				pendingInstallmentsGs: m(
@@ -82,9 +94,18 @@ export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
 				),
 			}
 
+			const investmentsForCalc =
+				input.investments !== undefined
+					? input.investments
+					: existing.investments
+			const currentTotalInvestedUsd = computeInvestedUsd(
+				investmentsForCalc,
+				fields.exchangeRateValue,
+			)
 			const derived = calculateDerivedMetrics(
 				fields,
 				previous?.totalInvestedUsd ?? null,
+				currentTotalInvestedUsd,
 			)
 
 			return repo.update(id, {

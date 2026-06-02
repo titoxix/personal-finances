@@ -29,11 +29,6 @@ const makeSnapshot = (
 	balanceMangoGs: null,
 	balanceGnbGs: null,
 	gnbCardGs: null,
-	investorFundUsd: 10000,
-	investorFundGs: null,
-	investorReturnPct: 8.5,
-	etfPortfolioUsd: 3000,
-	etfReturnPct: 12.3,
 	itauCardGs: null,
 	uenoCardGs: null,
 	pendingInstallmentsGs: null,
@@ -43,6 +38,7 @@ const makeSnapshot = (
 	savingsRatePct: 40,
 	notes: null,
 	createdAt: new Date(),
+	investments: [],
 	...overrides,
 })
 
@@ -146,6 +142,21 @@ describe('createMonthlySnapshotService', () => {
 				'MonthlySnapshot already exists for this month',
 			)
 		})
+
+		it('passes investments to the repository', async () => {
+			const investments = [
+				{ name: 'Investor', currency: 'USD' as const, value: 10000 },
+			]
+			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(null)
+			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
+
+			await service.create({ month: MAY_2026, investments })
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ investments }),
+			)
+		})
 	})
 
 	describe('update', () => {
@@ -187,12 +198,14 @@ describe('createMonthlySnapshotService', () => {
 			balanceMangoGs: 0,
 			balanceGnbGs: 0,
 			gnbCardGs: 0,
-			investorFundUsd: 8000,
-			investorFundGs: 7800000,
-			etfPortfolioUsd: 3000,
 			itauCardGs: 780000,
 			uenoCardGs: 780000,
 			pendingInstallmentsGs: 0,
+			investments: [
+				{ name: 'ETF Portfolio', currency: 'USD' as const, value: 3000 },
+				{ name: 'Investor Fund USD', currency: 'USD' as const, value: 8000 },
+				{ name: 'Investor Fund GS', currency: 'GS' as const, value: 7800000 },
+			],
 		}
 
 		it('computes correct derived values when all fields are present', async () => {

@@ -8,7 +8,9 @@ import type {
 } from '@/app/(app)/snapshots/actions'
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
 import { calculateDerivedMetrics } from '@/domain/entities/monthly-snapshot'
+import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
 import { formatAmountDisplay, parseAmountInput } from '@/lib/utils'
+import { InvestmentList } from './InvestmentList'
 
 const MONTHS_ES = [
 	'Enero',
@@ -69,11 +71,22 @@ type EditProps = {
 
 type Props = NewProps | EditProps
 
-function SectionHeader({ label }: { label: string }) {
+function FormSection({
+	title,
+	children,
+}: {
+	title: string
+	children: React.ReactNode
+}) {
 	return (
-		<p className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-			{label}
-		</p>
+		<div className="rounded-2xl border border-border bg-card overflow-hidden">
+			<div className="px-4 pt-3.5 pb-3 border-b border-border/50">
+				<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+					{title}
+				</p>
+			</div>
+			<div className="px-4 py-4 space-y-4">{children}</div>
+		</div>
 	)
 }
 
@@ -85,6 +98,7 @@ function FieldRow({
 	placeholder,
 	decimal,
 	pct,
+	hint,
 }: {
 	id: string
 	label: string
@@ -93,6 +107,7 @@ function FieldRow({
 	placeholder: string
 	decimal?: boolean
 	pct?: boolean
+	hint?: string
 }) {
 	return (
 		<div className="space-y-1.5">
@@ -111,8 +126,9 @@ function FieldRow({
 					)
 				}
 				placeholder={placeholder}
-				className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
+				className="w-full rounded-2xl border border-border bg-input px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
 			/>
+			{hint && <p className="text-xs text-primary/80">{hint}</p>}
 		</div>
 	)
 }
@@ -185,20 +201,15 @@ export function MonthlySnapshotForm(props: Props) {
 	)
 
 	// Inversiones
-	const [investorFundUsd, setInvestorFundUsd] = useState(
-		iv?.investorFundUsd?.toString() ?? '',
-	)
-	const [investorFundGs, setInvestorFundGs] = useState(
-		iv?.investorFundGs?.toString() ?? '',
-	)
-	const [investorReturnPct, setInvestorReturnPct] = useState(
-		iv?.investorReturnPct?.toString() ?? '',
-	)
-	const [etfPortfolioUsd, setEtfPortfolioUsd] = useState(
-		iv?.etfPortfolioUsd?.toString() ?? '',
-	)
-	const [etfReturnPct, setEtfReturnPct] = useState(
-		iv?.etfReturnPct?.toString() ?? '',
+	const [investments, setInvestments] = useState<
+		CreateSnapshotInvestmentInput[]
+	>(
+		iv?.investments.map(({ name, currency, value, returnPct }) => ({
+			name,
+			currency,
+			value,
+			...(returnPct != null && { returnPct }),
+		})) ?? [],
 	)
 
 	// Notas
@@ -208,6 +219,12 @@ export function MonthlySnapshotForm(props: Props) {
 	const [isPending, startTransition] = useTransition()
 
 	// Métricas calculadas en tiempo real
+	const rate = numOpt(exchangeRateValue) ?? 0
+	const currentTotalInvestedUsd = investments.reduce((sum, inv) => {
+		if (inv.currency === 'USD') return sum + inv.value
+		return rate > 0 ? sum + inv.value / rate : sum
+	}, 0)
+
 	const derived = calculateDerivedMetrics(
 		{
 			incomeUsd: numOpt(incomeUsd),
@@ -219,14 +236,12 @@ export function MonthlySnapshotForm(props: Props) {
 			balanceMangoGs: numOpt(balanceMangoGs),
 			balanceGnbGs: numOpt(balanceGnbGs),
 			gnbCardGs: numOpt(gnbCardGs),
-			investorFundUsd: numOpt(investorFundUsd),
-			investorFundGs: numOpt(investorFundGs),
-			etfPortfolioUsd: numOpt(etfPortfolioUsd),
 			itauCardGs: numOpt(itauCardGs),
 			uenoCardGs: numOpt(uenoCardGs),
 			pendingInstallmentsGs: numOpt(pendingInstallmentsGs),
 		},
 		previousTotalInvestedUsd,
+		currentTotalInvestedUsd,
 	)
 
 	const isValid = mode === 'create' ? month !== '' : true
@@ -255,11 +270,7 @@ export function MonthlySnapshotForm(props: Props) {
 					uenoCardGs: numOpt(uenoCardGs),
 					gnbCardGs: numOpt(gnbCardGs),
 					pendingInstallmentsGs: numOpt(pendingInstallmentsGs),
-					investorFundUsd: numOpt(investorFundUsd),
-					investorFundGs: numOpt(investorFundGs),
-					investorReturnPct: numOpt(investorReturnPct),
-					etfPortfolioUsd: numOpt(etfPortfolioUsd),
-					etfReturnPct: numOpt(etfReturnPct),
+					investments: investments.length > 0 ? investments : undefined,
 					notes: notes.trim() || undefined,
 				})
 			} else {
@@ -276,11 +287,7 @@ export function MonthlySnapshotForm(props: Props) {
 					uenoCardGs: numOrNull(uenoCardGs),
 					gnbCardGs: numOrNull(gnbCardGs),
 					pendingInstallmentsGs: numOrNull(pendingInstallmentsGs),
-					investorFundUsd: numOrNull(investorFundUsd),
-					investorFundGs: numOrNull(investorFundGs),
-					investorReturnPct: numOrNull(investorReturnPct),
-					etfPortfolioUsd: numOrNull(etfPortfolioUsd),
-					etfReturnPct: numOrNull(etfReturnPct),
+					investments: investments,
 					notes: notes.trim() || null,
 				})
 			}
@@ -292,215 +299,191 @@ export function MonthlySnapshotForm(props: Props) {
 	return (
 		<div className="space-y-4 pb-6">
 			{/* Mes */}
-			<SectionHeader label="Mes" />
-			{mode === 'create' ? (
-				<div className="space-y-1.5">
-					<label
-						htmlFor="snap-month"
-						className="text-sm font-semibold text-foreground"
-					>
-						Mes <span className="text-primary">*</span>
-					</label>
-					<input
-						id="snap-month"
-						type="month"
-						value={month}
-						onChange={(e) => setMonth(e.target.value)}
-						className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/60 transition-colors"
-					/>
-				</div>
-			) : (
-				<div className="rounded-2xl border border-border bg-card px-4 py-3.5 text-sm font-semibold text-foreground">
-					{iv?.month ? formatMonthLabel(iv.month) : '—'}
-				</div>
-			)}
-
-			{/* Ingresos y tipo de cambio */}
-			<SectionHeader label="Ingresos y tipo de cambio" />
-			<FieldRow
-				id="snap-income-usd"
-				label="Ingreso del mes (USD)"
-				value={incomeUsd}
-				onChange={setIncomeUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-exchange-rate"
-				label="Tipo de cambio (Gs/USD)"
-				value={exchangeRateValue}
-				onChange={setExchangeRateValue}
-				placeholder="0"
-			/>
-
-			{/* Saldos bancarios */}
-			<SectionHeader label="Saldos bancarios" />
-			<FieldRow
-				id="snap-itau-usd"
-				label="Itaú (USD)"
-				value={balanceItauUsd}
-				onChange={setBalanceItauUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-itau-gs"
-				label="Itaú (Gs)"
-				value={balanceItauGs}
-				onChange={setBalanceItauGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-ueno-usd"
-				label="Ueno (USD)"
-				value={balanceUenoUsd}
-				onChange={setBalanceUenoUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-ueno-gs"
-				label="Ueno (Gs)"
-				value={balanceUenoGs}
-				onChange={setBalanceUenoGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-mango-gs"
-				label="Mango (Gs)"
-				value={balanceMangoGs}
-				onChange={setBalanceMangoGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-gnb-gs"
-				label="GNB (Gs)"
-				value={balanceGnbGs}
-				onChange={setBalanceGnbGs}
-				placeholder="0"
-			/>
-
-			{/* Deudas de tarjetas */}
-			<SectionHeader label="Deudas de tarjetas" />
-			<FieldRow
-				id="snap-itau-card-gs"
-				label="Tarjeta Itaú (Gs)"
-				value={itauCardGs}
-				onChange={setItauCardGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-ueno-card-gs"
-				label="Tarjeta Ueno (Gs)"
-				value={uenoCardGs}
-				onChange={setUenoCardGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-gnb-card-gs"
-				label="Tarjeta GNB (Gs)"
-				value={gnbCardGs}
-				onChange={setGnbCardGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-pending-installments-gs"
-				label="Cuotas pendientes (Gs)"
-				value={pendingInstallmentsGs}
-				onChange={setPendingInstallmentsGs}
-				placeholder="0"
-			/>
-
-			{/* Inversiones */}
-			<SectionHeader label="Inversiones" />
-			<FieldRow
-				id="snap-investor-fund-usd"
-				label="Fondo de inversión (USD)"
-				value={investorFundUsd}
-				onChange={setInvestorFundUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-investor-fund-gs"
-				label="Fondo de inversión (Gs)"
-				value={investorFundGs}
-				onChange={setInvestorFundGs}
-				placeholder="0"
-			/>
-			<FieldRow
-				id="snap-investor-return-pct"
-				label="Rendimiento fondo (%)"
-				value={investorReturnPct}
-				onChange={setInvestorReturnPct}
-				placeholder="0.00"
-				pct
-			/>
-			<FieldRow
-				id="snap-etf-usd"
-				label="Portafolio ETF (USD)"
-				value={etfPortfolioUsd}
-				onChange={setEtfPortfolioUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-etf-return-pct"
-				label="Rendimiento ETF (%)"
-				value={etfReturnPct}
-				onChange={setEtfReturnPct}
-				placeholder="0.00"
-				pct
-			/>
-
-			{/* Métricas calculadas */}
-			<SectionHeader label="Métricas" />
-			<div className="rounded-2xl border border-border bg-card px-4 py-4 space-y-3">
-				<p className="text-xs text-muted-foreground">
-					Calculadas automáticamente a partir de los datos ingresados
-				</p>
-				{!exchangeRateValue && (
-					<p className="text-xs text-muted-foreground/60 italic">
-						Ingresá el tipo de cambio para ver los valores
+			<FormSection title="Mes">
+				{mode === 'create' ? (
+					<div className="space-y-1.5">
+						<label
+							htmlFor="snap-month"
+							className="text-sm font-semibold text-foreground"
+						>
+							Mes <span className="text-primary">*</span>
+						</label>
+						<input
+							id="snap-month"
+							type="month"
+							value={month}
+							onChange={(e) => setMonth(e.target.value)}
+							className="w-full rounded-2xl border border-border bg-input px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/60 transition-colors"
+						/>
+					</div>
+				) : (
+					<p className="text-sm font-semibold text-foreground">
+						{iv?.month ? formatMonthLabel(iv.month) : '—'}
 					</p>
 				)}
-				<MetricRow label="Net worth (USD)" value={derived.netWorthUsd} isUsd />
-				<MetricRow
-					label="Total invertido (USD)"
-					value={derived.totalInvestedUsd}
-					isUsd
+			</FormSection>
+
+			{/* Ingresos y tipo de cambio */}
+			<FormSection title="Ingresos y tipo de cambio">
+				<FieldRow
+					id="snap-income-usd"
+					label="Ingreso del mes (USD)"
+					value={incomeUsd}
+					onChange={setIncomeUsd}
+					placeholder="0.00"
+					decimal
 				/>
-				<MetricRow
-					label="Deuda total (USD)"
-					value={derived.totalDebtUsd}
-					isUsd
+				<FieldRow
+					id="snap-exchange-rate"
+					label="Tipo de cambio (Gs/USD)"
+					value={exchangeRateValue}
+					onChange={setExchangeRateValue}
+					placeholder="0"
+					hint="Usá el tipo de cambio de referencia oficial del Banco Central (BCP)"
 				/>
-				<MetricRow
-					label="Tasa de ahorro"
-					value={derived.savingsRatePct}
-					isPct
+			</FormSection>
+
+			{/* Saldos bancarios */}
+			<FormSection title="Saldos bancarios">
+				<FieldRow
+					id="snap-itau-usd"
+					label="Itaú (USD)"
+					value={balanceItauUsd}
+					onChange={setBalanceItauUsd}
+					placeholder="0.00"
+					decimal
 				/>
-			</div>
+				<FieldRow
+					id="snap-itau-gs"
+					label="Itaú (Gs)"
+					value={balanceItauGs}
+					onChange={setBalanceItauGs}
+					placeholder="0"
+				/>
+				<FieldRow
+					id="snap-ueno-usd"
+					label="Ueno (USD)"
+					value={balanceUenoUsd}
+					onChange={setBalanceUenoUsd}
+					placeholder="0.00"
+					decimal
+				/>
+				<FieldRow
+					id="snap-ueno-gs"
+					label="Ueno (Gs)"
+					value={balanceUenoGs}
+					onChange={setBalanceUenoGs}
+					placeholder="0"
+				/>
+				<FieldRow
+					id="snap-mango-gs"
+					label="Mango (Gs)"
+					value={balanceMangoGs}
+					onChange={setBalanceMangoGs}
+					placeholder="0"
+				/>
+				<FieldRow
+					id="snap-gnb-gs"
+					label="GNB (Gs)"
+					value={balanceGnbGs}
+					onChange={setBalanceGnbGs}
+					placeholder="0"
+				/>
+			</FormSection>
+
+			{/* Deudas de tarjetas */}
+			<FormSection title="Deudas de tarjetas">
+				<FieldRow
+					id="snap-itau-card-gs"
+					label="Tarjeta Itaú (Gs)"
+					value={itauCardGs}
+					onChange={setItauCardGs}
+					placeholder="0"
+				/>
+				<FieldRow
+					id="snap-ueno-card-gs"
+					label="Tarjeta Ueno (Gs)"
+					value={uenoCardGs}
+					onChange={setUenoCardGs}
+					placeholder="0"
+				/>
+				<FieldRow
+					id="snap-gnb-card-gs"
+					label="Tarjeta GNB (Gs)"
+					value={gnbCardGs}
+					onChange={setGnbCardGs}
+					placeholder="0"
+				/>
+				<FieldRow
+					id="snap-pending-installments-gs"
+					label="Cuotas pendientes (Gs)"
+					value={pendingInstallmentsGs}
+					onChange={setPendingInstallmentsGs}
+					placeholder="0"
+				/>
+			</FormSection>
+
+			{/* Inversiones */}
+			<FormSection title="Inversiones">
+				<InvestmentList value={investments} onChange={setInvestments} />
+			</FormSection>
+
+			{/* Métricas calculadas */}
+			<FormSection title="Métricas">
+				<div className="space-y-3">
+					<p className="text-xs text-muted-foreground">
+						Calculadas automáticamente a partir de los datos ingresados
+					</p>
+					{!exchangeRateValue && (
+						<p className="text-xs text-muted-foreground/60 italic">
+							Ingresá el tipo de cambio para ver los valores
+						</p>
+					)}
+					<MetricRow
+						label="Net worth (USD)"
+						value={derived.netWorthUsd}
+						isUsd
+					/>
+					<MetricRow
+						label="Total invertido (USD)"
+						value={derived.totalInvestedUsd}
+						isUsd
+					/>
+					<MetricRow
+						label="Deuda total (USD)"
+						value={derived.totalDebtUsd}
+						isUsd
+					/>
+					<MetricRow
+						label="Tasa de ahorro"
+						value={derived.savingsRatePct}
+						isPct
+					/>
+				</div>
+			</FormSection>
 
 			{/* Notas */}
-			<SectionHeader label="Notas" />
-			<div className="space-y-1.5">
-				<label
-					htmlFor="snap-notes"
-					className="text-sm font-semibold text-foreground"
-				>
-					Notas{' '}
-					<span className="font-normal text-muted-foreground">(Opcional)</span>
-				</label>
-				<textarea
-					id="snap-notes"
-					value={notes}
-					onChange={(e) => setNotes(e.target.value)}
-					placeholder="Contexto del mes, eventos relevantes..."
-					rows={3}
-					className="w-full resize-none rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
-				/>
-			</div>
+			<FormSection title="Notas">
+				<div className="space-y-1.5">
+					<label
+						htmlFor="snap-notes"
+						className="text-sm font-semibold text-foreground"
+					>
+						Notas{' '}
+						<span className="font-normal text-muted-foreground">
+							(Opcional)
+						</span>
+					</label>
+					<textarea
+						id="snap-notes"
+						value={notes}
+						onChange={(e) => setNotes(e.target.value)}
+						placeholder="Contexto del mes, eventos relevantes..."
+						rows={3}
+						className="w-full resize-none rounded-2xl border border-border bg-input px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
+					/>
+				</div>
+			</FormSection>
 
 			{/* Error */}
 			{error && (

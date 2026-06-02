@@ -30,6 +30,11 @@ enum RecurringFrequency {
   annual
 }
 
+enum Currency {
+  USD
+  GS
+}
+
 // ─── Reference tables ────────────────────────────────────────────────────────
 
 model Category {
@@ -182,11 +187,6 @@ model MonthlySnapshot {
   balanceMangoGs        Decimal? @db.Decimal(15, 2) @map("balance_mango_gs")
   balanceGnbGs          Decimal? @db.Decimal(15, 2) @map("balance_gnb_gs")
   gnbCardGs             Decimal? @db.Decimal(15, 2) @map("gnb_card_gs")
-  investorFundUsd       Decimal? @db.Decimal(10, 2) @map("investor_fund_usd")
-  investorFundGs        Decimal? @db.Decimal(15, 2) @map("investor_fund_gs")
-  investorReturnPct     Decimal? @db.Decimal(5, 2) @map("investor_return_pct")
-  etfPortfolioUsd       Decimal? @db.Decimal(10, 2) @map("etf_portfolio_usd")
-  etfReturnPct          Decimal? @db.Decimal(5, 2) @map("etf_return_pct")
   itauCardGs            Decimal? @db.Decimal(15, 2) @map("itau_card_gs")
   uenoCardGs            Decimal? @db.Decimal(15, 2) @map("ueno_card_gs")
   pendingInstallmentsGs Decimal? @db.Decimal(15, 2) @map("pending_installments_gs")
@@ -197,9 +197,24 @@ model MonthlySnapshot {
   notes                 String?
   createdAt             DateTime @default(now()) @map("created_at")
 
-  exchangeRate ExchangeRate? @relation(fields: [exchangeRateId], references: [id])
+  exchangeRate ExchangeRate?        @relation(fields: [exchangeRateId], references: [id])
+  investments  SnapshotInvestment[]
 
   @@map("monthly_snapshot")
+}
+
+model SnapshotInvestment {
+  id         Int      @id @default(autoincrement())
+  snapshotId Int      @map("snapshot_id")
+  name       String   @db.VarChar(100)
+  currency   Currency
+  value      Decimal  @db.Decimal(15, 2)
+  returnPct  Decimal? @db.Decimal(5, 2) @map("return_pct")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  snapshot MonthlySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+
+  @@map("snapshot_investments")
 }
 
 model RecurringItem {
