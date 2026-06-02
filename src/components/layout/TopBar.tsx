@@ -1,9 +1,10 @@
 'use client'
 
-import { ArrowLeft, Bell, Menu, MoreVertical } from 'lucide-react'
+import { ArrowLeft, Bell, LogOut, Menu, MoreVertical } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { logoutAction } from '@/app/login/actions'
 
 const MobileDrawer = dynamic(
 	() => import('./MobileDrawer').then((m) => ({ default: m.MobileDrawer })),
@@ -107,13 +108,24 @@ export function TopBar({ balance }: Props) {
 					</div>
 				</div>
 
-				<button
-					type="button"
-					className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
-					aria-label="Notificaciones"
-				>
-					<Bell className="h-5 w-5" />
-				</button>
+				<div className="flex items-center gap-1">
+					<button
+						type="button"
+						className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+						aria-label="Notificaciones"
+					>
+						<Bell className="h-5 w-5" />
+					</button>
+					<form action={logoutAction}>
+						<button
+							type="submit"
+							className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"
+							aria-label="Cerrar sesión"
+						>
+							<LogOut className="h-5 w-5" />
+						</button>
+					</form>
+				</div>
 			</header>
 
 			{open && (
