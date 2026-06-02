@@ -1,5 +1,78 @@
 import { z } from 'zod'
 
+export type SnapshotRawFields = {
+	incomeUsd?: number | null
+	exchangeRateValue?: number | null
+	balanceItauUsd?: number | null
+	balanceItauGs?: number | null
+	balanceUenoUsd?: number | null
+	balanceUenoGs?: number | null
+	balanceMangoGs?: number | null
+	balanceGnbGs?: number | null
+	gnbCardGs?: number | null
+	investorFundUsd?: number | null
+	investorFundGs?: number | null
+	etfPortfolioUsd?: number | null
+	itauCardGs?: number | null
+	uenoCardGs?: number | null
+	pendingInstallmentsGs?: number | null
+}
+
+export type SnapshotDerivedMetrics = {
+	netWorthUsd: number | null
+	totalInvestedUsd: number | null
+	totalDebtUsd: number | null
+	savingsRatePct: number | null
+}
+
+export function calculateDerivedMetrics(
+	fields: SnapshotRawFields,
+	previousTotalInvestedUsd: number | null,
+): SnapshotDerivedMetrics {
+	const n = (v: number | null | undefined): number => v ?? 0
+	const rate = fields.exchangeRateValue
+
+	if (!rate) {
+		return {
+			totalDebtUsd: null,
+			totalInvestedUsd: null,
+			netWorthUsd: null,
+			savingsRatePct: null,
+		}
+	}
+
+	const totalDebtUsd =
+		(n(fields.itauCardGs) +
+			n(fields.uenoCardGs) +
+			n(fields.gnbCardGs) +
+			n(fields.pendingInstallmentsGs)) /
+		rate
+
+	const totalInvestedUsd =
+		n(fields.etfPortfolioUsd) +
+		n(fields.investorFundUsd) +
+		n(fields.investorFundGs) / rate
+
+	const activosTotalesUsd =
+		n(fields.balanceItauUsd) +
+		n(fields.balanceItauGs) / rate +
+		n(fields.balanceUenoUsd) +
+		n(fields.balanceUenoGs) / rate +
+		n(fields.balanceMangoGs) / rate +
+		n(fields.balanceGnbGs) / rate +
+		totalInvestedUsd
+
+	const netWorthUsd = activosTotalesUsd - totalDebtUsd
+
+	const incomeUsd = fields.incomeUsd
+	const savingsRatePct =
+		previousTotalInvestedUsd !== null && incomeUsd
+			? ((totalInvestedUsd - previousTotalInvestedUsd) / incomeUsd) * 100
+			: null
+
+	return { totalDebtUsd, totalInvestedUsd, netWorthUsd, savingsRatePct }
+}
+
 export const MonthlySnapshotSchema = z.object({
 	id: z.number(),
 	month: z.date(),
@@ -50,12 +123,9 @@ export const CreateMonthlySnapshotSchema = z.object({
 	itauCardGs: z.number().optional(),
 	uenoCardGs: z.number().optional(),
 	pendingInstallmentsGs: z.number().optional(),
-	netWorthUsd: z.number().optional(),
-	totalInvestedUsd: z.number().optional(),
-	totalDebtUsd: z.number().optional(),
-	savingsRatePct: z.number().optional(),
 	notes: z.string().optional(),
 })
+export type CreateMonthlySnapshot = z.infer<typeof CreateMonthlySnapshotSchema>
 
 export const UpdateMonthlySnapshotSchema = z.object({
 	incomeUsd: z.number().nullable().optional(),
@@ -76,9 +146,6 @@ export const UpdateMonthlySnapshotSchema = z.object({
 	itauCardGs: z.number().nullable().optional(),
 	uenoCardGs: z.number().nullable().optional(),
 	pendingInstallmentsGs: z.number().nullable().optional(),
-	netWorthUsd: z.number().nullable().optional(),
-	totalInvestedUsd: z.number().nullable().optional(),
-	totalDebtUsd: z.number().nullable().optional(),
-	savingsRatePct: z.number().nullable().optional(),
 	notes: z.string().nullable().optional(),
 })
+export type UpdateMonthlySnapshot = z.infer<typeof UpdateMonthlySnapshotSchema>

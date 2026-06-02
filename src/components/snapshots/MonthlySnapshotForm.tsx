@@ -7,6 +7,7 @@ import type {
 	UpdateSnapshotPayload,
 } from '@/app/(app)/snapshots/actions'
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
+import { calculateDerivedMetrics } from '@/domain/entities/monthly-snapshot'
 import { formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 const MONTHS_ES = [
@@ -42,11 +43,19 @@ function numOrNull(raw: string): number | null {
 	return raw ? Number(raw) : null
 }
 
+function fmtUsd(v: number): string {
+	return new Intl.NumberFormat('en-US', {
+		minimumFractionDigits: 2,
+		maximumFractionDigits: 2,
+	}).format(v)
+}
+
 type NewProps = {
 	mode: 'create'
 	onSubmit: (
 		payload: CreateSnapshotPayload,
 	) => Promise<{ error: string } | undefined>
+	previousTotalInvestedUsd?: number | null
 }
 
 type EditProps = {
@@ -55,6 +64,7 @@ type EditProps = {
 		payload: UpdateSnapshotPayload,
 	) => Promise<{ error: string } | undefined>
 	initialValues: MonthlySnapshot
+	previousTotalInvestedUsd?: number | null
 }
 
 type Props = NewProps | EditProps
@@ -107,9 +117,36 @@ function FieldRow({
 	)
 }
 
+function MetricRow({
+	label,
+	value,
+	isUsd,
+	isPct,
+}: {
+	label: string
+	value: number | null
+	isUsd?: boolean
+	isPct?: boolean
+}) {
+	let display = '—'
+	if (value !== null) {
+		if (isUsd) display = `$${fmtUsd(value)}`
+		else if (isPct) display = `${value.toFixed(2)}%`
+	}
+	return (
+		<div className="flex items-center justify-between text-sm">
+			<span className="text-muted-foreground">{label}</span>
+			<span className="font-semibold tabular-nums text-foreground">
+				{display}
+			</span>
+		</div>
+	)
+}
+
 export function MonthlySnapshotForm(props: Props) {
 	const { mode } = props
 	const iv = mode === 'edit' ? props.initialValues : undefined
+	const previousTotalInvestedUsd = props.previousTotalInvestedUsd ?? null
 
 	const [month, setMonth] = useState(iv ? toMonthInputValue(iv.month) : '')
 
@@ -164,25 +201,33 @@ export function MonthlySnapshotForm(props: Props) {
 		iv?.etfReturnPct?.toString() ?? '',
 	)
 
-	// Métricas
-	const [netWorthUsd, setNetWorthUsd] = useState(
-		iv?.netWorthUsd?.toString() ?? '',
-	)
-	const [totalInvestedUsd, setTotalInvestedUsd] = useState(
-		iv?.totalInvestedUsd?.toString() ?? '',
-	)
-	const [totalDebtUsd, setTotalDebtUsd] = useState(
-		iv?.totalDebtUsd?.toString() ?? '',
-	)
-	const [savingsRatePct, setSavingsRatePct] = useState(
-		iv?.savingsRatePct?.toString() ?? '',
-	)
-
 	// Notas
 	const [notes, setNotes] = useState(iv?.notes ?? '')
 
 	const [error, setError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
+
+	// Métricas calculadas en tiempo real
+	const derived = calculateDerivedMetrics(
+		{
+			incomeUsd: numOpt(incomeUsd),
+			exchangeRateValue: numOpt(exchangeRateValue),
+			balanceItauUsd: numOpt(balanceItauUsd),
+			balanceItauGs: numOpt(balanceItauGs),
+			balanceUenoUsd: numOpt(balanceUenoUsd),
+			balanceUenoGs: numOpt(balanceUenoGs),
+			balanceMangoGs: numOpt(balanceMangoGs),
+			balanceGnbGs: numOpt(balanceGnbGs),
+			gnbCardGs: numOpt(gnbCardGs),
+			investorFundUsd: numOpt(investorFundUsd),
+			investorFundGs: numOpt(investorFundGs),
+			etfPortfolioUsd: numOpt(etfPortfolioUsd),
+			itauCardGs: numOpt(itauCardGs),
+			uenoCardGs: numOpt(uenoCardGs),
+			pendingInstallmentsGs: numOpt(pendingInstallmentsGs),
+		},
+		previousTotalInvestedUsd,
+	)
 
 	const isValid = mode === 'create' ? month !== '' : true
 
@@ -215,10 +260,6 @@ export function MonthlySnapshotForm(props: Props) {
 					investorReturnPct: numOpt(investorReturnPct),
 					etfPortfolioUsd: numOpt(etfPortfolioUsd),
 					etfReturnPct: numOpt(etfReturnPct),
-					netWorthUsd: numOpt(netWorthUsd),
-					totalInvestedUsd: numOpt(totalInvestedUsd),
-					totalDebtUsd: numOpt(totalDebtUsd),
-					savingsRatePct: numOpt(savingsRatePct),
 					notes: notes.trim() || undefined,
 				})
 			} else {
@@ -240,10 +281,6 @@ export function MonthlySnapshotForm(props: Props) {
 					investorReturnPct: numOrNull(investorReturnPct),
 					etfPortfolioUsd: numOrNull(etfPortfolioUsd),
 					etfReturnPct: numOrNull(etfReturnPct),
-					netWorthUsd: numOrNull(netWorthUsd),
-					totalInvestedUsd: numOrNull(totalInvestedUsd),
-					totalDebtUsd: numOrNull(totalDebtUsd),
-					savingsRatePct: numOrNull(savingsRatePct),
 					notes: notes.trim() || null,
 				})
 			}
@@ -416,40 +453,34 @@ export function MonthlySnapshotForm(props: Props) {
 				pct
 			/>
 
-			{/* Métricas */}
+			{/* Métricas calculadas */}
 			<SectionHeader label="Métricas" />
-			<FieldRow
-				id="snap-net-worth-usd"
-				label="Net worth (USD)"
-				value={netWorthUsd}
-				onChange={setNetWorthUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-total-invested-usd"
-				label="Total invertido (USD)"
-				value={totalInvestedUsd}
-				onChange={setTotalInvestedUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-total-debt-usd"
-				label="Deuda total (USD)"
-				value={totalDebtUsd}
-				onChange={setTotalDebtUsd}
-				placeholder="0.00"
-				decimal
-			/>
-			<FieldRow
-				id="snap-savings-rate-pct"
-				label="Tasa de ahorro (%)"
-				value={savingsRatePct}
-				onChange={setSavingsRatePct}
-				placeholder="0.00"
-				pct
-			/>
+			<div className="rounded-2xl border border-border bg-card px-4 py-4 space-y-3">
+				<p className="text-xs text-muted-foreground">
+					Calculadas automáticamente a partir de los datos ingresados
+				</p>
+				{!exchangeRateValue && (
+					<p className="text-xs text-muted-foreground/60 italic">
+						Ingresá el tipo de cambio para ver los valores
+					</p>
+				)}
+				<MetricRow label="Net worth (USD)" value={derived.netWorthUsd} isUsd />
+				<MetricRow
+					label="Total invertido (USD)"
+					value={derived.totalInvestedUsd}
+					isUsd
+				/>
+				<MetricRow
+					label="Deuda total (USD)"
+					value={derived.totalDebtUsd}
+					isUsd
+				/>
+				<MetricRow
+					label="Tasa de ahorro"
+					value={derived.savingsRatePct}
+					isPct
+				/>
+			</div>
 
 			{/* Notas */}
 			<SectionHeader label="Notas" />

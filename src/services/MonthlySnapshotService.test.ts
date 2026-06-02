@@ -129,19 +129,18 @@ describe('createMonthlySnapshotService', () => {
 		it('creates and returns the new snapshot', async () => {
 			const snapshot = makeSnapshot()
 			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(snapshot)
 
 			const result = await service.create({ month: MAY_2026, incomeUsd: 3000 })
 
 			expect(result).toBe(snapshot)
-			expect(repo.create).toHaveBeenCalledWith({
-				month: MAY_2026,
-				incomeUsd: 3000,
-			})
+			expect(repo.create).toHaveBeenCalledOnce()
 		})
 
 		it('throws when a snapshot already exists for the month', async () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue(makeSnapshot())
+			vi.mocked(repo.findLatest).mockResolvedValue(null)
 
 			await expect(service.create({ month: MAY_2026 })).rejects.toThrow(
 				'MonthlySnapshot already exists for this month',
@@ -152,21 +151,154 @@ describe('createMonthlySnapshotService', () => {
 	describe('update', () => {
 		it('updates and returns the snapshot', async () => {
 			const existing = makeSnapshot()
-			const updated = makeSnapshot({ netWorthUsd: 19000 })
+			const updated = makeSnapshot({ incomeUsd: 3500 })
 			vi.mocked(repo.findById).mockResolvedValue(existing)
+			vi.mocked(repo.findLatest).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { netWorthUsd: 19000 })
+			const result = await service.update(1, { incomeUsd: 3500 })
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { netWorthUsd: 19000 })
+			expect(repo.update).toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({ incomeUsd: 3500 }),
+			)
 		})
 
 		it('throws when snapshot does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(null)
 
-			await expect(service.update(999, { netWorthUsd: 19000 })).rejects.toThrow(
+			await expect(service.update(999, { incomeUsd: 3500 })).rejects.toThrow(
 				'MonthlySnapshot not found',
+			)
+		})
+	})
+
+	describe('derived metrics calculation', () => {
+		const fullInput = {
+			month: MAY_2026,
+			incomeUsd: 1000,
+			exchangeRateValue: 7800,
+			balanceItauUsd: 5000,
+			balanceItauGs: 7800000,
+			balanceUenoUsd: 2000,
+			balanceUenoGs: 0,
+			balanceMangoGs: 0,
+			balanceGnbGs: 0,
+			gnbCardGs: 0,
+			investorFundUsd: 8000,
+			investorFundGs: 7800000,
+			etfPortfolioUsd: 3000,
+			itauCardGs: 780000,
+			uenoCardGs: 780000,
+			pendingInstallmentsGs: 0,
+		}
+
+		it('computes correct derived values when all fields are present', async () => {
+			const previousSnapshot = makeSnapshot({ id: 2, totalInvestedUsd: 10000 })
+			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(previousSnapshot)
+			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
+
+			await service.create(fullInput)
+
+			// totalDebtUsd = (780000 + 780000 + 0 + 0) / 7800 = 200
+			// totalInvestedUsd = 3000 + 8000 + 7800000/7800 = 12000
+			// activosTotalesUsd = 5000 + 7800000/7800 + 2000 + 0 + 0 + 0 + 12000 = 20000
+			// netWorthUsd = 20000 - 200 = 19800
+			// savingsRatePct = ((12000 - 10000) / 1000) * 100 = 200
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					totalDebtUsd: 200,
+					totalInvestedUsd: 12000,
+					netWorthUsd: 19800,
+					savingsRatePct: 200,
+				}),
+			)
+		})
+
+		it('returns null for all derived fields when exchangeRateValue is null', async () => {
+			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(makeSnapshot({ id: 2 }))
+			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
+
+			await service.create({ month: MAY_2026, incomeUsd: 1000 })
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					netWorthUsd: undefined,
+					totalInvestedUsd: undefined,
+					totalDebtUsd: undefined,
+					savingsRatePct: undefined,
+				}),
+			)
+		})
+
+		it('returns null for all derived fields when exchangeRateValue is 0', async () => {
+			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(makeSnapshot({ id: 2 }))
+			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
+
+			// exchangeRateValue: 0 is rejected by the schema (positive()), so test via update
+			// which uses the merged existing fields
+			const existing = makeSnapshot({ exchangeRateValue: 0 })
+			vi.mocked(repo.findById).mockResolvedValue(existing)
+			vi.mocked(repo.findLatest).mockResolvedValue(makeSnapshot({ id: 2 }))
+			vi.mocked(repo.update).mockResolvedValue(makeSnapshot())
+
+			await service.update(1, {})
+
+			expect(repo.update).toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({
+					netWorthUsd: null,
+					totalInvestedUsd: null,
+					totalDebtUsd: null,
+					savingsRatePct: null,
+				}),
+			)
+		})
+
+		it('returns null savingsRatePct when incomeUsd is null', async () => {
+			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(
+				makeSnapshot({ id: 2, totalInvestedUsd: 10000 }),
+			)
+			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
+
+			await service.create({ ...fullInput, incomeUsd: undefined })
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ savingsRatePct: undefined }),
+			)
+		})
+
+		it('returns null savingsRatePct when incomeUsd is 0', async () => {
+			const existing = makeSnapshot({ incomeUsd: 0, exchangeRateValue: 7800 })
+			vi.mocked(repo.findById).mockResolvedValue(existing)
+			vi.mocked(repo.findLatest).mockResolvedValue(
+				makeSnapshot({ id: 2, totalInvestedUsd: 10000 }),
+			)
+			vi.mocked(repo.update).mockResolvedValue(makeSnapshot())
+
+			await service.update(1, {})
+
+			expect(repo.update).toHaveBeenCalledWith(
+				1,
+				expect.objectContaining({ savingsRatePct: null }),
+			)
+		})
+
+		it('returns null savingsRatePct when no previous snapshot exists', async () => {
+			vi.mocked(repo.findByMonth).mockResolvedValue(null)
+			vi.mocked(repo.findLatest).mockResolvedValue(null)
+			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
+
+			await service.create(fullInput)
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ savingsRatePct: undefined }),
 			)
 		})
 	})

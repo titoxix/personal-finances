@@ -13,8 +13,14 @@ export default async function EditSnapshotPage({
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
-	const snapshot = await monthlySnapshotService.findById(id).catch(() => null)
+	const [snapshot, latest] = await Promise.all([
+		monthlySnapshotService.findById(id).catch(() => null),
+		monthlySnapshotService.findLatest(),
+	])
 	if (!snapshot) notFound()
+
+	// mirror the same logic the service uses: if editing the latest, no previous
+	const previous = latest?.id === id ? null : latest
 
 	async function handleUpdate(payload: UpdateSnapshotPayload) {
 		'use server'
@@ -33,6 +39,7 @@ export default async function EditSnapshotPage({
 				mode="edit"
 				onSubmit={handleUpdate}
 				initialValues={snapshot}
+				previousTotalInvestedUsd={previous?.totalInvestedUsd ?? null}
 			/>
 		</div>
 	)
