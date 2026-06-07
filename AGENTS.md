@@ -6,6 +6,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ---
 
+# Task history
+
+The `/tasks` directory contains context on pending and completed tasks. Review it when you need to understand what has already been done or what work is still in progress.
+
+---
+
 # Definition of Done
 
 **Every task is complete only when all three checks pass.** Run them in this order after any change, before reporting the task as done:
