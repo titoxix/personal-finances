@@ -26,6 +26,7 @@ export default async function TransactionsPage() {
 			id: tx.id,
 			description: tx.description,
 			date: tx.date,
+			createdAt: tx.createdAt,
 			categoryId: tx.categoryId,
 			categoryLabel: categoryMap.get(tx.categoryId) ?? 'Sin categoría',
 			amountGs: tx.amountGs,

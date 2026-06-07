@@ -35,7 +35,9 @@ export function createTransactionService(repo: ITransactionRepository) {
 			if (input.amountGs == null && input.amountUsd == null)
 				throw new Error('transaction requires amountGs or amountUsd')
 			const weekOfMonth = input.weekOfMonth ?? calcWeekOfMonth(input.date)
-			return repo.create({ ...input, weekOfMonth })
+			const isRecurring =
+				input.recurringItemId != null ? true : (input.isRecurring ?? false)
+			return repo.create({ ...input, weekOfMonth, isRecurring })
 		},
 
 		update: async (

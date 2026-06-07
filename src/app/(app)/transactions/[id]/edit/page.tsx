@@ -3,6 +3,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm'
 import {
 	categoryService,
 	essentialityService,
+	recurringItemService,
 	transactionService,
 } from '@/lib/container'
 import type { CreateTransactionPayload } from '../../actions'
@@ -17,11 +18,13 @@ export default async function EditTransactionPage({
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
-	const [transaction, categories, essentialityLevels] = await Promise.all([
-		transactionService.findById(id).catch(() => null),
-		categoryService.findAll(),
-		essentialityService.findAll(),
-	])
+	const [transaction, categories, essentialityLevels, recurringItems] =
+		await Promise.all([
+			transactionService.findById(id).catch(() => null),
+			categoryService.findAll(),
+			essentialityService.findAll(),
+			recurringItemService.findActive(),
+		])
 
 	if (!transaction) notFound()
 
@@ -38,6 +41,7 @@ export default async function EditTransactionPage({
 		essentialityId: transaction.essentialityId,
 		paymentMethod: transaction.paymentMethod,
 		date: transaction.date.toISOString().split('T')[0] as string,
+		recurringItemId: transaction.recurringItemId ?? undefined,
 	}
 
 	async function handleUpdate(payload: CreateTransactionPayload) {
@@ -54,6 +58,7 @@ export default async function EditTransactionPage({
 		<TransactionForm
 			categories={activeCategories}
 			essentialityLevels={activeLevels}
+			recurringItems={recurringItems}
 			onSubmit={handleUpdate}
 			onDelete={handleDelete}
 			initialValues={initialValues}

@@ -143,6 +143,7 @@ model Transaction {
   installmentTotal  Int?          @db.SmallInt @map("installment_total")
   installmentPlanId Int?          @map("installment_plan_id")
   isRecurring       Boolean       @default(false) @map("is_recurring")
+  recurringItemId   Int?          @map("recurring_item_id")
   notes             String?
   createdAt         DateTime      @default(now()) @map("created_at")
 
@@ -150,6 +151,7 @@ model Transaction {
   essentiality    EssentialityLevel @relation(fields: [essentialityId], references: [id])
   exchangeRate    ExchangeRate?     @relation(fields: [exchangeRateId], references: [id])
   installmentPlan InstallmentPlan?  @relation(fields: [installmentPlanId], references: [id])
+  recurringItem   RecurringItem?    @relation(fields: [recurringItemId], references: [id], onDelete: SetNull)
 
   @@map("transactions")
 }
@@ -235,6 +237,7 @@ model RecurringItem {
 
   category     Category          @relation(fields: [categoryId], references: [id])
   essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
+  transactions Transaction[]
 
   @@map("recurring_items")
 }

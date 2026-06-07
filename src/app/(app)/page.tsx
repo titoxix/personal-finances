@@ -1,5 +1,6 @@
 import { BudgetSection } from '@/components/home/BudgetSection'
 import { MonthlyOverviewCard } from '@/components/home/MonthlyOverviewCard'
+import { RecurringSection } from '@/components/home/RecurringSection'
 import type { TransactionRow } from '@/components/home/TransactionSection'
 import { TransactionSection } from '@/components/home/TransactionSection'
 import {
@@ -140,16 +141,39 @@ export default async function HomePage({
 
 	// Compromisos recurrentes del mes: todos los activos mensuales +
 	// los anuales cuyo mes de cobro es el mes actual.
-	// Se muestra como referencia fija sin filtrar por día —
-	// el "libre" resultante es conservador (puede sobreestimar si ya
-	// registraste el pago como transacción, pero nunca te dice que
-	// tenés más de lo que realmente tenés).
 	const currentMonthNum = currentMonth.getUTCMonth() + 1 // 1-12
 	const monthlyRecurring = activeRecurring.filter((item) => {
 		if (item.frequency === 'monthly') return true
 		return item.billingMonth === currentMonthNum
 	})
-	const pendingRecurringGs = monthlyRecurring.reduce((sum, item) => {
+
+	// Determinar cuáles recurrentes ya fueron pagados este mes (tienen transacción vinculada)
+	const paidRecurringIds = new Set(
+		monthTransactions
+			.map((tx) => tx.recurringItemId)
+			.filter((id): id is number => id != null),
+	)
+	const pendingRecurringItems = monthlyRecurring
+		.filter((item) => !paidRecurringIds.has(item.id))
+		.sort((a, b) => (a.billingDay ?? 99) - (b.billingDay ?? 99))
+	const recurringIdToTxInfo = new Map(
+		monthTransactions
+			.filter((tx) => tx.recurringItemId != null)
+			.map((tx) => [
+				tx.recurringItemId as number,
+				{ txId: tx.id, paidAt: tx.createdAt, paymentMethod: tx.paymentMethod },
+			]),
+	)
+	const paidRecurringItems = monthlyRecurring
+		.filter((item) => paidRecurringIds.has(item.id))
+		.sort((a, b) => {
+			const aTime = recurringIdToTxInfo.get(a.id)?.paidAt.getTime() ?? 0
+			const bTime = recurringIdToTxInfo.get(b.id)?.paidAt.getTime() ?? 0
+			return bTime - aTime
+		})
+
+	// Solo descontar los pendientes del "libre" — los pagados ya están en totalSpentGs
+	const pendingRecurringGs = pendingRecurringItems.reduce((sum, item) => {
 		const amountGs =
 			item.amountGs ?? (item.amountUsd ? item.amountUsd * refRate : 0)
 		return sum + amountGs
@@ -202,12 +226,13 @@ export default async function HomePage({
 
 	// Últimas 5 transacciones del mes seleccionado
 	const recentTransactions: TransactionRow[] = [...monthTransactions]
-		.sort((a, b) => b.date.getTime() - a.date.getTime())
+		.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 		.slice(0, 10)
 		.map((tx) => ({
 			id: tx.id,
 			description: tx.description,
 			date: tx.date,
+			createdAt: tx.createdAt,
 			categoryLabel: categoryMap.get(tx.categoryId)?.label ?? 'Sin categoría',
 			amountUsd: tx.amountUsd,
 			amountGs: tx.amountGs,
@@ -223,6 +248,11 @@ export default async function HomePage({
 				incomeGs={incomeGs}
 				prevHref={prevHref}
 				nextHref={nextHref}
+			/>
+			<RecurringSection
+				pending={pendingRecurringItems}
+				paid={paidRecurringItems}
+				recurringIdToTxInfo={recurringIdToTxInfo}
 			/>
 			<BudgetSection items={budgetItems} alertCount={alertCount} />
 			<TransactionSection transactions={recentTransactions} />

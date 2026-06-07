@@ -8,6 +8,7 @@ const repository = createPrismaTransactionRepository(prismaTest)
 let categoryId: number
 let category2Id: number
 let essentialityId: number
+let recurringItemId: number
 
 beforeAll(async () => {
 	const cat1 = await prismaTest.category.create({
@@ -19,9 +20,21 @@ beforeAll(async () => {
 	const essentiality = await prismaTest.essentialityLevel.create({
 		data: { code: 'esencial', label: 'Esencial', sortOrder: 1 },
 	})
+	const recurringItem = await prismaTest.recurringItem.create({
+		data: {
+			description: 'Alquiler',
+			categoryId: cat1.id,
+			essentialityId: essentiality.id,
+			paymentMethod: 'transferencia',
+			frequency: 'monthly',
+			amountGs: 7000000,
+			billingDay: 1,
+		},
+	})
 	categoryId = cat1.id
 	category2Id = cat2.id
 	essentialityId = essentiality.id
+	recurringItemId = recurringItem.id
 })
 
 beforeEach(async () => {
@@ -30,6 +43,7 @@ beforeEach(async () => {
 
 afterAll(async () => {
 	await prismaTest.transaction.deleteMany()
+	await prismaTest.recurringItem.deleteMany()
 	await prismaTest.category.deleteMany()
 	await prismaTest.essentialityLevel.deleteMany()
 	await prismaTest.$disconnect()
@@ -261,6 +275,22 @@ describe('PrismaTransactionRepository', () => {
 			expect(result.isRecurring).toBe(true)
 			expect(result.notes).toBe('Netflix mensual')
 		})
+
+		it('creates a transaction linked to a recurring item', async () => {
+			const result = await repository.create({
+				...baseTx(),
+				amountGs: 7000000,
+				recurringItemId,
+			})
+
+			expect(result.recurringItemId).toBe(recurringItemId)
+		})
+
+		it('defaults recurringItemId to null when not provided', async () => {
+			const result = await repository.create(baseTx())
+
+			expect(result.recurringItemId).toBeNull()
+		})
 	})
 
 	describe('update', () => {
@@ -291,6 +321,18 @@ describe('PrismaTransactionRepository', () => {
 
 			expect(result.amountGs).toBeNull()
 			expect(result.notes).toBeNull()
+		})
+
+		it('can unlink a recurringItemId by setting it to null', async () => {
+			const created = await prismaTest.transaction.create({
+				data: { ...baseTx(), amountGs: 7000000, recurringItemId },
+			})
+
+			const result = await repository.update(created.id, {
+				recurringItemId: null,
+			})
+
+			expect(result.recurringItemId).toBeNull()
 		})
 	})
 

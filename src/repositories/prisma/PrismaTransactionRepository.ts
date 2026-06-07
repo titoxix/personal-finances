@@ -24,6 +24,7 @@ type PrismaTransaction = {
 	installmentTotal: number | null
 	installmentPlanId: number | null
 	isRecurring: boolean
+	recurringItemId: number | null
 	notes: string | null
 	createdAt: Date
 }
@@ -46,6 +47,7 @@ function toDomain(raw: PrismaTransaction): Transaction {
 		installmentTotal: raw.installmentTotal,
 		installmentPlanId: raw.installmentPlanId,
 		isRecurring: raw.isRecurring,
+		recurringItemId: raw.recurringItemId,
 		notes: raw.notes,
 		createdAt: raw.createdAt,
 	}

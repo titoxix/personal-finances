@@ -8,6 +8,7 @@ export type TransactionListRow = {
 	id: number
 	description: string
 	date: Date
+	createdAt: Date
 	categoryId: number
 	categoryLabel: string
 	amountGs: number | null
@@ -19,7 +20,7 @@ type Section = { key: string; label: string; rows: TransactionListRow[] }
 function groupByDate(rows: TransactionListRow[]): Section[] {
 	const now = new Date()
 	const today = new Date(
-		Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()),
+		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
 	)
 	const yesterday = new Date(today)
 	yesterday.setUTCDate(yesterday.getUTCDate() - 1)
@@ -29,7 +30,7 @@ function groupByDate(rows: TransactionListRow[]): Section[] {
 	for (const row of rows) {
 		const d = row.date
 		const dayUTC = new Date(
-			Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()),
+			Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
 		)
 		let key: string
 		let label: string
@@ -41,7 +42,11 @@ function groupByDate(rows: TransactionListRow[]): Section[] {
 			label = 'Ayer'
 		} else {
 			key = dayUTC.toISOString()
-			label = d.toLocaleDateString('es-PY', { day: 'numeric', month: 'long' })
+			label = dayUTC.toLocaleDateString('es-PY', {
+				day: 'numeric',
+				month: 'long',
+				timeZone: 'UTC',
+			})
 		}
 		if (!buckets.has(key)) buckets.set(key, { key, label, rows: [] })
 		buckets.get(key)?.rows.push(row)
@@ -101,6 +106,7 @@ export function TransactionList({ rows, belowSearch }: Props) {
 								id={tx.id}
 								description={tx.description}
 								date={tx.date}
+								createdAt={tx.createdAt}
 								categoryLabel={tx.categoryLabel}
 								amountUsd={tx.amountUsd}
 								amountGs={tx.amountGs}

@@ -20,10 +20,12 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
+	await prismaTest.transaction.deleteMany()
 	await prismaTest.recurringItem.deleteMany()
 })
 
 afterAll(async () => {
+	await prismaTest.transaction.deleteMany()
 	await prismaTest.recurringItem.deleteMany()
 	await prismaTest.category.deleteMany()
 	await prismaTest.essentialityLevel.deleteMany()

@@ -18,6 +18,7 @@ export const TransactionSchema = z.object({
 	installmentTotal: z.number().nullable(),
 	installmentPlanId: z.number().nullable(),
 	isRecurring: z.boolean(),
+	recurringItemId: z.number().nullable(),
 	notes: z.string().nullable(),
 	createdAt: z.date(),
 })
@@ -39,6 +40,7 @@ export const CreateTransactionSchema = z.object({
 	installmentTotal: z.number().int().positive().optional(),
 	installmentPlanId: z.number().int().positive().optional(),
 	isRecurring: z.boolean().optional(),
+	recurringItemId: z.number().int().positive().optional(),
 	notes: z.string().optional(),
 })
 
@@ -58,5 +60,6 @@ export const UpdateTransactionSchema = z.object({
 	installmentTotal: z.number().int().positive().nullable().optional(),
 	installmentPlanId: z.number().int().positive().nullable().optional(),
 	isRecurring: z.boolean().optional(),
+	recurringItemId: z.number().int().positive().nullable().optional(),
 	notes: z.string().nullable().optional(),
 })

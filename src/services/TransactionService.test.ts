@@ -30,6 +30,7 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
 	installmentTotal: null,
 	installmentPlanId: null,
 	isRecurring: false,
+	recurringItemId: null,
 	notes: null,
 	createdAt: new Date(),
 	...overrides,
@@ -158,6 +159,44 @@ describe('createTransactionService', () => {
 				}),
 			).rejects.toThrow('transaction requires amountGs or amountUsd')
 		})
+
+		it('sets isRecurring to true automatically when recurringItemId is provided', async () => {
+			vi.mocked(repo.create).mockResolvedValue(
+				makeTx({ isRecurring: true, recurringItemId: 5 }),
+			)
+
+			await service.create({
+				date: new Date('2026-05-10'),
+				description: 'Alquiler',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'transferencia',
+				amountGs: 7000000,
+				recurringItemId: 5,
+			})
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ isRecurring: true, recurringItemId: 5 }),
+			)
+		})
+
+		it('passes recurringItemId through to the repository', async () => {
+			vi.mocked(repo.create).mockResolvedValue(makeTx({ recurringItemId: 3 }))
+
+			await service.create({
+				date: new Date('2026-05-10'),
+				description: 'Test',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'itau_debito',
+				amountGs: 100000,
+				recurringItemId: 3,
+			})
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({ recurringItemId: 3 }),
+			)
+		})
 	})
 
 	describe('update', () => {
@@ -179,6 +218,17 @@ describe('createTransactionService', () => {
 			await expect(service.update(999, { amountGs: 200000 })).rejects.toThrow(
 				'Transaction not found',
 			)
+		})
+
+		it('can unlink a recurringItemId by passing null', async () => {
+			const existing = makeTx({ recurringItemId: 5, isRecurring: true })
+			const updated = makeTx({ recurringItemId: null, isRecurring: true })
+			vi.mocked(repo.findById).mockResolvedValue(existing)
+			vi.mocked(repo.update).mockResolvedValue(updated)
+
+			await service.update(1, { recurringItemId: null })
+
+			expect(repo.update).toHaveBeenCalledWith(1, { recurringItemId: null })
 		})
 	})
 

@@ -5,6 +5,7 @@ export type TransactionRow = {
 	id: number
 	description: string
 	date: Date
+	createdAt: Date
 	categoryLabel: string
 	amountUsd: number | null
 	amountGs: number | null
@@ -41,6 +42,7 @@ export function TransactionSection({ transactions }: Props) {
 							id={tx.id}
 							description={tx.description}
 							date={tx.date}
+							createdAt={tx.createdAt}
 							categoryLabel={tx.categoryLabel}
 							amountUsd={tx.amountUsd}
 							amountGs={tx.amountGs}

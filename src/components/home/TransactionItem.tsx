@@ -14,6 +14,7 @@ type Props = {
 	id: number
 	description: string
 	date: Date
+	createdAt: Date
 	categoryLabel: string
 	amountUsd: number | null
 	amountGs: number | null
@@ -40,6 +41,7 @@ export function TransactionItem({
 	id,
 	description,
 	date,
+	createdAt,
 	categoryLabel,
 	amountUsd,
 	amountGs,
@@ -51,10 +53,12 @@ export function TransactionItem({
 	const dateStr = date.toLocaleDateString('es-PY', {
 		month: 'short',
 		day: 'numeric',
+		timeZone: 'UTC',
 	})
-	const timeStr = date.toLocaleTimeString('es-PY', {
+	const timeStr = createdAt.toLocaleTimeString('es-PY', {
 		hour: '2-digit',
 		minute: '2-digit',
+		hour12: false,
 	})
 
 	return (

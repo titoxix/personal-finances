@@ -6,7 +6,10 @@ import { useState, useTransition } from 'react'
 import type { CreateTransactionPayload } from '@/app/(app)/transactions/actions'
 import type { Category } from '@/domain/entities/category'
 import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
-import type { PaymentMethod } from '@/domain/entities/recurring-item'
+import type {
+	PaymentMethod,
+	RecurringItem,
+} from '@/domain/entities/recurring-item'
 import { cn, formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 
 const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
@@ -22,6 +25,7 @@ const PAYMENT_METHODS: Array<{ value: PaymentMethod; label: string }> = [
 type Props = {
 	categories: Category[]
 	essentialityLevels: EssentialityLevel[]
+	recurringItems: RecurringItem[]
 	onSubmit: (
 		payload: CreateTransactionPayload,
 	) => Promise<{ error: string } | undefined>
@@ -36,30 +40,70 @@ function todayISO() {
 export function TransactionForm({
 	categories,
 	essentialityLevels,
+	recurringItems,
 	onSubmit,
 	initialValues,
 	onDelete,
 }: Props) {
-	const [currency, setCurrency] = useState<'gs' | 'usd'>(
-		initialValues?.currency ?? 'gs',
-	)
-	const [amount, setAmount] = useState(initialValues?.amount?.toString() ?? '')
+	const preselectedItem =
+		initialValues?.recurringItemId != null
+			? recurringItems.find((r) => r.id === initialValues.recurringItemId)
+			: undefined
+
+	const [currency, setCurrency] = useState<'gs' | 'usd'>(() => {
+		if (preselectedItem && !preselectedItem.isVariable) {
+			if (preselectedItem.amountGs != null) return 'gs'
+			if (preselectedItem.amountUsd != null) return 'usd'
+		}
+		return initialValues?.currency ?? 'gs'
+	})
+	const [amount, setAmount] = useState(() => {
+		if (preselectedItem && !preselectedItem.isVariable) {
+			if (preselectedItem.amountGs != null)
+				return preselectedItem.amountGs.toString()
+			if (preselectedItem.amountUsd != null)
+				return preselectedItem.amountUsd.toString()
+		}
+		return initialValues?.amount?.toString() ?? ''
+	})
 	const [description, setDescription] = useState(
 		initialValues?.description ?? '',
 	)
 	const [categoryId, setCategoryId] = useState<number | ''>(
-		initialValues?.categoryId ?? '',
+		preselectedItem?.categoryId ?? initialValues?.categoryId ?? '',
 	)
 	const [essentialityId, setEssentialityId] = useState<number | null>(
-		initialValues?.essentialityId ?? null,
+		preselectedItem?.essentialityId ?? initialValues?.essentialityId ?? null,
 	)
 	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-		initialValues?.paymentMethod ?? null,
+		preselectedItem?.paymentMethod ?? initialValues?.paymentMethod ?? null,
 	)
 	const [date, setDate] = useState(initialValues?.date ?? todayISO())
+	const [recurringItemId, setRecurringItemId] = useState<number | null>(
+		initialValues?.recurringItemId ?? null,
+	)
 	const [error, setError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
 	const [isDeleting, startDeleteTransition] = useTransition()
+
+	function handleRecurringSelect(id: number | null) {
+		setRecurringItemId(id)
+		if (id == null) return
+		const item = recurringItems.find((r) => r.id === id)
+		if (!item) return
+		if (!item.isVariable) {
+			if (item.amountGs != null) {
+				setCurrency('gs')
+				setAmount(item.amountGs.toString())
+			} else if (item.amountUsd != null) {
+				setCurrency('usd')
+				setAmount(item.amountUsd.toString())
+			}
+		}
+		if (item.categoryId) setCategoryId(item.categoryId)
+		if (item.essentialityId) setEssentialityId(item.essentialityId)
+		if (item.paymentMethod) setPaymentMethod(item.paymentMethod)
+	}
 
 	const isValid =
 		Number(amount) > 0 &&
@@ -83,6 +127,7 @@ export function TransactionForm({
 				essentialityId: essentialityId as number,
 				paymentMethod: paymentMethod as PaymentMethod,
 				date: date as string,
+				recurringItemId: recurringItemId ?? undefined,
 			})
 			if (result?.error) setError(result.error)
 		})
@@ -143,6 +188,55 @@ export function TransactionForm({
 					/>
 				</div>
 			</div>
+
+			{/* ── Recurring item ── */}
+			{recurringItems.length > 0 && (
+				<div className="space-y-2">
+					<label
+						htmlFor="recurring"
+						className="text-sm font-semibold text-foreground"
+					>
+						Recurrente (opcional)
+					</label>
+					<div className="relative">
+						<select
+							id="recurring"
+							value={recurringItemId ?? ''}
+							onChange={(e) =>
+								handleRecurringSelect(
+									e.target.value === '' ? null : Number(e.target.value),
+								)
+							}
+							className="w-full appearance-none rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/60 transition-colors"
+						>
+							<option value="">Sin recurrente</option>
+							{recurringItems.map((item) => (
+								<option key={item.id} value={item.id}>
+									{item.description}
+								</option>
+							))}
+						</select>
+						<div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+							<svg
+								aria-hidden="true"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path d="m6 9 6 6 6-6" />
+							</svg>
+						</div>
+					</div>
+					{recurringItemId != null && (
+						<p className="text-xs text-muted-foreground">
+							Montos y categoría pre-cargados — podés modificarlos.
+						</p>
+					)}
+				</div>
+			)}
 
 			{/* ── Description ── */}
 			<div className="space-y-2">
