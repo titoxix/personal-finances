@@ -1,18 +1,47 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { RecurringItemList } from '@/components/recurring-items/RecurringItemList'
+import { RecurringTotalsSummary } from '@/components/recurring-items/RecurringTotalsSummary'
+import { TopRecurringItems } from '@/components/recurring-items/TopRecurringItems'
 import {
 	categoryService,
 	essentialityService,
+	exchangeRateService,
 	recurringItemService,
 } from '@/lib/container'
 
 export default async function RecurringItemsPage() {
-	const [items, categories, essentialityLevels] = await Promise.all([
-		recurringItemService.findAll(),
-		categoryService.findAll(),
-		essentialityService.findAll(),
-	])
+	const [items, categories, essentialityLevels, latestRate] = await Promise.all(
+		[
+			recurringItemService.findAll(),
+			categoryService.findAll(),
+			essentialityService.findAll(),
+			exchangeRateService.findLatestBySource('itau'),
+		],
+	)
+
+	const refRate = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
+	const toGs = (amountGs: number | null, amountUsd: number | null) =>
+		amountGs ?? (amountUsd ? amountUsd * refRate : 0)
+
+	const activeItems = items.filter((item) => item.active)
+	const monthlyTotalGs = activeItems
+		.filter((item) => item.frequency === 'monthly')
+		.reduce((sum, item) => sum + toGs(item.amountGs, item.amountUsd), 0)
+	const annualTotalGs = activeItems
+		.filter((item) => item.frequency === 'annual')
+		.reduce((sum, item) => sum + toGs(item.amountGs, item.amountUsd), 0)
+
+	const topExpensive = [...activeItems]
+		.map((item) => ({
+			id: item.id,
+			description: item.description,
+			amountGs: toGs(item.amountGs, item.amountUsd),
+			frequency: item.frequency,
+			isVariable: item.isVariable,
+		}))
+		.sort((a, b) => b.amountGs - a.amountGs)
+		.slice(0, 3)
 
 	return (
 		<div>
@@ -31,6 +60,16 @@ export default async function RecurringItemsPage() {
 					Nuevo
 				</Link>
 			</div>
+
+			{items.length > 0 && (
+				<>
+					<RecurringTotalsSummary
+						monthlyTotalGs={monthlyTotalGs}
+						combinedTotalGs={monthlyTotalGs + annualTotalGs}
+					/>
+					<TopRecurringItems items={topExpensive} />
+				</>
+			)}
 
 			{items.length === 0 ? (
 				<div className="flex flex-col items-center gap-3 py-16 text-center">
