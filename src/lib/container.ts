@@ -32,6 +32,7 @@ export const essentialityService = createEssentialityLevelService(
 
 export const transactionService = createTransactionService(
 	createPrismaTransactionRepository(prisma),
+	createPrismaInstallmentPlanRepository(prisma),
 )
 
 export const budgetService = createBudgetService(

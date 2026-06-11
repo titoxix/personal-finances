@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { InstallmentPlan } from '@/domain/entities/installment-plan'
 import type { Transaction } from '@/domain/entities/transaction'
+import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 import { createTransactionService } from './TransactionService'
 
@@ -11,6 +13,36 @@ const makeRepo = (): ITransactionRepository => ({
 	create: vi.fn(),
 	update: vi.fn(),
 	delete: vi.fn(),
+})
+
+const makeInstallmentPlanRepo = (): IInstallmentPlanRepository => ({
+	findAll: vi.fn(),
+	findById: vi.fn(),
+	findActive: vi.fn(),
+	create: vi.fn(),
+	update: vi.fn(),
+	deactivate: vi.fn(),
+})
+
+const makePlan = (
+	overrides: Partial<InstallmentPlan> = {},
+): InstallmentPlan => ({
+	id: 1,
+	description: 'iPhone 16',
+	totalAmountGs: null,
+	totalAmountUsd: 1200,
+	installmentsTotal: 12,
+	installmentsPaid: 3,
+	installmentAmountGs: 750000,
+	startDate: new Date('2026-01-01'),
+	endDate: new Date('2027-01-01'),
+	paymentMethod: 'itau_visa',
+	categoryId: 1,
+	essentialityId: 1,
+	active: true,
+	notes: null,
+	createdAt: new Date(),
+	...overrides,
 })
 
 const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
@@ -38,11 +70,13 @@ const makeTx = (overrides: Partial<Transaction> = {}): Transaction => ({
 
 describe('createTransactionService', () => {
 	let repo: ITransactionRepository
+	let installmentPlanRepo: IInstallmentPlanRepository
 	let service: ReturnType<typeof createTransactionService>
 
 	beforeEach(() => {
 		repo = makeRepo()
-		service = createTransactionService(repo)
+		installmentPlanRepo = makeInstallmentPlanRepo()
+		service = createTransactionService(repo, installmentPlanRepo)
 	})
 
 	describe('findAll', () => {
@@ -196,6 +230,95 @@ describe('createTransactionService', () => {
 			expect(repo.create).toHaveBeenCalledWith(
 				expect.objectContaining({ recurringItemId: 3 }),
 			)
+		})
+	})
+
+	describe('create — installment plan linking', () => {
+		it('fills isInstallment, installmentCurrent and installmentTotal from the plan', async () => {
+			const plan = makePlan({
+				id: 7,
+				installmentsPaid: 3,
+				installmentsTotal: 12,
+			})
+			vi.mocked(installmentPlanRepo.findById).mockResolvedValue(plan)
+			vi.mocked(repo.create).mockResolvedValue(makeTx({ installmentPlanId: 7 }))
+
+			await service.create({
+				date: new Date('2026-05-10'),
+				description: 'Cuota iPhone',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'itau_visa',
+				amountGs: 750000,
+				installmentPlanId: 7,
+			})
+
+			expect(repo.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					installmentPlanId: 7,
+					isInstallment: true,
+					installmentCurrent: 4,
+					installmentTotal: 12,
+				}),
+			)
+		})
+
+		it('increments installmentsPaid on the linked plan after creating the transaction', async () => {
+			const plan = makePlan({
+				id: 7,
+				installmentsPaid: 3,
+				installmentsTotal: 12,
+			})
+			vi.mocked(installmentPlanRepo.findById).mockResolvedValue(plan)
+			vi.mocked(repo.create).mockResolvedValue(makeTx({ installmentPlanId: 7 }))
+
+			await service.create({
+				date: new Date('2026-05-10'),
+				description: 'Cuota iPhone',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'itau_visa',
+				amountGs: 750000,
+				installmentPlanId: 7,
+			})
+
+			expect(installmentPlanRepo.update).toHaveBeenCalledWith(7, {
+				installmentsPaid: 4,
+			})
+		})
+
+		it('throws when the linked installment plan does not exist', async () => {
+			vi.mocked(installmentPlanRepo.findById).mockResolvedValue(null)
+
+			await expect(
+				service.create({
+					date: new Date('2026-05-10'),
+					description: 'Cuota iPhone',
+					categoryId: 1,
+					essentialityId: 1,
+					paymentMethod: 'itau_visa',
+					amountGs: 750000,
+					installmentPlanId: 99,
+				}),
+			).rejects.toThrow('InstallmentPlan not found')
+
+			expect(repo.create).not.toHaveBeenCalled()
+		})
+
+		it('does not touch the installment plan repository when no plan is linked', async () => {
+			vi.mocked(repo.create).mockResolvedValue(makeTx())
+
+			await service.create({
+				date: new Date('2026-05-10'),
+				description: 'Test',
+				categoryId: 1,
+				essentialityId: 1,
+				paymentMethod: 'itau_debito',
+				amountGs: 100000,
+			})
+
+			expect(installmentPlanRepo.findById).not.toHaveBeenCalled()
+			expect(installmentPlanRepo.update).not.toHaveBeenCalled()
 		})
 	})
 

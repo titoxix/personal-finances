@@ -1,18 +1,40 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { InstallmentPendingSummary } from '@/components/installment-plans/InstallmentPendingSummary'
 import { InstallmentPlanList } from '@/components/installment-plans/InstallmentPlanList'
 import {
 	categoryService,
 	essentialityService,
+	exchangeRateService,
 	installmentPlanService,
 } from '@/lib/container'
 
 export default async function InstallmentPlansPage() {
-	const [plans, categories, essentialityLevels] = await Promise.all([
-		installmentPlanService.findAll(),
-		categoryService.findAll(),
-		essentialityService.findAll(),
-	])
+	const [plans, categories, essentialityLevels, latestRate] = await Promise.all(
+		[
+			installmentPlanService.findAll(),
+			categoryService.findAll(),
+			essentialityService.findAll(),
+			exchangeRateService.findLatestBySource('itau'),
+		],
+	)
+
+	const refRate = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
+	const activePlans = plans.filter((plan) => plan.active)
+	const pendingTotalGs = activePlans.reduce((sum, plan) => {
+		const remaining = Math.max(
+			plan.installmentsTotal - plan.installmentsPaid,
+			0,
+		)
+		const perInstallmentGs =
+			plan.installmentAmountGs ??
+			(plan.totalAmountGs
+				? plan.totalAmountGs / plan.installmentsTotal
+				: plan.totalAmountUsd
+					? (plan.totalAmountUsd * refRate) / plan.installmentsTotal
+					: 0)
+		return sum + remaining * perInstallmentGs
+	}, 0)
 
 	return (
 		<div>
@@ -31,6 +53,13 @@ export default async function InstallmentPlansPage() {
 					Nuevo
 				</Link>
 			</div>
+
+			{plans.length > 0 && (
+				<InstallmentPendingSummary
+					totalGs={pendingTotalGs}
+					activeCount={activePlans.length}
+				/>
+			)}
 
 			{plans.length === 0 ? (
 				<div className="flex flex-col items-center gap-3 py-16 text-center">

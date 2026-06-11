@@ -3,6 +3,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm'
 import {
 	categoryService,
 	essentialityService,
+	installmentPlanService,
 	recurringItemService,
 	transactionService,
 } from '@/lib/container'
@@ -18,13 +19,19 @@ export default async function EditTransactionPage({
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
-	const [transaction, categories, essentialityLevels, recurringItems] =
-		await Promise.all([
-			transactionService.findById(id).catch(() => null),
-			categoryService.findAll(),
-			essentialityService.findAll(),
-			recurringItemService.findActive(),
-		])
+	const [
+		transaction,
+		categories,
+		essentialityLevels,
+		recurringItems,
+		installmentPlans,
+	] = await Promise.all([
+		transactionService.findById(id).catch(() => null),
+		categoryService.findAll(),
+		essentialityService.findAll(),
+		recurringItemService.findActive(),
+		installmentPlanService.findActive(),
+	])
 
 	if (!transaction) notFound()
 
@@ -32,6 +39,11 @@ export default async function EditTransactionPage({
 	const activeLevels = essentialityLevels
 		.filter((l) => l.active)
 		.sort((a, b) => a.sortOrder - b.sortOrder)
+	const availablePlans = installmentPlans.filter(
+		(p) =>
+			p.installmentsPaid < p.installmentsTotal ||
+			p.id === transaction.installmentPlanId,
+	)
 
 	const initialValues: CreateTransactionPayload = {
 		amount: transaction.amountUsd ?? transaction.amountGs ?? 0,
@@ -42,6 +54,7 @@ export default async function EditTransactionPage({
 		paymentMethod: transaction.paymentMethod,
 		date: transaction.date.toISOString().split('T')[0] as string,
 		recurringItemId: transaction.recurringItemId ?? undefined,
+		installmentPlanId: transaction.installmentPlanId ?? undefined,
 	}
 
 	async function handleUpdate(payload: CreateTransactionPayload) {
@@ -59,6 +72,7 @@ export default async function EditTransactionPage({
 			categories={activeCategories}
 			essentialityLevels={activeLevels}
 			recurringItems={recurringItems}
+			installmentPlans={availablePlans}
 			onSubmit={handleUpdate}
 			onDelete={handleDelete}
 			initialValues={initialValues}

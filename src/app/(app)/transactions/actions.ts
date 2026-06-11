@@ -14,6 +14,7 @@ export type CreateTransactionPayload = {
 	paymentMethod: PaymentMethod
 	date: string
 	recurringItemId?: number
+	installmentPlanId?: number
 }
 
 export async function createTransaction(
@@ -29,6 +30,7 @@ export async function createTransaction(
 			amountGs: payload.currency === 'gs' ? payload.amount : undefined,
 			amountUsd: payload.currency === 'usd' ? payload.amount : undefined,
 			recurringItemId: payload.recurringItemId,
+			installmentPlanId: payload.installmentPlanId,
 		})
 	} catch (e) {
 		return {
@@ -55,6 +57,7 @@ export async function updateTransaction(
 			amountGs: payload.currency === 'gs' ? payload.amount : null,
 			amountUsd: payload.currency === 'usd' ? payload.amount : null,
 			recurringItemId: payload.recurringItemId ?? null,
+			installmentPlanId: payload.installmentPlanId ?? null,
 		})
 	} catch (e) {
 		return {

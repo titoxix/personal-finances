@@ -1,4 +1,5 @@
 import type { Transaction } from '@/domain/entities/transaction'
+import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
 import type {
 	CreateTransactionInput,
 	ITransactionRepository,
@@ -13,7 +14,10 @@ function calcWeekOfMonth(date: Date): number {
 	return 4
 }
 
-export function createTransactionService(repo: ITransactionRepository) {
+export function createTransactionService(
+	repo: ITransactionRepository,
+	installmentPlanRepo: IInstallmentPlanRepository,
+) {
 	return {
 		findAll: (): Promise<Transaction[]> => repo.findAll(),
 
@@ -37,7 +41,34 @@ export function createTransactionService(repo: ITransactionRepository) {
 			const weekOfMonth = input.weekOfMonth ?? calcWeekOfMonth(input.date)
 			const isRecurring =
 				input.recurringItemId != null ? true : (input.isRecurring ?? false)
-			return repo.create({ ...input, weekOfMonth, isRecurring })
+
+			let installmentFields: Partial<CreateTransactionInput> = {}
+			let plan: Awaited<ReturnType<IInstallmentPlanRepository['findById']>> =
+				null
+			if (input.installmentPlanId != null) {
+				plan = await installmentPlanRepo.findById(input.installmentPlanId)
+				if (!plan) throw new Error('InstallmentPlan not found')
+				installmentFields = {
+					isInstallment: true,
+					installmentCurrent: plan.installmentsPaid + 1,
+					installmentTotal: plan.installmentsTotal,
+				}
+			}
+
+			const created = await repo.create({
+				...input,
+				...installmentFields,
+				weekOfMonth,
+				isRecurring,
+			})
+
+			if (plan) {
+				await installmentPlanRepo.update(plan.id, {
+					installmentsPaid: plan.installmentsPaid + 1,
+				})
+			}
+
+			return created
 		},
 
 		update: async (

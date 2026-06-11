@@ -6,6 +6,7 @@ import { useState, useTransition } from 'react'
 import type { CreateTransactionPayload } from '@/app/(app)/transactions/actions'
 import type { Category } from '@/domain/entities/category'
 import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
+import type { InstallmentPlan } from '@/domain/entities/installment-plan'
 import type {
 	PaymentMethod,
 	RecurringItem,
@@ -26,6 +27,7 @@ type Props = {
 	categories: Category[]
 	essentialityLevels: EssentialityLevel[]
 	recurringItems: RecurringItem[]
+	installmentPlans: InstallmentPlan[]
 	onSubmit: (
 		payload: CreateTransactionPayload,
 	) => Promise<{ error: string } | undefined>
@@ -37,10 +39,29 @@ function todayISO() {
 	return new Date().toISOString().split('T')[0] as string
 }
 
+function planInstallmentAmount(
+	plan: InstallmentPlan,
+): { amount: number; currency: 'gs' | 'usd' } | null {
+	if (plan.installmentAmountGs != null)
+		return { amount: plan.installmentAmountGs, currency: 'gs' }
+	if (plan.totalAmountGs != null)
+		return {
+			amount: plan.totalAmountGs / plan.installmentsTotal,
+			currency: 'gs',
+		}
+	if (plan.totalAmountUsd != null)
+		return {
+			amount: plan.totalAmountUsd / plan.installmentsTotal,
+			currency: 'usd',
+		}
+	return null
+}
+
 export function TransactionForm({
 	categories,
 	essentialityLevels,
 	recurringItems,
+	installmentPlans,
 	onSubmit,
 	initialValues,
 	onDelete,
@@ -50,11 +71,20 @@ export function TransactionForm({
 			? recurringItems.find((r) => r.id === initialValues.recurringItemId)
 			: undefined
 
+	const preselectedPlan =
+		initialValues?.installmentPlanId != null
+			? installmentPlans.find((p) => p.id === initialValues.installmentPlanId)
+			: undefined
+	const preselectedPlanAmount = preselectedPlan
+		? planInstallmentAmount(preselectedPlan)
+		: null
+
 	const [currency, setCurrency] = useState<'gs' | 'usd'>(() => {
 		if (preselectedItem && !preselectedItem.isVariable) {
 			if (preselectedItem.amountGs != null) return 'gs'
 			if (preselectedItem.amountUsd != null) return 'usd'
 		}
+		if (preselectedPlanAmount) return preselectedPlanAmount.currency
 		return initialValues?.currency ?? 'gs'
 	})
 	const [amount, setAmount] = useState(() => {
@@ -64,23 +94,36 @@ export function TransactionForm({
 			if (preselectedItem.amountUsd != null)
 				return preselectedItem.amountUsd.toString()
 		}
+		if (preselectedPlanAmount) return preselectedPlanAmount.amount.toString()
 		return initialValues?.amount?.toString() ?? ''
 	})
 	const [description, setDescription] = useState(
 		initialValues?.description ?? '',
 	)
 	const [categoryId, setCategoryId] = useState<number | ''>(
-		preselectedItem?.categoryId ?? initialValues?.categoryId ?? '',
+		preselectedItem?.categoryId ??
+			preselectedPlan?.categoryId ??
+			initialValues?.categoryId ??
+			'',
 	)
 	const [essentialityId, setEssentialityId] = useState<number | null>(
-		preselectedItem?.essentialityId ?? initialValues?.essentialityId ?? null,
+		preselectedItem?.essentialityId ??
+			preselectedPlan?.essentialityId ??
+			initialValues?.essentialityId ??
+			null,
 	)
 	const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(
-		preselectedItem?.paymentMethod ?? initialValues?.paymentMethod ?? null,
+		preselectedItem?.paymentMethod ??
+			preselectedPlan?.paymentMethod ??
+			initialValues?.paymentMethod ??
+			null,
 	)
 	const [date, setDate] = useState(initialValues?.date ?? todayISO())
 	const [recurringItemId, setRecurringItemId] = useState<number | null>(
 		initialValues?.recurringItemId ?? null,
+	)
+	const [installmentPlanId, setInstallmentPlanId] = useState<number | null>(
+		initialValues?.installmentPlanId ?? null,
 	)
 	const [error, setError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
@@ -103,6 +146,26 @@ export function TransactionForm({
 		if (item.categoryId) setCategoryId(item.categoryId)
 		if (item.essentialityId) setEssentialityId(item.essentialityId)
 		if (item.paymentMethod) setPaymentMethod(item.paymentMethod)
+	}
+
+	const selectedPlan =
+		installmentPlanId != null
+			? installmentPlans.find((p) => p.id === installmentPlanId)
+			: undefined
+
+	function handleInstallmentPlanSelect(id: number | null) {
+		setInstallmentPlanId(id)
+		if (id == null) return
+		const plan = installmentPlans.find((p) => p.id === id)
+		if (!plan) return
+		const planAmount = planInstallmentAmount(plan)
+		if (planAmount) {
+			setCurrency(planAmount.currency)
+			setAmount(planAmount.amount.toString())
+		}
+		if (plan.categoryId) setCategoryId(plan.categoryId)
+		if (plan.essentialityId) setEssentialityId(plan.essentialityId)
+		if (plan.paymentMethod) setPaymentMethod(plan.paymentMethod)
 	}
 
 	const isValid =
@@ -128,6 +191,7 @@ export function TransactionForm({
 				paymentMethod: paymentMethod as PaymentMethod,
 				date: date as string,
 				recurringItemId: recurringItemId ?? undefined,
+				installmentPlanId: installmentPlanId ?? undefined,
 			})
 			if (result?.error) setError(result.error)
 		})
@@ -233,6 +297,57 @@ export function TransactionForm({
 					{recurringItemId != null && (
 						<p className="text-xs text-muted-foreground">
 							Montos y categoría pre-cargados — podés modificarlos.
+						</p>
+					)}
+				</div>
+			)}
+
+			{/* ── Installment plan ── */}
+			{installmentPlans.length > 0 && (
+				<div className="space-y-2">
+					<label
+						htmlFor="installment-plan"
+						className="text-sm font-semibold text-foreground"
+					>
+						Plan de cuotas (opcional)
+					</label>
+					<div className="relative">
+						<select
+							id="installment-plan"
+							value={installmentPlanId ?? ''}
+							onChange={(e) =>
+								handleInstallmentPlanSelect(
+									e.target.value === '' ? null : Number(e.target.value),
+								)
+							}
+							className="w-full appearance-none rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/60 transition-colors"
+						>
+							<option value="">Sin plan de cuotas</option>
+							{installmentPlans.map((plan) => (
+								<option key={plan.id} value={plan.id}>
+									{plan.description}
+								</option>
+							))}
+						</select>
+						<div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">
+							<svg
+								aria-hidden="true"
+								width="16"
+								height="16"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth="2"
+							>
+								<path d="m6 9 6 6 6-6" />
+							</svg>
+						</div>
+					</div>
+					{selectedPlan && (
+						<p className="text-xs text-muted-foreground">
+							Cuota {selectedPlan.installmentsPaid + 1} de{' '}
+							{selectedPlan.installmentsTotal} — montos y categoría
+							pre-cargados, podés modificarlos.
 						</p>
 					)}
 				</div>

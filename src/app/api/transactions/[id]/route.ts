@@ -2,11 +2,15 @@ import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { UpdateTransactionSchema } from '@/domain/entities/transaction'
 import { prisma } from '@/lib/prisma'
+import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
 import { createTransactionService } from '@/services/TransactionService'
 
 function makeService() {
-	return createTransactionService(createPrismaTransactionRepository(prisma))
+	return createTransactionService(
+		createPrismaTransactionRepository(prisma),
+		createPrismaInstallmentPlanRepository(prisma),
+	)
 }
 
 export async function GET(

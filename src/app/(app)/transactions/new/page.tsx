@@ -2,6 +2,7 @@ import { TransactionForm } from '@/components/transactions/TransactionForm'
 import {
 	categoryService,
 	essentialityService,
+	installmentPlanService,
 	recurringItemService,
 } from '@/lib/container'
 import { createTransaction } from '../actions'
@@ -12,16 +13,21 @@ export default async function NewTransactionPage({
 	searchParams: Promise<{ recurringItemId?: string }>
 }) {
 	const { recurringItemId: recurringItemIdParam } = await searchParams
-	const [categories, essentialityLevels, recurringItems] = await Promise.all([
-		categoryService.findAll(),
-		essentialityService.findAll(),
-		recurringItemService.findActive(),
-	])
+	const [categories, essentialityLevels, recurringItems, installmentPlans] =
+		await Promise.all([
+			categoryService.findAll(),
+			essentialityService.findAll(),
+			recurringItemService.findActive(),
+			installmentPlanService.findActive(),
+		])
 
 	const activeCategories = categories.filter((c) => c.active)
 	const activeLevels = essentialityLevels
 		.filter((l) => l.active)
 		.sort((a, b) => a.sortOrder - b.sortOrder)
+	const availablePlans = installmentPlans.filter(
+		(p) => p.installmentsPaid < p.installmentsTotal,
+	)
 
 	const preselectedId =
 		recurringItemIdParam != null ? Number(recurringItemIdParam) : undefined
@@ -31,6 +37,7 @@ export default async function NewTransactionPage({
 			categories={activeCategories}
 			essentialityLevels={activeLevels}
 			recurringItems={recurringItems}
+			installmentPlans={availablePlans}
 			onSubmit={createTransaction}
 			initialValues={
 				preselectedId != null
