@@ -16,6 +16,7 @@ import { createIncomeService } from '@/services/IncomeService'
 import { createInstallmentPlanService } from '@/services/InstallmentPlanService'
 import { createMonthlySnapshotService } from '@/services/MonthlySnapshotService'
 import { createRecurringItemService } from '@/services/RecurringItemService'
+import { createSnapshotExportService } from '@/services/SnapshotExportService'
 import { createTransactionService } from '@/services/TransactionService'
 
 export const exchangeRateService = createExchangeRateService(
@@ -54,3 +55,15 @@ export const recurringItemService = createRecurringItemService(
 export const installmentPlanService = createInstallmentPlanService(
 	createPrismaInstallmentPlanRepository(prisma),
 )
+
+export const snapshotExportService = createSnapshotExportService({
+	monthlySnapshotRepo: createPrismaMonthlySnapshotRepository(prisma),
+	transactionRepo: createPrismaTransactionRepository(prisma),
+	budgetRepo: createPrismaBudgetRepository(prisma),
+	incomeRepo: createPrismaIncomeRepository(prisma),
+	exchangeRateRepo: createPrismaExchangeRateRepository(prisma),
+	recurringItemRepo: createPrismaRecurringItemRepository(prisma),
+	installmentPlanRepo: createPrismaInstallmentPlanRepository(prisma),
+	categoryRepo: createPrismaCategoryRepository(prisma),
+	essentialityRepo: createPrismaEssentialityLevelRepository(prisma),
+})

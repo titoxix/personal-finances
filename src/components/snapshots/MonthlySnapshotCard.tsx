@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Download } from 'lucide-react'
 import Link from 'next/link'
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
 
@@ -49,42 +49,59 @@ export function MonthlySnapshotCard({ snapshot }: Props) {
 				}).format(snapshot.incomeUsd)
 			: null
 
+	const ym = `${snapshot.month.getUTCFullYear()}-${String(
+		snapshot.month.getUTCMonth() + 1,
+	).padStart(2, '0')}`
+
 	return (
-		<Link
-			href={`/snapshots/${snapshot.id}/edit`}
-			className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-card/80"
-		>
-			<div className="min-w-0 flex-1">
-				<div className="flex items-center justify-between gap-2">
-					<p className="text-sm font-semibold text-foreground">
-						{formatMonth(snapshot.month)}
-					</p>
-					{netWorthStr && (
-						<span className="shrink-0 font-mono text-sm font-bold text-primary">
-							{netWorthStr}
-						</span>
-					)}
+		<div className="flex items-center gap-1 rounded-2xl border border-border bg-card pr-2">
+			<Link
+				href={`/snapshots/${snapshot.id}/edit`}
+				className="flex min-w-0 flex-1 items-center gap-3 rounded-l-2xl px-4 py-3.5 transition-colors hover:bg-card/80"
+			>
+				<div className="min-w-0 flex-1">
+					<div className="flex items-center justify-between gap-2">
+						<p className="text-sm font-semibold text-foreground">
+							{formatMonth(snapshot.month)}
+						</p>
+						{netWorthStr && (
+							<span className="shrink-0 font-mono text-sm font-bold text-primary">
+								{netWorthStr}
+							</span>
+						)}
+					</div>
+					<div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+						{incomeStr && (
+							<span className="text-xs text-muted-foreground">
+								Ingreso {incomeStr}
+							</span>
+						)}
+						{incomeStr && savingsStr && (
+							<span className="text-xs text-muted-foreground">·</span>
+						)}
+						{savingsStr && (
+							<span className="text-xs text-muted-foreground">
+								{savingsStr}
+							</span>
+						)}
+						{!incomeStr && !savingsStr && (
+							<span className="text-xs text-muted-foreground">
+								Sin datos principales
+							</span>
+						)}
+					</div>
 				</div>
-				<div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
-					{incomeStr && (
-						<span className="text-xs text-muted-foreground">
-							Ingreso {incomeStr}
-						</span>
-					)}
-					{incomeStr && savingsStr && (
-						<span className="text-xs text-muted-foreground">·</span>
-					)}
-					{savingsStr && (
-						<span className="text-xs text-muted-foreground">{savingsStr}</span>
-					)}
-					{!incomeStr && !savingsStr && (
-						<span className="text-xs text-muted-foreground">
-							Sin datos principales
-						</span>
-					)}
-				</div>
-			</div>
-			<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-		</Link>
+				<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+			</Link>
+			<a
+				href={`/api/monthly-snapshots/${snapshot.id}/export`}
+				download={`snapshot-${ym}.json`}
+				aria-label="Exportar JSON"
+				title="Exportar JSON"
+				className="flex shrink-0 items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+			>
+				<Download className="h-4 w-4" />
+			</a>
+		</div>
 	)
 }
