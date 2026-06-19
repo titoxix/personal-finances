@@ -1,8 +1,13 @@
 import type { Category } from '@/domain/entities/category'
 import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
+import type { ExchangeRate } from '@/domain/entities/exchange-rate'
+import type { Income } from '@/domain/entities/income'
 import type { InstallmentPlan } from '@/domain/entities/installment-plan'
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
+import type { RecurringItem } from '@/domain/entities/recurring-item'
 import type {
+	ExportExchangeRate,
+	ExportIncome,
 	SnapshotExport,
 	SnapshotExportGlossary,
 } from '@/domain/entities/snapshot-export'
@@ -58,6 +63,131 @@ function monthBounds(month: Date): { monthStart: Date; monthEnd: Date } {
 	}
 }
 
+function toExportIncome(
+	income: Income | null,
+	snapshot: MonthlySnapshot,
+): ExportIncome | null {
+	if (income) {
+		return {
+			grossIncomeUsd: income.grossIncomeUsd,
+			budgetCapUsd: income.budgetCapUsd,
+			automaticInvestmentUsd: income.automaticInvestmentUsd,
+			automaticDest: income.automaticDest,
+			exchangeRate: income.exchangeRate,
+			notes: income.notes,
+		}
+	}
+	if (snapshot.incomeUsd != null) {
+		return {
+			grossIncomeUsd: snapshot.incomeUsd,
+			budgetCapUsd: null,
+			automaticInvestmentUsd: null,
+			automaticDest: null,
+			exchangeRate: snapshot.exchangeRateValue,
+			notes: null,
+		}
+	}
+	return null
+}
+
+function toExportExchangeRate(
+	exchangeRate: ExchangeRate | null,
+	snapshot: MonthlySnapshot,
+): ExportExchangeRate | null {
+	if (exchangeRate) {
+		return {
+			recordedAt: exchangeRate.recordedAt,
+			source: exchangeRate.source,
+			rateBuy: exchangeRate.rateBuy,
+			rateSell: exchangeRate.rateSell,
+			rateMid: exchangeRate.rateMid,
+			notes: exchangeRate.notes,
+		}
+	}
+	if (snapshot.exchangeRateValue != null) {
+		return {
+			recordedAt: null,
+			source: null,
+			rateBuy: null,
+			rateSell: null,
+			rateMid: snapshot.exchangeRateValue,
+			notes: null,
+		}
+	}
+	return null
+}
+
+function generateEstimatedTransactions(
+	recurringItems: RecurringItem[],
+	installmentPlans: InstallmentPlan[],
+	snapshot: MonthlySnapshot,
+	monthStart: Date,
+) {
+	const year = monthStart.getUTCFullYear()
+	const monthIdx = monthStart.getUTCMonth()
+	const monthNum = monthIdx + 1
+
+	const fromRecurring = recurringItems
+		.filter((item) => {
+			if (item.frequency === 'monthly') return true
+			return item.frequency === 'annual' && item.billingMonth === monthNum
+		})
+		.map((item) => {
+			const day = Math.min(item.billingDay ?? 1, 28)
+			const date = new Date(Date.UTC(year, monthIdx, day))
+			return {
+				id: 0,
+				date,
+				description: item.description,
+				amountGs: item.amountGs,
+				amountUsd: item.amountUsd,
+				exchangeRateValue: snapshot.exchangeRateValue,
+				exchangeRateId: null,
+				categoryId: item.categoryId,
+				essentialityId: item.essentialityId,
+				paymentMethod: item.paymentMethod,
+				weekOfMonth: Math.min(Math.ceil(day / 7), 4),
+				isInstallment: false,
+				installmentCurrent: null,
+				installmentTotal: null,
+				installmentPlanId: null,
+				isRecurring: true,
+				recurringItemId: item.id,
+				notes: item.notes,
+				createdAt: date,
+				estimated: true as const,
+			}
+		})
+
+	const fromInstallments = installmentPlans.map((plan) => {
+		const date = new Date(Date.UTC(year, monthIdx, 15))
+		return {
+			id: 0,
+			date,
+			description: plan.description,
+			amountGs: plan.installmentAmountGs,
+			amountUsd: null,
+			exchangeRateValue: snapshot.exchangeRateValue,
+			exchangeRateId: null,
+			categoryId: plan.categoryId,
+			essentialityId: plan.essentialityId,
+			paymentMethod: plan.paymentMethod,
+			weekOfMonth: 3,
+			isInstallment: true,
+			installmentCurrent: null,
+			installmentTotal: plan.installmentsTotal,
+			installmentPlanId: plan.id,
+			isRecurring: false,
+			recurringItemId: null,
+			notes: plan.notes,
+			createdAt: date,
+			estimated: true as const,
+		}
+	})
+
+	return [...fromRecurring, ...fromInstallments]
+}
+
 function buildGlossary(): SnapshotExportGlossary {
 	return {
 		currency:
@@ -76,15 +206,17 @@ function buildGlossary(): SnapshotExportGlossary {
 		snapshotFields:
 			"'snapshot' es el cierre financiero del mes: saldos de cuentas (balance*), saldos de tarjetas de crédito (*CardGs), cuotas pendientes (pendingInstallmentsGs) e indicadores derivados (netWorthUsd, totalInvestedUsd, totalDebtUsd, savingsRatePct). 'investments' lista las inversiones activas al cierre del mes, cada una con su moneda (USD o GS) y retorno porcentual (returnPct).",
 		transactions:
-			"Movimientos del mes. 'weekOfMonth' (1-4) indica la semana del mes. Los campos 'installment*' indican si la transacción pertenece a un plan de cuotas (ver installmentPlanId), y 'recurringItemId' la vincula a un gasto recurrente si aplica.",
+			"Movimientos del mes. 'weekOfMonth' (1-4) indica la semana del mes. Los campos 'installment*' indican si la transacción pertenece a un plan de cuotas (ver installmentPlanId), y 'recurringItemId' la vincula a un gasto recurrente si aplica. Si 'estimated' es true, la transacción fue generada automáticamente a partir de los ítems recurrentes y planes de cuotas activos (no fue registrada manualmente).",
 		budgets:
 			"Presupuestos asignados por categoría y essentiality para el mes. 'isRecurring' indica si se repite automáticamente cada mes.",
 		recurringItems:
 			"Gastos/ingresos recurrentes ACTIVOS actualmente (no necesariamente todos ocurrieron este mes — depende de frequency/billingDay/billingMonth). 'frequency' es 'monthly' o 'annual'.",
 		installmentPlans:
 			"Planes de cuotas activos durante este mes (startDate <= fin de mes y (endDate es null o endDate >= inicio de mes)). 'installmentsPaid'/'installmentsTotal' indican el progreso total del plan, no las cuotas de este mes específico.",
+		income:
+			'Datos del ingreso del mes. Si existe un registro Income dedicado se usan todos sus campos; si no, se deriva grossIncomeUsd y exchangeRate desde el snapshot (los demás campos serán null).',
 		exchangeRate:
-			"Si el snapshot tiene exchangeRateId, 'exchangeRate' contiene el registro vinculado (fuente, fecha, tasas de compra/venta/promedio); puede ser null.",
+			'Tipo de cambio del mes. Si existe un registro ExchangeRate vinculado al snapshot se incluyen todas las tasas (compra/venta/promedio); si no, se usa el exchangeRateValue del snapshot como rateMid (los demás campos serán null).',
 	}
 }
 
@@ -151,7 +283,7 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 			deps.essentialityRepo.findAll(),
 		])
 
-		const exchangeRate =
+		const rawExchangeRate =
 			snapshot.exchangeRateId != null
 				? await deps.exchangeRateRepo.findById(snapshot.exchangeRateId)
 				: null
@@ -166,6 +298,18 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 			monthEnd,
 		)
 
+		const enrichedTransactions =
+			transactions.length > 0
+				? transactions.map((t) =>
+						enrichWithLabels(t, categoryMap, essentialityMap),
+					)
+				: generateEstimatedTransactions(
+						recurringItems,
+						installmentPlans,
+						snapshot,
+						monthStart,
+					).map((t) => enrichWithLabels(t, categoryMap, essentialityMap))
+
 		return {
 			meta: {
 				generatedAt: new Date().toISOString(),
@@ -174,11 +318,9 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 				glossary: buildGlossary(),
 			},
 			snapshot,
-			income,
-			exchangeRate,
-			transactions: transactions.map((t) =>
-				enrichWithLabels(t, categoryMap, essentialityMap),
-			),
+			income: toExportIncome(income, snapshot),
+			exchangeRate: toExportExchangeRate(rawExchangeRate, snapshot),
+			transactions: enrichedTransactions,
 			budgets: budgets.map((b) =>
 				enrichWithLabels(b, categoryMap, essentialityMap),
 			),

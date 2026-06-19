@@ -2,8 +2,6 @@ import { z } from 'zod'
 import { BudgetSchema } from './budget'
 import { CategorySchema } from './category'
 import { EssentialityLevelSchema } from './essentiality-level'
-import { ExchangeRateSchema } from './exchange-rate'
-import { IncomeSchema } from './income'
 import { InstallmentPlanSchema } from './installment-plan'
 import { MonthlySnapshotSchema } from './monthly-snapshot'
 import { RecurringItemSchema } from './recurring-item'
@@ -16,9 +14,10 @@ const LabelRefSchema = z.object({
 	essentialityLabel: z.string().nullable(),
 })
 
-export const ExportTransactionSchema = TransactionSchema.extend(
-	LabelRefSchema.shape,
-)
+export const ExportTransactionSchema = TransactionSchema.extend({
+	...LabelRefSchema.shape,
+	estimated: z.boolean().optional(),
+})
 export type ExportTransaction = z.infer<typeof ExportTransactionSchema>
 
 export const ExportBudgetSchema = BudgetSchema.extend(LabelRefSchema.shape)
@@ -34,6 +33,26 @@ export const ExportInstallmentPlanSchema = InstallmentPlanSchema.extend(
 )
 export type ExportInstallmentPlan = z.infer<typeof ExportInstallmentPlanSchema>
 
+export const ExportIncomeSchema = z.object({
+	grossIncomeUsd: z.number(),
+	budgetCapUsd: z.number().nullable(),
+	automaticInvestmentUsd: z.number().nullable(),
+	automaticDest: z.string().nullable(),
+	exchangeRate: z.number().nullable(),
+	notes: z.string().nullable(),
+})
+export type ExportIncome = z.infer<typeof ExportIncomeSchema>
+
+export const ExportExchangeRateSchema = z.object({
+	recordedAt: z.date().nullable(),
+	source: z.string().nullable(),
+	rateBuy: z.number().nullable(),
+	rateSell: z.number().nullable(),
+	rateMid: z.number().nullable(),
+	notes: z.string().nullable(),
+})
+export type ExportExchangeRate = z.infer<typeof ExportExchangeRateSchema>
+
 export const SnapshotExportGlossarySchema = z.object({
 	currency: z.string(),
 	paymentMethods: z.record(z.string(), z.string()),
@@ -43,6 +62,7 @@ export const SnapshotExportGlossarySchema = z.object({
 	budgets: z.string(),
 	recurringItems: z.string(),
 	installmentPlans: z.string(),
+	income: z.string(),
 	exchangeRate: z.string(),
 })
 export type SnapshotExportGlossary = z.infer<
@@ -60,8 +80,8 @@ export type SnapshotExportMeta = z.infer<typeof SnapshotExportMetaSchema>
 export const SnapshotExportSchema = z.object({
 	meta: SnapshotExportMetaSchema,
 	snapshot: MonthlySnapshotSchema,
-	income: IncomeSchema.nullable(),
-	exchangeRate: ExchangeRateSchema.nullable(),
+	income: ExportIncomeSchema.nullable(),
+	exchangeRate: ExportExchangeRateSchema.nullable(),
 	transactions: z.array(ExportTransactionSchema),
 	budgets: z.array(ExportBudgetSchema),
 	recurringItems: z.array(ExportRecurringItemSchema),

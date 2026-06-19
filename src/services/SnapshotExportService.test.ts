@@ -372,8 +372,8 @@ describe('createSnapshotExportService', () => {
 			const result = await service.buildExport(new Date('2026-06-01'))
 
 			expect(result.snapshot.id).toBe(1)
-			expect(result.income?.id).toBe(1)
-			expect(result.exchangeRate?.id).toBe(1)
+			expect(result.income?.grossIncomeUsd).toBe(3000)
+			expect(result.exchangeRate?.rateMid).toBe(7800)
 			expect(result.transactions).toHaveLength(1)
 			expect(result.budgets).toHaveLength(1)
 			expect(result.recurringItems).toHaveLength(1)
@@ -475,36 +475,85 @@ describe('createSnapshotExportService', () => {
 			expect(result.essentialityLevels.map((e) => e.id)).toEqual([1])
 		})
 
-		it('returns exchangeRate: null and skips the lookup when exchangeRateId is null', async () => {
+		it('falls back to snapshot exchangeRateValue when exchangeRateId is null', async () => {
 			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot({ exchangeRateId: null }),
+				makeSnapshot({ exchangeRateId: null, exchangeRateValue: 7800 }),
+			)
+			stubDefaults(d)
+
+			const result = await service.buildExport(new Date('2026-06-01'))
+
+			expect(d.exchangeRateRepo.findById).not.toHaveBeenCalled()
+			expect(result.exchangeRate).toEqual({
+				recordedAt: null,
+				source: null,
+				rateBuy: null,
+				rateSell: null,
+				rateMid: 7800,
+				notes: null,
+			})
+		})
+
+		it('returns exchangeRate: null when both exchangeRateId and exchangeRateValue are null', async () => {
+			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+				makeSnapshot({ exchangeRateId: null, exchangeRateValue: null }),
 			)
 			stubDefaults(d)
 
 			const result = await service.buildExport(new Date('2026-06-01'))
 
 			expect(result.exchangeRate).toBeNull()
-			expect(d.exchangeRateRepo.findById).not.toHaveBeenCalled()
 		})
 
-		it('looks up the linked exchange rate when exchangeRateId is set', async () => {
+		it('uses full exchange rate record when exchangeRateId is set', async () => {
 			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
 				makeSnapshot({ exchangeRateId: 42 }),
 			)
 			stubDefaults(d)
 			vi.mocked(d.exchangeRateRepo.findById).mockResolvedValue(
-				makeExchangeRate({ id: 42 }),
+				makeExchangeRate({
+					id: 42,
+					rateBuy: 7700,
+					rateSell: 7900,
+					rateMid: 7800,
+				}),
 			)
 
 			const result = await service.buildExport(new Date('2026-06-01'))
 
 			expect(d.exchangeRateRepo.findById).toHaveBeenCalledWith(42)
-			expect(result.exchangeRate?.id).toBe(42)
+			expect(result.exchangeRate).toEqual({
+				recordedAt: new Date('2026-06-01'),
+				source: 'itau',
+				rateBuy: 7700,
+				rateSell: 7900,
+				rateMid: 7800,
+				notes: null,
+			})
 		})
 
-		it('returns income: null when no income record exists for the month', async () => {
+		it('falls back to snapshot incomeUsd when no income record exists', async () => {
 			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot(),
+				makeSnapshot({ incomeUsd: 5000, exchangeRateValue: 7800 }),
+			)
+			stubDefaults(d)
+			vi.mocked(d.incomeRepo.findByMonth).mockResolvedValue(null)
+
+			const result = await service.buildExport(new Date('2026-06-01'))
+
+			expect(result.income).toEqual({
+				grossIncomeUsd: 5000,
+				budgetCapUsd: null,
+				automaticInvestmentUsd: null,
+				automaticDest: null,
+				exchangeRate: 7800,
+				notes: null,
+			})
+		})
+
+		it('returns income: null when both income record and snapshot incomeUsd are null', async () => {
+			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+				makeSnapshot({ incomeUsd: null }),
 			)
 			stubDefaults(d)
 			vi.mocked(d.incomeRepo.findByMonth).mockResolvedValue(null)
@@ -512,6 +561,147 @@ describe('createSnapshotExportService', () => {
 			const result = await service.buildExport(new Date('2026-06-01'))
 
 			expect(result.income).toBeNull()
+		})
+
+		it('uses full income record when available', async () => {
+			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+				makeSnapshot(),
+			)
+			stubDefaults(d)
+
+			const result = await service.buildExport(new Date('2026-06-01'))
+
+			expect(result.income).toEqual({
+				grossIncomeUsd: 3000,
+				budgetCapUsd: 2500,
+				automaticInvestmentUsd: 500,
+				automaticDest: 'Broker XYZ',
+				exchangeRate: 7800,
+				notes: null,
+			})
+		})
+
+		describe('estimated transactions', () => {
+			it('generates estimated transactions from recurring items when no actual transactions exist', async () => {
+				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+					makeSnapshot({
+						month: new Date('2026-06-01'),
+						exchangeRateValue: 7800,
+					}),
+				)
+				stubDefaults(d)
+				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
+				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
+					makeRecurringItem({
+						id: 10,
+						description: 'Netflix',
+						frequency: 'monthly',
+						billingDay: 5,
+						amountGs: 151000,
+						categoryId: 1,
+						essentialityId: 1,
+					}),
+				])
+				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
+
+				const result = await service.buildExport(new Date('2026-06-01'))
+
+				expect(result.transactions).toHaveLength(1)
+				expect(result.transactions[0]).toMatchObject({
+					description: 'Netflix',
+					amountGs: 151000,
+					estimated: true,
+					isRecurring: true,
+					recurringItemId: 10,
+				})
+			})
+
+			it('generates estimated transactions from installment plans active in the month', async () => {
+				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+					makeSnapshot({ month: new Date('2026-06-01') }),
+				)
+				stubDefaults(d)
+				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
+				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([])
+				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([
+					makeInstallmentPlan({
+						id: 5,
+						description: 'Gym Equipment',
+						installmentAmountGs: 1300000,
+						categoryId: 1,
+						essentialityId: 1,
+					}),
+				])
+
+				const result = await service.buildExport(new Date('2026-06-01'))
+
+				expect(result.transactions).toHaveLength(1)
+				expect(result.transactions[0]).toMatchObject({
+					description: 'Gym Equipment',
+					amountGs: 1300000,
+					estimated: true,
+					isInstallment: true,
+					installmentPlanId: 5,
+				})
+			})
+
+			it('excludes annual recurring items that do not match the snapshot month', async () => {
+				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+					makeSnapshot({ month: new Date('2026-06-01') }),
+				)
+				stubDefaults(d)
+				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
+				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
+					makeRecurringItem({
+						frequency: 'annual',
+						billingDay: 15,
+						billingMonth: 9,
+					}),
+				])
+				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
+
+				const result = await service.buildExport(new Date('2026-06-01'))
+
+				expect(result.transactions).toHaveLength(0)
+			})
+
+			it('includes annual recurring items when billingMonth matches the snapshot month', async () => {
+				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+					makeSnapshot({ month: new Date('2026-06-01') }),
+				)
+				stubDefaults(d)
+				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
+				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
+					makeRecurringItem({
+						id: 7,
+						frequency: 'annual',
+						billingDay: 15,
+						billingMonth: 6,
+						description: 'Annual sub',
+					}),
+				])
+				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
+
+				const result = await service.buildExport(new Date('2026-06-01'))
+
+				expect(result.transactions).toHaveLength(1)
+				expect(result.transactions[0]).toMatchObject({
+					description: 'Annual sub',
+					estimated: true,
+				})
+			})
+
+			it('uses actual transactions when they exist (no estimated fallback)', async () => {
+				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
+					makeSnapshot(),
+				)
+				stubDefaults(d)
+
+				const result = await service.buildExport(new Date('2026-06-01'))
+
+				expect(result.transactions).toHaveLength(1)
+				expect(result.transactions[0]?.estimated).toBeUndefined()
+			})
 		})
 
 		describe('installment plan month-overlap filtering (June 2026)', () => {
@@ -601,6 +791,7 @@ describe('createSnapshotExportService', () => {
 					budgets: expect.any(String),
 					recurringItems: expect.any(String),
 					installmentPlans: expect.any(String),
+					income: expect.any(String),
 					exchangeRate: expect.any(String),
 				})
 			})

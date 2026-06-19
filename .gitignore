@@ -48,3 +48,6 @@ next-env.d.ts
 
 # project tasks
 /tasks
+
+# temporary scripts and test data
+/tmp
