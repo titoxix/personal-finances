@@ -1,4 +1,4 @@
-import { Download, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { MonthlySnapshotList } from '@/components/snapshots/MonthlySnapshotList'
 import { monthlySnapshotService } from '@/lib/container'
@@ -15,25 +15,13 @@ export default async function SnapshotsPage() {
 					</p>
 					<h1 className="text-2xl font-bold text-foreground">Snapshots</h1>
 				</div>
-				<div className="flex shrink-0 items-center gap-2">
-					{snapshots.length > 0 && (
-						<a
-							href="/api/monthly-snapshots/export"
-							download="snapshots-all.json"
-							className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-muted"
-						>
-							<Download className="h-4 w-4" strokeWidth={2.5} />
-							Exportar todo
-						</a>
-					)}
-					<Link
-						href="/snapshots/new"
-						className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
-					>
-						<Plus className="h-4 w-4" strokeWidth={2.5} />
-						Nuevo
-					</Link>
-				</div>
+				<Link
+					href="/snapshots/new"
+					className="flex shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+				>
+					<Plus className="h-4 w-4" strokeWidth={2.5} />
+					Nuevo
+				</Link>
 			</div>
 
 			{snapshots.length === 0 ? (

@@ -48,6 +48,13 @@ export function createPrismaIncomeRepository(
 			const row = await prisma.income.findFirst({ where: { month } })
 			return row ? toDomain(row) : null
 		},
+		findByDateRange: async (start: Date, end: Date) => {
+			const rows = await prisma.income.findMany({
+				where: { month: { gte: start, lt: end } },
+				orderBy: { month: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
 		create: async (input: CreateIncomeInput) => {
 			const row = await prisma.income.create({ data: input })
 			return toDomain(row)

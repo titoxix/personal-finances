@@ -91,6 +91,13 @@ export function createPrismaTransactionRepository(
 			})
 			return rows.map(toDomain)
 		},
+		findByDateRange: async (start: Date, end: Date) => {
+			const rows = await prisma.transaction.findMany({
+				where: { date: { gte: start, lt: end } },
+				orderBy: { date: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
 		create: async (input: CreateTransactionInput) => {
 			const row = await prisma.transaction.create({ data: input })
 			return toDomain(row)

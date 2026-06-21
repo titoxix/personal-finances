@@ -62,6 +62,13 @@ export function createPrismaBudgetRepository(
 			})
 			return row ? toDomain(row) : null
 		},
+		findByDateRange: async (start: Date, end: Date) => {
+			const rows = await prisma.budget.findMany({
+				where: { month: { gte: start, lt: end }, deletedAt: null },
+				orderBy: { month: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
 		findRecurring: async (upToMonth: Date) => {
 			const rows = await prisma.budget.findMany({
 				where: {

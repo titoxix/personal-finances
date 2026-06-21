@@ -63,6 +63,15 @@ export function createPrismaInstallmentPlanRepository(
 			})
 			return rows.map(toDomain)
 		},
+		findActiveInDateRange: async (start: Date, end: Date) => {
+			const rows = await prisma.installmentPlan.findMany({
+				where: {
+					startDate: { lt: end },
+					OR: [{ endDate: null }, { endDate: { gte: start } }],
+				},
+			})
+			return rows.map(toDomain)
+		},
 		create: async (input: CreateInstallmentPlanInput) => {
 			const row = await prisma.installmentPlan.create({ data: input })
 			return toDomain(row)

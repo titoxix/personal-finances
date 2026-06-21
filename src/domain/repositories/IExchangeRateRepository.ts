@@ -25,6 +25,7 @@ export interface IExchangeRateRepository {
 	findById(id: number): Promise<ExchangeRate | null>
 	findBySource(source: ExchangeRateSource): Promise<ExchangeRate[]>
 	findLatestBySource(source: ExchangeRateSource): Promise<ExchangeRate | null>
+	findByDateRange(start: Date, end: Date): Promise<ExchangeRate[]>
 	create(input: CreateExchangeRateInput): Promise<ExchangeRate>
 	update(id: number, input: UpdateExchangeRateInput): Promise<ExchangeRate>
 	delete(id: number): Promise<void>

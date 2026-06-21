@@ -7,6 +7,7 @@ const makeRepo = (): IInstallmentPlanRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
 	findActive: vi.fn(),
+	findActiveInDateRange: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 	deactivate: vi.fn(),

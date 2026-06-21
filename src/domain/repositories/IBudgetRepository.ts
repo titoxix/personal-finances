@@ -26,6 +26,7 @@ export interface IBudgetRepository {
 		month: Date,
 		categoryId: number,
 	): Promise<Budget | null>
+	findByDateRange(start: Date, end: Date): Promise<Budget[]>
 	findRecurring(upToMonth: Date): Promise<Budget[]>
 	create(input: CreateBudgetInput): Promise<Budget>
 	update(id: number, input: UpdateBudgetInput): Promise<Budget>

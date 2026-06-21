@@ -55,7 +55,7 @@ export function InvestmentList({ value, onChange }: Props) {
 				const returnPctId = `inv-${index}-return-pct`
 				return (
 					<div
-						key={index}
+						key={nameId}
 						className="rounded-2xl border border-border bg-card p-4 space-y-3"
 					>
 						<div className="flex items-center justify-between">

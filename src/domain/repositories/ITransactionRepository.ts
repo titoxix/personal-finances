@@ -49,6 +49,7 @@ export interface ITransactionRepository {
 		month: Date,
 		categoryId: number,
 	): Promise<Transaction[]>
+	findByDateRange(start: Date, end: Date): Promise<Transaction[]>
 	create(input: CreateTransactionInput): Promise<Transaction>
 	update(id: number, input: UpdateTransactionInput): Promise<Transaction>
 	delete(id: number): Promise<void>

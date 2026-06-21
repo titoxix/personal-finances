@@ -32,6 +32,7 @@ export interface IInstallmentPlanRepository {
 	findAll(): Promise<InstallmentPlan[]>
 	findById(id: number): Promise<InstallmentPlan | null>
 	findActive(): Promise<InstallmentPlan[]>
+	findActiveInDateRange(start: Date, end: Date): Promise<InstallmentPlan[]>
 	create(input: CreateInstallmentPlanInput): Promise<InstallmentPlan>
 	update(
 		id: number,

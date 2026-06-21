@@ -1,43 +1,10 @@
 'use client'
 
-import {
-	ArrowLeftRight,
-	BarChart2,
-	CreditCard,
-	Layers,
-	LayoutDashboard,
-	Receipt,
-	RefreshCw,
-	Settings,
-	Tag,
-	Target,
-	TrendingUp,
-	Wallet,
-	X,
-} from 'lucide-react'
+import { X } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-
-const NAV_ITEMS = [
-	{ href: '/', icon: LayoutDashboard, label: 'Dashboard' },
-	{ href: '/transactions', icon: Receipt, label: 'Transacciones' },
-	{ href: '/incomes', icon: Wallet, label: 'Ingresos' },
-	{ href: '/budgets', icon: Target, label: 'Presupuestos' },
-	{ href: '/categories', icon: Tag, label: 'Categorías' },
-	{ href: '/essentiality-levels', icon: Layers, label: 'Esencialidad' },
-	{ href: '/recurring-items', icon: RefreshCw, label: 'Recurrentes' },
-	{ href: '/installment-plans', icon: CreditCard, label: 'Cuotas' },
-	{ href: '/snapshots', icon: BarChart2, label: 'Snapshots' },
-	{ href: '/exchange-rates', icon: ArrowLeftRight, label: 'Tipos de Cambio' },
-	{
-		href: '/analytics',
-		icon: TrendingUp,
-		label: 'Analytics',
-		comingSoon: true,
-	},
-	{ href: '/settings', icon: Settings, label: 'Settings', comingSoon: true },
-]
+import { NAV_ITEMS } from './nav-items'
 
 type Props = {
 	open: boolean

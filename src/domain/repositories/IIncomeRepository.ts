@@ -23,6 +23,7 @@ export interface IIncomeRepository {
 	findAll(): Promise<Income[]>
 	findById(id: number): Promise<Income | null>
 	findByMonth(month: Date): Promise<Income | null>
+	findByDateRange(start: Date, end: Date): Promise<Income[]>
 	create(input: CreateIncomeInput): Promise<Income>
 	update(id: number, input: UpdateIncomeInput): Promise<Income>
 }

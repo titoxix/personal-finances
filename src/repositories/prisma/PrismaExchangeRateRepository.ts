@@ -61,6 +61,13 @@ export function createPrismaExchangeRateRepository(
 			})
 			return row ? toDomain(row) : null
 		},
+		findByDateRange: async (start: Date, end: Date) => {
+			const rows = await prisma.exchangeRate.findMany({
+				where: { recordedAt: { gte: start, lt: end } },
+				orderBy: { recordedAt: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
 		create: async (input: CreateExchangeRateInput) => {
 			const row = await prisma.exchangeRate.create({ data: input })
 			return toDomain(row)

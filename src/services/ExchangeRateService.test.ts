@@ -8,6 +8,7 @@ const makeRepo = (): IExchangeRateRepository => ({
 	findById: vi.fn(),
 	findBySource: vi.fn(),
 	findLatestBySource: vi.fn(),
+	findByDateRange: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 	delete: vi.fn(),

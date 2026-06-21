@@ -8,6 +8,7 @@ const makeRepo = (): IBudgetRepository => ({
 	findById: vi.fn(),
 	findByMonth: vi.fn(),
 	findByMonthAndCategory: vi.fn(),
+	findByDateRange: vi.fn(),
 	findRecurring: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),

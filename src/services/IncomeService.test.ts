@@ -7,6 +7,7 @@ const makeRepo = (): IIncomeRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
 	findByMonth: vi.fn(),
+	findByDateRange: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 })

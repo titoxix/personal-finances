@@ -103,6 +103,14 @@ export function createPrismaMonthlySnapshotRepository(
 			})
 			return row ? toDomain(row) : null
 		},
+		findByDateRange: async (start: Date, end: Date) => {
+			const rows = await prisma.monthlySnapshot.findMany({
+				where: { month: { gte: start, lt: end } },
+				orderBy: { month: 'desc' },
+				include: { investments: true },
+			})
+			return rows.map(toDomain)
+		},
 		findLatest: async () => {
 			const row = await prisma.monthlySnapshot.findFirst({
 				orderBy: { month: 'desc' },

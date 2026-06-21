@@ -8,6 +8,7 @@ const makeRepo = (): IMonthlySnapshotRepository => ({
 	findById: vi.fn(),
 	findByMonth: vi.fn(),
 	findLatest: vi.fn(),
+	findByDateRange: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 })
