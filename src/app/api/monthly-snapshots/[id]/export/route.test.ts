@@ -3,16 +3,16 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mockMonthlySnapshotService = {
+const mockSnapshotService = {
 	findById: vi.fn(),
 }
 
 const mockSnapshotExportService = {
-	buildExport: vi.fn(),
+	buildExportForSnapshot: vi.fn(),
 }
 
 vi.mock('@/lib/container', () => ({
-	monthlySnapshotService: mockMonthlySnapshotService,
+	snapshotService: mockSnapshotService,
 	snapshotExportService: mockSnapshotExportService,
 }))
 
@@ -28,43 +28,49 @@ function makeRequest(id: string) {
 describe('GET /api/monthly-snapshots/[id]/export', () => {
 	beforeEach(() => vi.clearAllMocks())
 
-	it('returns 200 with a Content-Disposition header derived from the snapshot month', async () => {
-		mockMonthlySnapshotService.findById.mockResolvedValue({
+	it('returns 200 with a Content-Disposition header derived from the snapshot date', async () => {
+		const snapshot = {
 			id: 1,
-			month: new Date('2026-06-01'),
+			date: new Date('2026-06-15'),
+		}
+		mockSnapshotService.findById.mockResolvedValue(snapshot)
+		mockSnapshotExportService.buildExportForSnapshot.mockResolvedValue({
+			meta: {},
 		})
-		mockSnapshotExportService.buildExport.mockResolvedValue({ meta: {} })
 
 		const { req, params } = makeRequest('1')
 		const response = await GET(req, { params })
 
 		expect(response.status).toBe(200)
 		expect(response.headers.get('Content-Disposition')).toBe(
-			'attachment; filename="snapshot-2026-06.json"',
+			'attachment; filename="snapshot-2026-06-15.json"',
 		)
-		expect(mockSnapshotExportService.buildExport).toHaveBeenCalledWith(
-			new Date('2026-06-01'),
-		)
+		expect(
+			mockSnapshotExportService.buildExportForSnapshot,
+		).toHaveBeenCalledWith(snapshot)
 	})
 
-	it('zero-pads single-digit months in the filename', async () => {
-		mockMonthlySnapshotService.findById.mockResolvedValue({
+	it('zero-pads single-digit months and days in the filename', async () => {
+		const snapshot = {
 			id: 1,
-			month: new Date('2026-01-01'),
+			date: new Date('2026-01-05'),
+		}
+		mockSnapshotService.findById.mockResolvedValue(snapshot)
+		mockSnapshotExportService.buildExportForSnapshot.mockResolvedValue({
+			meta: {},
 		})
-		mockSnapshotExportService.buildExport.mockResolvedValue({ meta: {} })
 
 		const { req, params } = makeRequest('1')
 		const response = await GET(req, { params })
 
 		expect(response.headers.get('Content-Disposition')).toBe(
-			'attachment; filename="snapshot-2026-01.json"',
+			'attachment; filename="snapshot-2026-01-05.json"',
 		)
 	})
 
 	it('returns 404 when the snapshot does not exist', async () => {
-		mockMonthlySnapshotService.findById.mockRejectedValue(
-			new Error('MonthlySnapshot not found'),
+		mockSnapshotService.findById.mockRejectedValue(
+			new Error('Snapshot not found'),
 		)
 
 		const { req, params } = makeRequest('999')
@@ -74,11 +80,13 @@ describe('GET /api/monthly-snapshots/[id]/export', () => {
 	})
 
 	it('returns 500 on unexpected errors', async () => {
-		mockMonthlySnapshotService.findById.mockResolvedValue({
+		mockSnapshotService.findById.mockResolvedValue({
 			id: 1,
-			month: new Date('2026-06-01'),
+			date: new Date('2026-06-15'),
 		})
-		mockSnapshotExportService.buildExport.mockRejectedValue(new Error('boom'))
+		mockSnapshotExportService.buildExportForSnapshot.mockRejectedValue(
+			new Error('boom'),
+		)
 
 		const { req, params } = makeRequest('1')
 		const response = await GET(req, { params })

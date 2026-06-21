@@ -3,29 +3,24 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/prisma', () => ({ prisma: {} }))
-vi.mock('@/repositories/prisma/PrismaMonthlySnapshotRepository', () => ({
-	createPrismaMonthlySnapshotRepository: vi.fn(() => ({})),
-}))
-
 const mockService = {
 	findAll: vi.fn(),
 	findById: vi.fn(),
-	findByMonth: vi.fn(),
+	findByDate: vi.fn(),
 	findLatest: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 }
 
-vi.mock('@/services/MonthlySnapshotService', () => ({
-	createMonthlySnapshotService: vi.fn(() => mockService),
+vi.mock('@/lib/container', () => ({
+	snapshotService: mockService,
 }))
 
 const { GET, POST } = await import('./route')
 
 const snapshot = {
 	id: 1,
-	month: new Date('2026-05-01'),
+	date: new Date('2026-05-15'),
 	incomeUsd: 3000,
 	exchangeRateValue: 7800,
 	exchangeRateId: 1,
@@ -65,14 +60,14 @@ describe('POST /api/monthly-snapshots', () => {
 		mockService.create.mockResolvedValue(snapshot)
 		const request = new NextRequest('http://localhost/api/monthly-snapshots', {
 			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01' }),
+			body: JSON.stringify({ date: '2026-05-15' }),
 			headers: { 'Content-Type': 'application/json' },
 		})
 		const response = await POST(request)
 		expect(response.status).toBe(201)
 	})
 
-	it('returns 400 for missing month', async () => {
+	it('returns 400 for missing date', async () => {
 		const request = new NextRequest('http://localhost/api/monthly-snapshots', {
 			method: 'POST',
 			body: JSON.stringify({}),
@@ -100,7 +95,7 @@ describe('POST /api/monthly-snapshots', () => {
 		const request = new NextRequest('http://localhost/api/monthly-snapshots', {
 			method: 'POST',
 			body: JSON.stringify({
-				month: '2026-05-01',
+				date: '2026-05-15',
 				investments: [
 					{ name: 'Investor', currency: 'USD', value: 10000, returnPct: 3.2 },
 				],
@@ -109,18 +104,5 @@ describe('POST /api/monthly-snapshots', () => {
 		})
 		const response = await POST(request)
 		expect(response.status).toBe(201)
-	})
-
-	it('returns 409 when snapshot already exists for month', async () => {
-		mockService.create.mockRejectedValue(
-			new Error('MonthlySnapshot already exists for this month'),
-		)
-		const request = new NextRequest('http://localhost/api/monthly-snapshots', {
-			method: 'POST',
-			body: JSON.stringify({ month: '2026-05-01' }),
-			headers: { 'Content-Type': 'application/json' },
-		})
-		const response = await POST(request)
-		expect(response.status).toBe(409)
 	})
 })

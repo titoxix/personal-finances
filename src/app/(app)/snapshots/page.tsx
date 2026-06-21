@@ -1,10 +1,10 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
-import { MonthlySnapshotList } from '@/components/snapshots/MonthlySnapshotList'
-import { monthlySnapshotService } from '@/lib/container'
+import { SnapshotList } from '@/components/snapshots/SnapshotList'
+import { snapshotService } from '@/lib/container'
 
 export default async function SnapshotsPage() {
-	const snapshots = await monthlySnapshotService.findAll()
+	const snapshots = await snapshotService.findAll()
 
 	return (
 		<div>
@@ -30,17 +30,17 @@ export default async function SnapshotsPage() {
 						Sin snapshots registrados
 					</p>
 					<p className="max-w-[240px] text-sm text-muted-foreground">
-						Registrá el estado de tus finanzas al cierre de cada mes.
+						Registrá el estado de tus finanzas en cualquier momento.
 					</p>
 					<Link
 						href="/snapshots/new"
 						className="mt-2 rounded-full bg-primary px-6 py-2.5 text-sm font-bold text-primary-foreground"
 					>
-						Registrar mes
+						Registrar snapshot
 					</Link>
 				</div>
 			) : (
-				<MonthlySnapshotList snapshots={snapshots} />
+				<SnapshotList snapshots={snapshots} />
 			)}
 		</div>
 	)

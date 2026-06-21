@@ -1,8 +1,8 @@
-import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
+import type { Snapshot } from '@/domain/entities/snapshot'
 import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
 
-export type CreateMonthlySnapshotInput = {
-	month: Date
+export type CreateSnapshotInput = {
+	date: Date
 	incomeUsd?: number
 	exchangeRateValue?: number
 	exchangeRateId?: number
@@ -24,7 +24,7 @@ export type CreateMonthlySnapshotInput = {
 	investments?: CreateSnapshotInvestmentInput[]
 }
 
-export type UpdateMonthlySnapshotInput = {
+export type UpdateSnapshotInput = {
 	incomeUsd?: number | null
 	exchangeRateValue?: number | null
 	exchangeRateId?: number | null
@@ -46,15 +46,11 @@ export type UpdateMonthlySnapshotInput = {
 	investments?: CreateSnapshotInvestmentInput[]
 }
 
-export interface IMonthlySnapshotRepository {
-	findAll(): Promise<MonthlySnapshot[]>
-	findById(id: number): Promise<MonthlySnapshot | null>
-	findByMonth(month: Date): Promise<MonthlySnapshot | null>
-	findLatest(): Promise<MonthlySnapshot | null>
-	findByDateRange(start: Date, end: Date): Promise<MonthlySnapshot[]>
-	create(input: CreateMonthlySnapshotInput): Promise<MonthlySnapshot>
-	update(
-		id: number,
-		input: UpdateMonthlySnapshotInput,
-	): Promise<MonthlySnapshot>
+export interface ISnapshotRepository {
+	findAll(): Promise<Snapshot[]>
+	findById(id: number): Promise<Snapshot | null>
+	findLatest(): Promise<Snapshot | null>
+	findByDateRange(start: Date, end: Date): Promise<Snapshot[]>
+	create(input: CreateSnapshotInput): Promise<Snapshot>
+	update(id: number, input: UpdateSnapshotInput): Promise<Snapshot>
 }

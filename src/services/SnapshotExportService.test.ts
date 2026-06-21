@@ -5,8 +5,8 @@ import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
 import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 import type { Income } from '@/domain/entities/income'
 import type { InstallmentPlan } from '@/domain/entities/installment-plan'
-import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
 import type { RecurringItem } from '@/domain/entities/recurring-item'
+import type { Snapshot } from '@/domain/entities/snapshot'
 import type { Transaction } from '@/domain/entities/transaction'
 import type { IBudgetRepository } from '@/domain/repositories/IBudgetRepository'
 import type { ICategoryRepository } from '@/domain/repositories/ICategoryRepository'
@@ -14,18 +14,17 @@ import type { IEssentialityLevelRepository } from '@/domain/repositories/IEssent
 import type { IExchangeRateRepository } from '@/domain/repositories/IExchangeRateRepository'
 import type { IIncomeRepository } from '@/domain/repositories/IIncomeRepository'
 import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
-import type { IMonthlySnapshotRepository } from '@/domain/repositories/IMonthlySnapshotRepository'
 import type { IRecurringItemRepository } from '@/domain/repositories/IRecurringItemRepository'
+import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotRepository'
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 import {
 	createSnapshotExportService,
 	type SnapshotExportDeps,
 } from './SnapshotExportService'
 
-const makeMonthlySnapshotRepo = (): IMonthlySnapshotRepository => ({
+const makeSnapshotRepo = (): ISnapshotRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
-	findByMonth: vi.fn(),
 	findLatest: vi.fn(),
 	findByDateRange: vi.fn(),
 	create: vi.fn(),
@@ -112,12 +111,10 @@ const makeEssentialityRepo = (): IEssentialityLevelRepository => ({
 	deactivate: vi.fn(),
 })
 
-function makeSnapshot(
-	overrides: Partial<MonthlySnapshot> = {},
-): MonthlySnapshot {
+function makeSnapshot(overrides: Partial<Snapshot> = {}): Snapshot {
 	return {
 		id: 1,
-		month: new Date('2026-06-01'),
+		date: new Date('2026-06-15'),
 		incomeUsd: 3000,
 		exchangeRateValue: 7800,
 		exchangeRateId: 1,
@@ -287,7 +284,7 @@ function makeEssentialityLevel(
 
 function makeDeps(): {
 	deps: SnapshotExportDeps
-	monthlySnapshotRepo: IMonthlySnapshotRepository
+	snapshotRepo: ISnapshotRepository
 	transactionRepo: ITransactionRepository
 	budgetRepo: IBudgetRepository
 	incomeRepo: IIncomeRepository
@@ -297,7 +294,7 @@ function makeDeps(): {
 	categoryRepo: ICategoryRepository
 	essentialityRepo: IEssentialityLevelRepository
 } {
-	const monthlySnapshotRepo = makeMonthlySnapshotRepo()
+	const snapshotRepo = makeSnapshotRepo()
 	const transactionRepo = makeTransactionRepo()
 	const budgetRepo = makeBudgetRepo()
 	const incomeRepo = makeIncomeRepo()
@@ -309,7 +306,7 @@ function makeDeps(): {
 
 	return {
 		deps: {
-			monthlySnapshotRepo,
+			snapshotRepo,
 			transactionRepo,
 			budgetRepo,
 			incomeRepo,
@@ -319,7 +316,7 @@ function makeDeps(): {
 			categoryRepo,
 			essentialityRepo,
 		},
-		monthlySnapshotRepo,
+		snapshotRepo,
 		transactionRepo,
 		budgetRepo,
 		incomeRepo,
@@ -360,22 +357,12 @@ describe('createSnapshotExportService', () => {
 		service = createSnapshotExportService(d.deps)
 	})
 
-	describe('buildExport', () => {
-		it('throws when no snapshot exists for the month', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(null)
-
-			await expect(service.buildExport(new Date('2026-06-01'))).rejects.toThrow(
-				'MonthlySnapshot not found',
-			)
-		})
-
+	describe('buildExportForSnapshot', () => {
 		it('returns a fully-populated export object', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot(),
-			)
+			const snapshot = makeSnapshot()
 			stubDefaults(d)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.snapshot.id).toBe(1)
 			expect(result.income?.grossIncomeUsd).toBe(3000)
@@ -389,9 +376,7 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('resolves category and essentiality labels on enriched records', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot(),
-			)
+			const snapshot = makeSnapshot()
 			stubDefaults(d)
 			vi.mocked(d.categoryRepo.findAll).mockResolvedValue([
 				makeCategory({ id: 1, code: 'food', label: 'Comida' }),
@@ -400,7 +385,7 @@ describe('createSnapshotExportService', () => {
 				makeEssentialityLevel({ id: 1, code: 'essential', label: 'Esencial' }),
 			])
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.transactions[0]).toMatchObject({
 				categoryCode: 'food',
@@ -423,15 +408,13 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('falls back to null labels when category/essentiality ids are not found', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot(),
-			)
+			const snapshot = makeSnapshot()
 			stubDefaults(d)
 			vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([
 				makeTransaction({ categoryId: 999, essentialityId: 999 }),
 			])
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.transactions[0]).toMatchObject({
 				categoryCode: null,
@@ -442,9 +425,7 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('resolves labels for inactive categories/essentiality levels but excludes them from reference lists', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot(),
-			)
+			const snapshot = makeSnapshot()
 			stubDefaults(d)
 			vi.mocked(d.categoryRepo.findAll).mockResolvedValue([
 				makeCategory({ id: 1, code: 'food', label: 'Comida', active: true }),
@@ -469,7 +450,7 @@ describe('createSnapshotExportService', () => {
 				makeTransaction({ categoryId: 2, essentialityId: 2 }),
 			])
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.transactions[0]).toMatchObject({
 				categoryCode: 'old',
@@ -482,12 +463,13 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('falls back to snapshot exchangeRateValue when exchangeRateId is null', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot({ exchangeRateId: null, exchangeRateValue: 7800 }),
-			)
+			const snapshot = makeSnapshot({
+				exchangeRateId: null,
+				exchangeRateValue: 7800,
+			})
 			stubDefaults(d)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(d.exchangeRateRepo.findById).not.toHaveBeenCalled()
 			expect(result.exchangeRate).toEqual({
@@ -501,20 +483,19 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('returns exchangeRate: null when both exchangeRateId and exchangeRateValue are null', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot({ exchangeRateId: null, exchangeRateValue: null }),
-			)
+			const snapshot = makeSnapshot({
+				exchangeRateId: null,
+				exchangeRateValue: null,
+			})
 			stubDefaults(d)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.exchangeRate).toBeNull()
 		})
 
 		it('uses full exchange rate record when exchangeRateId is set', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot({ exchangeRateId: 42 }),
-			)
+			const snapshot = makeSnapshot({ exchangeRateId: 42 })
 			stubDefaults(d)
 			vi.mocked(d.exchangeRateRepo.findById).mockResolvedValue(
 				makeExchangeRate({
@@ -525,7 +506,7 @@ describe('createSnapshotExportService', () => {
 				}),
 			)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(d.exchangeRateRepo.findById).toHaveBeenCalledWith(42)
 			expect(result.exchangeRate).toEqual({
@@ -539,13 +520,14 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('falls back to snapshot incomeUsd when no income record exists', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot({ incomeUsd: 5000, exchangeRateValue: 7800 }),
-			)
+			const snapshot = makeSnapshot({
+				incomeUsd: 5000,
+				exchangeRateValue: 7800,
+			})
 			stubDefaults(d)
 			vi.mocked(d.incomeRepo.findByMonth).mockResolvedValue(null)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.income).toEqual({
 				grossIncomeUsd: 5000,
@@ -558,24 +540,20 @@ describe('createSnapshotExportService', () => {
 		})
 
 		it('returns income: null when both income record and snapshot incomeUsd are null', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot({ incomeUsd: null }),
-			)
+			const snapshot = makeSnapshot({ incomeUsd: null })
 			stubDefaults(d)
 			vi.mocked(d.incomeRepo.findByMonth).mockResolvedValue(null)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.income).toBeNull()
 		})
 
 		it('uses full income record when available', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-				makeSnapshot(),
-			)
+			const snapshot = makeSnapshot()
 			stubDefaults(d)
 
-			const result = await service.buildExport(new Date('2026-06-01'))
+			const result = await service.buildExportForSnapshot(snapshot)
 
 			expect(result.income).toEqual({
 				grossIncomeUsd: 3000,
@@ -589,12 +567,10 @@ describe('createSnapshotExportService', () => {
 
 		describe('estimated transactions', () => {
 			it('generates estimated transactions from recurring items when no actual transactions exist', async () => {
-				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-					makeSnapshot({
-						month: new Date('2026-06-01'),
-						exchangeRateValue: 7800,
-					}),
-				)
+				const snapshot = makeSnapshot({
+					date: new Date('2026-06-01'),
+					exchangeRateValue: 7800,
+				})
 				stubDefaults(d)
 				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
 				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
@@ -610,7 +586,7 @@ describe('createSnapshotExportService', () => {
 				])
 				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
 
-				const result = await service.buildExport(new Date('2026-06-01'))
+				const result = await service.buildExportForSnapshot(snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]).toMatchObject({
@@ -623,9 +599,7 @@ describe('createSnapshotExportService', () => {
 			})
 
 			it('generates estimated transactions from installment plans active in the month', async () => {
-				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-					makeSnapshot({ month: new Date('2026-06-01') }),
-				)
+				const snapshot = makeSnapshot({ date: new Date('2026-06-01') })
 				stubDefaults(d)
 				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
 				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([])
@@ -639,7 +613,7 @@ describe('createSnapshotExportService', () => {
 					}),
 				])
 
-				const result = await service.buildExport(new Date('2026-06-01'))
+				const result = await service.buildExportForSnapshot(snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]).toMatchObject({
@@ -652,9 +626,7 @@ describe('createSnapshotExportService', () => {
 			})
 
 			it('excludes annual recurring items that do not match the snapshot month', async () => {
-				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-					makeSnapshot({ month: new Date('2026-06-01') }),
-				)
+				const snapshot = makeSnapshot({ date: new Date('2026-06-01') })
 				stubDefaults(d)
 				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
 				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
@@ -666,15 +638,13 @@ describe('createSnapshotExportService', () => {
 				])
 				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
 
-				const result = await service.buildExport(new Date('2026-06-01'))
+				const result = await service.buildExportForSnapshot(snapshot)
 
 				expect(result.transactions).toHaveLength(0)
 			})
 
 			it('includes annual recurring items when billingMonth matches the snapshot month', async () => {
-				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-					makeSnapshot({ month: new Date('2026-06-01') }),
-				)
+				const snapshot = makeSnapshot({ date: new Date('2026-06-01') })
 				stubDefaults(d)
 				vi.mocked(d.transactionRepo.findByMonth).mockResolvedValue([])
 				vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
@@ -688,7 +658,7 @@ describe('createSnapshotExportService', () => {
 				])
 				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
 
-				const result = await service.buildExport(new Date('2026-06-01'))
+				const result = await service.buildExportForSnapshot(snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]).toMatchObject({
@@ -698,12 +668,10 @@ describe('createSnapshotExportService', () => {
 			})
 
 			it('uses actual transactions when they exist (no estimated fallback)', async () => {
-				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-					makeSnapshot(),
-				)
+				const snapshot = makeSnapshot()
 				stubDefaults(d)
 
-				const result = await service.buildExport(new Date('2026-06-01'))
+				const result = await service.buildExportForSnapshot(snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]?.estimated).toBeUndefined()
@@ -759,15 +727,13 @@ describe('createSnapshotExportService', () => {
 
 			for (const { name, plan, included } of cases) {
 				it(`${included ? 'includes' : 'excludes'} ${name}`, async () => {
-					vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-						makeSnapshot({ month: new Date('2026-06-01') }),
-					)
+					const snapshot = makeSnapshot({ date: new Date('2026-06-01') })
 					stubDefaults(d)
 					vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([
 						makeInstallmentPlan(plan),
 					])
 
-					const result = await service.buildExport(new Date('2026-06-01'))
+					const result = await service.buildExportForSnapshot(snapshot)
 
 					expect(result.installmentPlans).toHaveLength(included ? 1 : 0)
 				})
@@ -776,14 +742,12 @@ describe('createSnapshotExportService', () => {
 
 		describe('meta', () => {
 			it('includes generatedAt/month as ISO strings, a Spanish monthLabel, and a glossary', async () => {
-				vi.mocked(d.monthlySnapshotRepo.findByMonth).mockResolvedValue(
-					makeSnapshot({ month: new Date('2026-06-01') }),
-				)
+				const snapshot = makeSnapshot({ date: new Date('2026-06-01') })
 				stubDefaults(d)
 
-				const result = await service.buildExport(new Date('2026-06-01'))
+				const result = await service.buildExportForSnapshot(snapshot)
 
-				expect(result.meta.month).toBe(new Date('2026-06-01').toISOString())
+				expect(result.meta.date).toBe(new Date('2026-06-01').toISOString())
 				expect(() =>
 					new Date(result.meta.generatedAt).toISOString(),
 				).not.toThrow()
@@ -806,7 +770,7 @@ describe('createSnapshotExportService', () => {
 
 	describe('buildAllExports', () => {
 		it('returns an empty array when there are no snapshots', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findAll).mockResolvedValue([])
+			vi.mocked(d.snapshotRepo.findAll).mockResolvedValue([])
 
 			const result = await service.buildAllExports()
 
@@ -814,10 +778,10 @@ describe('createSnapshotExportService', () => {
 			expect(d.transactionRepo.findByMonth).not.toHaveBeenCalled()
 		})
 
-		it('returns one export per snapshot, sorted by month ascending', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findAll).mockResolvedValue([
-				makeSnapshot({ id: 2, month: new Date('2026-06-01') }),
-				makeSnapshot({ id: 1, month: new Date('2026-05-01') }),
+		it('returns one export per snapshot, sorted by date ascending', async () => {
+			vi.mocked(d.snapshotRepo.findAll).mockResolvedValue([
+				makeSnapshot({ id: 2, date: new Date('2026-06-01') }),
+				makeSnapshot({ id: 1, date: new Date('2026-05-01') }),
 			])
 			stubDefaults(d)
 

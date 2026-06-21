@@ -81,7 +81,7 @@ model ExchangeRate {
   createdAt  DateTime           @default(now()) @map("created_at")
 
   transactions     Transaction[]
-  monthlySnapshots MonthlySnapshot[]
+  snapshots        Snapshot[]
 
   @@map("exchange_rates")
 }
@@ -176,9 +176,9 @@ model Budget {
   @@map("budgets")
 }
 
-model MonthlySnapshot {
+model Snapshot {
   id                    Int      @id @default(autoincrement())
-  month                 DateTime @unique @db.Date
+  date                  DateTime @db.Date @map("month")
   incomeUsd             Decimal? @db.Decimal(10, 2) @map("income_usd")
   exchangeRateValue     Decimal? @db.Decimal(10, 2) @map("exchange_rate")
   exchangeRateId        Int?     @map("exchange_rate_id")
@@ -214,7 +214,7 @@ model SnapshotInvestment {
   returnPct  Decimal? @db.Decimal(5, 2) @map("return_pct")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  snapshot MonthlySnapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  snapshot Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
 
   @@map("snapshot_investments")
 }

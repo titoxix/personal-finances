@@ -1,10 +1,10 @@
 import {
-	type CreateMonthlySnapshot,
+	type CreateSnapshot,
 	calculateDerivedMetrics,
-	type MonthlySnapshot,
-	type UpdateMonthlySnapshot,
-} from '@/domain/entities/monthly-snapshot'
-import type { IMonthlySnapshotRepository } from '@/domain/repositories/IMonthlySnapshotRepository'
+	type Snapshot,
+	type UpdateSnapshot,
+} from '@/domain/entities/snapshot'
+import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotRepository'
 
 function computeInvestedUsd(
 	investments: ReadonlyArray<{ currency: string; value: number }>,
@@ -16,28 +16,20 @@ function computeInvestedUsd(
 	}, 0)
 }
 
-export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
+export function createSnapshotService(repo: ISnapshotRepository) {
 	return {
-		findAll: (): Promise<MonthlySnapshot[]> => repo.findAll(),
+		findAll: (): Promise<Snapshot[]> => repo.findAll(),
 
-		findById: async (id: number): Promise<MonthlySnapshot> => {
+		findById: async (id: number): Promise<Snapshot> => {
 			const snapshot = await repo.findById(id)
-			if (!snapshot) throw new Error('MonthlySnapshot not found')
+			if (!snapshot) throw new Error('Snapshot not found')
 			return snapshot
 		},
 
-		findByMonth: (month: Date): Promise<MonthlySnapshot | null> =>
-			repo.findByMonth(month),
+		findLatest: (): Promise<Snapshot | null> => repo.findLatest(),
 
-		findLatest: (): Promise<MonthlySnapshot | null> => repo.findLatest(),
-
-		create: async (input: CreateMonthlySnapshot): Promise<MonthlySnapshot> => {
-			const [existing, previous] = await Promise.all([
-				repo.findByMonth(input.month),
-				repo.findLatest(),
-			])
-			if (existing)
-				throw new Error('MonthlySnapshot already exists for this month')
+		create: async (input: CreateSnapshot): Promise<Snapshot> => {
+			const previous = await repo.findLatest()
 
 			const currentTotalInvestedUsd = computeInvestedUsd(
 				input.investments ?? [],
@@ -58,15 +50,12 @@ export function createMonthlySnapshotService(repo: IMonthlySnapshotRepository) {
 			})
 		},
 
-		update: async (
-			id: number,
-			input: UpdateMonthlySnapshot,
-		): Promise<MonthlySnapshot> => {
+		update: async (id: number, input: UpdateSnapshot): Promise<Snapshot> => {
 			const [existing, latest] = await Promise.all([
 				repo.findById(id),
 				repo.findLatest(),
 			])
-			if (!existing) throw new Error('MonthlySnapshot not found')
+			if (!existing) throw new Error('Snapshot not found')
 
 			const previous = latest?.id === id ? null : latest
 

@@ -3,8 +3,8 @@ import type { IBudgetRepository } from '@/domain/repositories/IBudgetRepository'
 import type { IExchangeRateRepository } from '@/domain/repositories/IExchangeRateRepository'
 import type { IIncomeRepository } from '@/domain/repositories/IIncomeRepository'
 import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
-import type { IMonthlySnapshotRepository } from '@/domain/repositories/IMonthlySnapshotRepository'
 import type { IRecurringItemRepository } from '@/domain/repositories/IRecurringItemRepository'
+import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotRepository'
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 import { createExportService, type ExportServiceDeps } from './ExportService'
 
@@ -70,10 +70,9 @@ const makeInstallmentPlanRepo = (): IInstallmentPlanRepository => ({
 	deactivate: vi.fn(),
 })
 
-const makeMonthlySnapshotRepo = (): IMonthlySnapshotRepository => ({
+const makeSnapshotRepo = (): ISnapshotRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
-	findByMonth: vi.fn(),
 	findLatest: vi.fn(),
 	findByDateRange: vi.fn(),
 	create: vi.fn(),
@@ -87,7 +86,7 @@ function makeDeps() {
 	const exchangeRateRepo = makeExchangeRateRepo()
 	const recurringItemRepo = makeRecurringItemRepo()
 	const installmentPlanRepo = makeInstallmentPlanRepo()
-	const monthlySnapshotRepo = makeMonthlySnapshotRepo()
+	const snapshotRepo = makeSnapshotRepo()
 
 	const deps: ExportServiceDeps = {
 		transactionRepo,
@@ -96,7 +95,7 @@ function makeDeps() {
 		exchangeRateRepo,
 		recurringItemRepo,
 		installmentPlanRepo,
-		monthlySnapshotRepo,
+		snapshotRepo,
 	}
 
 	return {
@@ -107,7 +106,7 @@ function makeDeps() {
 		exchangeRateRepo,
 		recurringItemRepo,
 		installmentPlanRepo,
-		monthlySnapshotRepo,
+		snapshotRepo,
 	}
 }
 
@@ -188,7 +187,7 @@ describe('createExportService', () => {
 		})
 
 		it('counts snapshots by date range', async () => {
-			vi.mocked(d.monthlySnapshotRepo.findByDateRange).mockResolvedValue([
+			vi.mocked(d.snapshotRepo.findByDateRange).mockResolvedValue([
 				{ id: 1 } as never,
 			])
 
@@ -259,7 +258,7 @@ describe('createExportService', () => {
 			vi.mocked(d.exchangeRateRepo.findByDateRange).mockResolvedValue([
 				{ id: 1 } as never,
 			])
-			vi.mocked(d.monthlySnapshotRepo.findByDateRange).mockResolvedValue([
+			vi.mocked(d.snapshotRepo.findByDateRange).mockResolvedValue([
 				{ id: 1 } as never,
 			])
 			vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([
@@ -348,7 +347,7 @@ describe('createExportService', () => {
 			vi.mocked(d.exchangeRateRepo.findByDateRange).mockResolvedValue([
 				{ id: 4 } as never,
 			])
-			vi.mocked(d.monthlySnapshotRepo.findByDateRange).mockResolvedValue([
+			vi.mocked(d.snapshotRepo.findByDateRange).mockResolvedValue([
 				{ id: 5 } as never,
 			])
 			vi.mocked(d.recurringItemRepo.findActive).mockResolvedValue([

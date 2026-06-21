@@ -3,8 +3,8 @@ import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
 import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 import type { Income } from '@/domain/entities/income'
 import type { InstallmentPlan } from '@/domain/entities/installment-plan'
-import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
 import type { RecurringItem } from '@/domain/entities/recurring-item'
+import type { Snapshot } from '@/domain/entities/snapshot'
 import type {
 	ExportExchangeRate,
 	ExportIncome,
@@ -17,12 +17,12 @@ import type { IEssentialityLevelRepository } from '@/domain/repositories/IEssent
 import type { IExchangeRateRepository } from '@/domain/repositories/IExchangeRateRepository'
 import type { IIncomeRepository } from '@/domain/repositories/IIncomeRepository'
 import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
-import type { IMonthlySnapshotRepository } from '@/domain/repositories/IMonthlySnapshotRepository'
 import type { IRecurringItemRepository } from '@/domain/repositories/IRecurringItemRepository'
+import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotRepository'
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 
 export type SnapshotExportDeps = {
-	monthlySnapshotRepo: IMonthlySnapshotRepository
+	snapshotRepo: ISnapshotRepository
 	transactionRepo: ITransactionRepository
 	budgetRepo: IBudgetRepository
 	incomeRepo: IIncomeRepository
@@ -52,20 +52,20 @@ function formatMonthLabel(date: Date): string {
 	return `${MONTHS_ES[date.getUTCMonth()]} ${date.getUTCFullYear()}`
 }
 
-function monthBounds(month: Date): { monthStart: Date; monthEnd: Date } {
+function monthBounds(date: Date): { monthStart: Date; monthEnd: Date } {
 	return {
 		monthStart: new Date(
-			Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1),
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1),
 		),
 		monthEnd: new Date(
-			Date.UTC(month.getUTCFullYear(), month.getUTCMonth() + 1, 1),
+			Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1),
 		),
 	}
 }
 
 function toExportIncome(
 	income: Income | null,
-	snapshot: MonthlySnapshot,
+	snapshot: Snapshot,
 ): ExportIncome | null {
 	if (income) {
 		return {
@@ -92,7 +92,7 @@ function toExportIncome(
 
 function toExportExchangeRate(
 	exchangeRate: ExchangeRate | null,
-	snapshot: MonthlySnapshot,
+	snapshot: Snapshot,
 ): ExportExchangeRate | null {
 	if (exchangeRate) {
 		return {
@@ -120,7 +120,7 @@ function toExportExchangeRate(
 function generateEstimatedTransactions(
 	recurringItems: RecurringItem[],
 	installmentPlans: InstallmentPlan[],
-	snapshot: MonthlySnapshot,
+	snapshot: Snapshot,
 	monthStart: Date,
 ) {
 	const year = monthStart.getUTCFullYear()
@@ -204,7 +204,7 @@ function buildGlossary(): SnapshotExportGlossary {
 		essentiality:
 			'essentialityLevels indica qué tan esencial es un gasto, ordenado por sortOrder (menor = más esencial). Cada transacción, presupuesto, ítem recurrente y plan de cuotas resuelve su essentialityId en essentialityCode/essentialityLabel.',
 		snapshotFields:
-			"'snapshot' es el cierre financiero del mes: saldos de cuentas (balance*), saldos de tarjetas de crédito (*CardGs), cuotas pendientes (pendingInstallmentsGs) e indicadores derivados (netWorthUsd, totalInvestedUsd, totalDebtUsd, savingsRatePct). 'investments' lista las inversiones activas al cierre del mes, cada una con su moneda (USD o GS) y retorno porcentual (returnPct).",
+			"'snapshot' es el cierre financiero: saldos de cuentas (balance*), saldos de tarjetas de crédito (*CardGs), cuotas pendientes (pendingInstallmentsGs) e indicadores derivados (netWorthUsd, totalInvestedUsd, totalDebtUsd, savingsRatePct). 'investments' lista las inversiones activas al cierre, cada una con su moneda (USD o GS) y retorno porcentual (returnPct).",
 		transactions:
 			"Movimientos del mes. 'weekOfMonth' (1-4) indica la semana del mes. Los campos 'installment*' indican si la transacción pertenece a un plan de cuotas (ver installmentPlanId), y 'recurringItemId' la vincula a un gasto recurrente si aplica. Si 'estimated' es true, la transacción fue generada automáticamente a partir de los ítems recurrentes y planes de cuotas activos (no fue registrada manualmente).",
 		budgets:
@@ -261,9 +261,9 @@ function filterInstallmentPlansForMonth(
 
 export function createSnapshotExportService(deps: SnapshotExportDeps) {
 	async function buildExportForSnapshot(
-		snapshot: MonthlySnapshot,
+		snapshot: Snapshot,
 	): Promise<SnapshotExport> {
-		const { monthStart, monthEnd } = monthBounds(snapshot.month)
+		const { monthStart, monthEnd } = monthBounds(snapshot.date)
 
 		const [
 			income,
@@ -274,9 +274,9 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 			categories,
 			essentialities,
 		] = await Promise.all([
-			deps.incomeRepo.findByMonth(snapshot.month),
-			deps.transactionRepo.findByMonth(snapshot.month),
-			deps.budgetRepo.findByMonth(snapshot.month),
+			deps.incomeRepo.findByMonth(snapshot.date),
+			deps.transactionRepo.findByMonth(snapshot.date),
+			deps.budgetRepo.findByMonth(snapshot.date),
 			deps.recurringItemRepo.findActive(),
 			deps.installmentPlanRepo.findAll(),
 			deps.categoryRepo.findAll(),
@@ -313,8 +313,8 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 		return {
 			meta: {
 				generatedAt: new Date().toISOString(),
-				month: snapshot.month.toISOString(),
-				monthLabel: formatMonthLabel(snapshot.month),
+				date: snapshot.date.toISOString(),
+				monthLabel: formatMonthLabel(snapshot.date),
 				glossary: buildGlossary(),
 			},
 			snapshot,
@@ -336,16 +336,12 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 	}
 
 	return {
-		buildExport: async (month: Date): Promise<SnapshotExport> => {
-			const snapshot = await deps.monthlySnapshotRepo.findByMonth(month)
-			if (!snapshot) throw new Error('MonthlySnapshot not found')
-			return buildExportForSnapshot(snapshot)
-		},
+		buildExportForSnapshot,
 
 		buildAllExports: async (): Promise<SnapshotExport[]> => {
-			const snapshots = await deps.monthlySnapshotRepo.findAll()
+			const snapshots = await deps.snapshotRepo.findAll()
 			const sorted = [...snapshots].sort(
-				(a, b) => a.month.getTime() - b.month.getTime(),
+				(a, b) => a.date.getTime() - b.date.getTime(),
 			)
 			return Promise.all(sorted.map((s) => buildExportForSnapshot(s)))
 		},

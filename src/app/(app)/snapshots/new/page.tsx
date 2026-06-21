@@ -1,5 +1,5 @@
-import { MonthlySnapshotForm } from '@/components/snapshots/MonthlySnapshotForm'
-import { monthlySnapshotService } from '@/lib/container'
+import { SnapshotForm } from '@/components/snapshots/SnapshotForm'
+import { snapshotService } from '@/lib/container'
 import { createSnapshot } from '../actions'
 
 export default async function NewSnapshotPage({
@@ -9,8 +9,8 @@ export default async function NewSnapshotPage({
 }) {
 	const { copyFrom } = await searchParams
 	const [latest, source] = await Promise.all([
-		monthlySnapshotService.findLatest(),
-		copyFrom ? monthlySnapshotService.findById(Number(copyFrom)) : null,
+		snapshotService.findLatest(),
+		copyFrom ? snapshotService.findById(Number(copyFrom)) : null,
 	])
 
 	return (
@@ -21,7 +21,7 @@ export default async function NewSnapshotPage({
 				</p>
 				<h1 className="text-2xl font-bold text-foreground">Nuevo Snapshot</h1>
 			</div>
-			<MonthlySnapshotForm
+			<SnapshotForm
 				mode="create"
 				onSubmit={createSnapshot}
 				previousTotalInvestedUsd={latest?.totalInvestedUsd ?? null}

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
-import { MonthlySnapshotForm } from '@/components/snapshots/MonthlySnapshotForm'
-import { monthlySnapshotService } from '@/lib/container'
+import { SnapshotForm } from '@/components/snapshots/SnapshotForm'
+import { snapshotService } from '@/lib/container'
 import type { UpdateSnapshotPayload } from '../../actions'
 import { updateSnapshot } from '../../actions'
 
@@ -14,12 +14,11 @@ export default async function EditSnapshotPage({
 	if (Number.isNaN(id)) notFound()
 
 	const [snapshot, latest] = await Promise.all([
-		monthlySnapshotService.findById(id).catch(() => null),
-		monthlySnapshotService.findLatest(),
+		snapshotService.findById(id).catch(() => null),
+		snapshotService.findLatest(),
 	])
 	if (!snapshot) notFound()
 
-	// mirror the same logic the service uses: if editing the latest, no previous
 	const previous = latest?.id === id ? null : latest
 
 	async function handleUpdate(payload: UpdateSnapshotPayload) {
@@ -35,7 +34,7 @@ export default async function EditSnapshotPage({
 				</p>
 				<h1 className="text-2xl font-bold text-foreground">Editar Snapshot</h1>
 			</div>
-			<MonthlySnapshotForm
+			<SnapshotForm
 				mode="edit"
 				onSubmit={handleUpdate}
 				initialValues={snapshot}

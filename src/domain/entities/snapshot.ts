@@ -79,9 +79,9 @@ export function calculateDerivedMetrics(
 	return { totalDebtUsd, totalInvestedUsd, netWorthUsd, savingsRatePct }
 }
 
-export const MonthlySnapshotSchema = z.object({
+export const SnapshotSchema = z.object({
 	id: z.number(),
-	month: z.date(),
+	date: z.date(),
 	incomeUsd: z.number().nullable(),
 	exchangeRateValue: z.number().nullable(),
 	exchangeRateId: z.number().nullable(),
@@ -103,10 +103,10 @@ export const MonthlySnapshotSchema = z.object({
 	createdAt: z.date(),
 	investments: z.array(SnapshotInvestmentSchema),
 })
-export type MonthlySnapshot = z.infer<typeof MonthlySnapshotSchema>
+export type Snapshot = z.infer<typeof SnapshotSchema>
 
-export const CreateMonthlySnapshotSchema = z.object({
-	month: z.coerce.date(),
+export const CreateSnapshotSchema = z.object({
+	date: z.coerce.date(),
 	incomeUsd: z.number().optional(),
 	exchangeRateValue: z.number().positive().optional(),
 	exchangeRateId: z.number().int().positive().optional(),
@@ -123,9 +123,9 @@ export const CreateMonthlySnapshotSchema = z.object({
 	notes: z.string().optional(),
 	investments: z.array(CreateSnapshotInvestmentSchema).optional(),
 })
-export type CreateMonthlySnapshot = z.infer<typeof CreateMonthlySnapshotSchema>
+export type CreateSnapshot = z.infer<typeof CreateSnapshotSchema>
 
-export const UpdateMonthlySnapshotSchema = z.object({
+export const UpdateSnapshotSchema = z.object({
 	incomeUsd: z.number().nullable().optional(),
 	exchangeRateValue: z.number().positive().nullable().optional(),
 	exchangeRateId: z.number().int().positive().nullable().optional(),
@@ -142,4 +142,4 @@ export const UpdateMonthlySnapshotSchema = z.object({
 	notes: z.string().nullable().optional(),
 	investments: z.array(CreateSnapshotInvestmentSchema).optional(),
 })
-export type UpdateMonthlySnapshot = z.infer<typeof UpdateMonthlySnapshotSchema>
+export type UpdateSnapshot = z.infer<typeof UpdateSnapshotSchema>

@@ -2,8 +2,8 @@ import type { IBudgetRepository } from '@/domain/repositories/IBudgetRepository'
 import type { IExchangeRateRepository } from '@/domain/repositories/IExchangeRateRepository'
 import type { IIncomeRepository } from '@/domain/repositories/IIncomeRepository'
 import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
-import type { IMonthlySnapshotRepository } from '@/domain/repositories/IMonthlySnapshotRepository'
 import type { IRecurringItemRepository } from '@/domain/repositories/IRecurringItemRepository'
+import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotRepository'
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 
 export type ExportServiceDeps = {
@@ -13,7 +13,7 @@ export type ExportServiceDeps = {
 	exchangeRateRepo: IExchangeRateRepository
 	recurringItemRepo: IRecurringItemRepository
 	installmentPlanRepo: IInstallmentPlanRepository
-	monthlySnapshotRepo: IMonthlySnapshotRepository
+	snapshotRepo: ISnapshotRepository
 }
 
 export type ExportEntityType =
@@ -71,7 +71,7 @@ export function createExportService(deps: ExportServiceDeps) {
 			case 'exchange-rates':
 				return deps.exchangeRateRepo.findByDateRange(range.start, range.end)
 			case 'snapshots':
-				return deps.monthlySnapshotRepo.findByDateRange(range.start, range.end)
+				return deps.snapshotRepo.findByDateRange(range.start, range.end)
 			case 'recurring-items':
 				return deps.recurringItemRepo.findActive()
 			case 'installment-plans':

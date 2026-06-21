@@ -3,7 +3,7 @@
 import { ChevronRight, Copy } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
+import type { Snapshot } from '@/domain/entities/snapshot'
 
 const MONTHS_ES = [
 	'Enero',
@@ -20,15 +20,15 @@ const MONTHS_ES = [
 	'Diciembre',
 ]
 
-function formatMonth(date: Date): string {
-	return `${MONTHS_ES[date.getUTCMonth()]} ${date.getUTCFullYear()}`
+function formatDate(date: Date): string {
+	return `${date.getUTCDate()} de ${MONTHS_ES[date.getUTCMonth()]} ${date.getUTCFullYear()}`
 }
 
 type Props = {
-	snapshot: MonthlySnapshot
+	snapshot: Snapshot
 }
 
-export function MonthlySnapshotCard({ snapshot }: Props) {
+export function SnapshotCard({ snapshot }: Props) {
 	const router = useRouter()
 
 	const netWorthStr =
@@ -62,7 +62,7 @@ export function MonthlySnapshotCard({ snapshot }: Props) {
 			<div className="min-w-0 flex-1">
 				<div className="flex items-center justify-between gap-2">
 					<p className="text-sm font-semibold text-foreground">
-						{formatMonth(snapshot.month)}
+						{formatDate(snapshot.date)}
 					</p>
 					{netWorthStr && (
 						<span className="shrink-0 font-mono text-sm font-bold text-primary">

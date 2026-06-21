@@ -3,22 +3,17 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/lib/prisma', () => ({ prisma: {} }))
-vi.mock('@/repositories/prisma/PrismaMonthlySnapshotRepository', () => ({
-	createPrismaMonthlySnapshotRepository: vi.fn(() => ({})),
-}))
-
 const mockService = {
 	findAll: vi.fn(),
 	findById: vi.fn(),
-	findByMonth: vi.fn(),
+	findByDate: vi.fn(),
 	findLatest: vi.fn(),
 	create: vi.fn(),
 	update: vi.fn(),
 }
 
-vi.mock('@/services/MonthlySnapshotService', () => ({
-	createMonthlySnapshotService: vi.fn(() => mockService),
+vi.mock('@/lib/container', () => ({
+	snapshotService: mockService,
 }))
 
 const { GET, PATCH } = await import('./route')
@@ -26,7 +21,7 @@ const { GET, PATCH } = await import('./route')
 const req = new NextRequest('http://localhost/api/monthly-snapshots/1')
 const snapshot = {
 	id: 1,
-	month: new Date('2026-05-01'),
+	date: new Date('2026-05-15'),
 	incomeUsd: 3000,
 	exchangeRateValue: 7800,
 	exchangeRateId: 1,
@@ -59,9 +54,7 @@ describe('GET /api/monthly-snapshots/[id]', () => {
 	})
 
 	it('returns 404 when not found', async () => {
-		mockService.findById.mockRejectedValue(
-			new Error('MonthlySnapshot not found'),
-		)
+		mockService.findById.mockRejectedValue(new Error('Snapshot not found'))
 		const response = await GET(req, { params: Promise.resolve({ id: '99' }) })
 		expect(response.status).toBe(404)
 	})
@@ -120,7 +113,7 @@ describe('PATCH /api/monthly-snapshots/[id]', () => {
 	})
 
 	it('returns 404 when not found', async () => {
-		mockService.update.mockRejectedValue(new Error('MonthlySnapshot not found'))
+		mockService.update.mockRejectedValue(new Error('Snapshot not found'))
 		const request = new NextRequest(
 			'http://localhost/api/monthly-snapshots/1',
 			{

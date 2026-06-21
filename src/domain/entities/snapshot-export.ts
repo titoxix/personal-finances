@@ -3,8 +3,8 @@ import { BudgetSchema } from './budget'
 import { CategorySchema } from './category'
 import { EssentialityLevelSchema } from './essentiality-level'
 import { InstallmentPlanSchema } from './installment-plan'
-import { MonthlySnapshotSchema } from './monthly-snapshot'
 import { RecurringItemSchema } from './recurring-item'
+import { SnapshotSchema } from './snapshot'
 import { TransactionSchema } from './transaction'
 
 const LabelRefSchema = z.object({
@@ -71,7 +71,7 @@ export type SnapshotExportGlossary = z.infer<
 
 export const SnapshotExportMetaSchema = z.object({
 	generatedAt: z.string(),
-	month: z.string(),
+	date: z.string(),
 	monthLabel: z.string(),
 	glossary: SnapshotExportGlossarySchema,
 })
@@ -79,7 +79,7 @@ export type SnapshotExportMeta = z.infer<typeof SnapshotExportMetaSchema>
 
 export const SnapshotExportSchema = z.object({
 	meta: SnapshotExportMetaSchema,
-	snapshot: MonthlySnapshotSchema,
+	snapshot: SnapshotSchema,
 	income: ExportIncomeSchema.nullable(),
 	exchangeRate: ExportExchangeRateSchema.nullable(),
 	transactions: z.array(ExportTransactionSchema),

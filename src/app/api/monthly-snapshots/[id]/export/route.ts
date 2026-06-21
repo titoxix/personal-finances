@@ -1,10 +1,11 @@
 import type { NextRequest } from 'next/server'
-import { monthlySnapshotService, snapshotExportService } from '@/lib/container'
+import { snapshotExportService, snapshotService } from '@/lib/container'
 
-function formatFilenameMonth(month: Date): string {
-	const year = month.getUTCFullYear()
-	const monthNum = String(month.getUTCMonth() + 1).padStart(2, '0')
-	return `${year}-${monthNum}`
+function formatFilenameDate(date: Date): string {
+	const year = date.getUTCFullYear()
+	const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+	const day = String(date.getUTCDate()).padStart(2, '0')
+	return `${year}-${month}-${day}`
 }
 
 export async function GET(
@@ -13,19 +14,16 @@ export async function GET(
 ) {
 	const { id } = await params
 	try {
-		const snapshot = await monthlySnapshotService.findById(Number(id))
-		const data = await snapshotExportService.buildExport(snapshot.month)
-		const filename = `snapshot-${formatFilenameMonth(snapshot.month)}.json`
+		const snapshot = await snapshotService.findById(Number(id))
+		const data = await snapshotExportService.buildExportForSnapshot(snapshot)
+		const filename = `snapshot-${formatFilenameDate(snapshot.date)}.json`
 		return Response.json(data, {
 			headers: {
 				'Content-Disposition': `attachment; filename="${filename}"`,
 			},
 		})
 	} catch (error) {
-		if (
-			error instanceof Error &&
-			error.message === 'MonthlySnapshot not found'
-		) {
+		if (error instanceof Error && error.message === 'Snapshot not found') {
 			return Response.json({ error: error.message }, { status: 404 })
 		}
 		return Response.json({ error: 'Internal server error' }, { status: 500 })

@@ -3,14 +3,14 @@ export const dynamic = 'force-dynamic'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { SidebarLoader } from '@/components/layout/SidebarLoader'
 import { TopBar } from '@/components/layout/TopBar'
-import { monthlySnapshotService } from '@/lib/container'
+import { snapshotService } from '@/lib/container'
 
 export default async function AppLayout({
 	children,
 }: {
 	children: React.ReactNode
 }) {
-	const snapshot = await monthlySnapshotService.findLatest()
+	const snapshot = await snapshotService.findLatest()
 	const balance = snapshot?.netWorthUsd ?? null
 
 	return (

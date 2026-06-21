@@ -6,8 +6,8 @@ import type {
 	CreateSnapshotPayload,
 	UpdateSnapshotPayload,
 } from '@/app/(app)/snapshots/actions'
-import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
-import { calculateDerivedMetrics } from '@/domain/entities/monthly-snapshot'
+import type { Snapshot } from '@/domain/entities/snapshot'
+import { calculateDerivedMetrics } from '@/domain/entities/snapshot'
 import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
 import { formatAmountDisplay, parseAmountInput } from '@/lib/utils'
 import { InvestmentList } from './InvestmentList'
@@ -27,14 +27,15 @@ const MONTHS_ES = [
 	'Diciembre',
 ]
 
-function toMonthInputValue(date: Date): string {
+function toDateInputValue(date: Date): string {
 	const y = date.getUTCFullYear()
 	const m = String(date.getUTCMonth() + 1).padStart(2, '0')
-	return `${y}-${m}`
+	const d = String(date.getUTCDate()).padStart(2, '0')
+	return `${y}-${m}-${d}`
 }
 
-function formatMonthLabel(date: Date): string {
-	return `${MONTHS_ES[date.getUTCMonth()]} ${date.getUTCFullYear()}`
+function formatDateLabel(date: Date): string {
+	return `${date.getUTCDate()} de ${MONTHS_ES[date.getUTCMonth()]} ${date.getUTCFullYear()}`
 }
 
 function numOpt(raw: string): number | undefined {
@@ -58,7 +59,7 @@ type NewProps = {
 		payload: CreateSnapshotPayload,
 	) => Promise<{ error: string } | undefined>
 	previousTotalInvestedUsd?: number | null
-	initialValues?: MonthlySnapshot
+	initialValues?: Snapshot
 }
 
 type EditProps = {
@@ -66,7 +67,7 @@ type EditProps = {
 	onSubmit: (
 		payload: UpdateSnapshotPayload,
 	) => Promise<{ error: string } | undefined>
-	initialValues: MonthlySnapshot
+	initialValues: Snapshot
 	previousTotalInvestedUsd?: number | null
 }
 
@@ -160,21 +161,19 @@ function MetricRow({
 	)
 }
 
-export function MonthlySnapshotForm(props: Props) {
+export function SnapshotForm(props: Props) {
 	const { mode } = props
 	const iv =
 		mode === 'edit' ? props.initialValues : (props.initialValues ?? undefined)
 	const previousTotalInvestedUsd = props.previousTotalInvestedUsd ?? null
 
-	const [month, setMonth] = useState(iv ? toMonthInputValue(iv.month) : '')
+	const [date, setDate] = useState(iv ? toDateInputValue(iv.date) : '')
 
-	// Ingresos y cambio
 	const [incomeUsd, setIncomeUsd] = useState(iv?.incomeUsd?.toString() ?? '')
 	const [exchangeRateValue, setExchangeRateValue] = useState(
 		iv?.exchangeRateValue?.toString() ?? '',
 	)
 
-	// Saldos bancarios
 	const [balanceItauUsd, setBalanceItauUsd] = useState(
 		iv?.balanceItauUsd?.toString() ?? '',
 	)
@@ -194,7 +193,6 @@ export function MonthlySnapshotForm(props: Props) {
 		iv?.balanceGnbGs?.toString() ?? '',
 	)
 
-	// Deudas de tarjetas
 	const [itauCardGs, setItauCardGs] = useState(iv?.itauCardGs?.toString() ?? '')
 	const [uenoCardGs, setUenoCardGs] = useState(iv?.uenoCardGs?.toString() ?? '')
 	const [gnbCardGs, setGnbCardGs] = useState(iv?.gnbCardGs?.toString() ?? '')
@@ -202,7 +200,6 @@ export function MonthlySnapshotForm(props: Props) {
 		iv?.pendingInstallmentsGs?.toString() ?? '',
 	)
 
-	// Inversiones
 	const [investments, setInvestments] = useState<
 		CreateSnapshotInvestmentInput[]
 	>(
@@ -214,13 +211,11 @@ export function MonthlySnapshotForm(props: Props) {
 		})) ?? [],
 	)
 
-	// Notas
 	const [notes, setNotes] = useState(iv?.notes ?? '')
 
 	const [error, setError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
 
-	// Métricas calculadas en tiempo real
 	const rate = numOpt(exchangeRateValue) ?? 0
 	const currentTotalInvestedUsd = investments.reduce((sum, inv) => {
 		if (inv.currency === 'USD') return sum + inv.value
@@ -246,11 +241,11 @@ export function MonthlySnapshotForm(props: Props) {
 		currentTotalInvestedUsd,
 	)
 
-	const isValid = mode === 'create' ? month !== '' : true
+	const isValid = mode === 'create' ? date !== '' : true
 
 	function handleSubmit() {
 		if (!isValid) {
-			setError('Seleccioná el mes del snapshot.')
+			setError('Seleccioná la fecha del snapshot.')
 			return
 		}
 		setError(null)
@@ -259,7 +254,7 @@ export function MonthlySnapshotForm(props: Props) {
 
 			if (mode === 'create') {
 				result = await props.onSubmit({
-					month: new Date(`${month}-01T00:00:00Z`),
+					date: new Date(`${date}T00:00:00Z`),
 					incomeUsd: numOpt(incomeUsd),
 					exchangeRateValue: numOpt(exchangeRateValue),
 					balanceItauUsd: numOpt(balanceItauUsd),
@@ -300,27 +295,27 @@ export function MonthlySnapshotForm(props: Props) {
 
 	return (
 		<div className="space-y-4 pb-6">
-			{/* Mes */}
-			<FormSection title="Mes">
+			{/* Fecha */}
+			<FormSection title="Fecha">
 				{mode === 'create' ? (
 					<div className="space-y-1.5">
 						<label
-							htmlFor="snap-month"
+							htmlFor="snap-date"
 							className="text-sm font-semibold text-foreground"
 						>
-							Mes <span className="text-primary">*</span>
+							Fecha <span className="text-primary">*</span>
 						</label>
 						<input
-							id="snap-month"
-							type="month"
-							value={month}
-							onChange={(e) => setMonth(e.target.value)}
+							id="snap-date"
+							type="date"
+							value={date}
+							onChange={(e) => setDate(e.target.value)}
 							className="w-full rounded-2xl border border-border bg-input px-4 py-3.5 text-sm text-foreground outline-none focus:border-primary/60 transition-colors"
 						/>
 					</div>
 				) : (
 					<p className="text-sm font-semibold text-foreground">
-						{iv?.month ? formatMonthLabel(iv.month) : '—'}
+						{iv?.date ? formatDateLabel(iv.date) : '—'}
 					</p>
 				)}
 			</FormSection>

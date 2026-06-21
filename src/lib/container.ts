@@ -5,8 +5,8 @@ import { createPrismaEssentialityLevelRepository } from '@/repositories/prisma/P
 import { createPrismaExchangeRateRepository } from '@/repositories/prisma/PrismaExchangeRateRepository'
 import { createPrismaIncomeRepository } from '@/repositories/prisma/PrismaIncomeRepository'
 import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
-import { createPrismaMonthlySnapshotRepository } from '@/repositories/prisma/PrismaMonthlySnapshotRepository'
 import { createPrismaRecurringItemRepository } from '@/repositories/prisma/PrismaRecurringItemRepository'
+import { createPrismaSnapshotRepository } from '@/repositories/prisma/PrismaSnapshotRepository'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
 import { createBudgetService } from '@/services/BudgetService'
 import { createCategoryService } from '@/services/CategoryService'
@@ -15,9 +15,9 @@ import { createExchangeRateService } from '@/services/ExchangeRateService'
 import { createExportService } from '@/services/ExportService'
 import { createIncomeService } from '@/services/IncomeService'
 import { createInstallmentPlanService } from '@/services/InstallmentPlanService'
-import { createMonthlySnapshotService } from '@/services/MonthlySnapshotService'
 import { createRecurringItemService } from '@/services/RecurringItemService'
 import { createSnapshotExportService } from '@/services/SnapshotExportService'
+import { createSnapshotService } from '@/services/SnapshotService'
 import { createTransactionService } from '@/services/TransactionService'
 
 export const exchangeRateService = createExchangeRateService(
@@ -41,8 +41,8 @@ export const budgetService = createBudgetService(
 	createPrismaBudgetRepository(prisma),
 )
 
-export const monthlySnapshotService = createMonthlySnapshotService(
-	createPrismaMonthlySnapshotRepository(prisma),
+export const snapshotService = createSnapshotService(
+	createPrismaSnapshotRepository(prisma),
 )
 
 export const incomeService = createIncomeService(
@@ -64,11 +64,11 @@ export const exportService = createExportService({
 	exchangeRateRepo: createPrismaExchangeRateRepository(prisma),
 	recurringItemRepo: createPrismaRecurringItemRepository(prisma),
 	installmentPlanRepo: createPrismaInstallmentPlanRepository(prisma),
-	monthlySnapshotRepo: createPrismaMonthlySnapshotRepository(prisma),
+	snapshotRepo: createPrismaSnapshotRepository(prisma),
 })
 
 export const snapshotExportService = createSnapshotExportService({
-	monthlySnapshotRepo: createPrismaMonthlySnapshotRepository(prisma),
+	snapshotRepo: createPrismaSnapshotRepository(prisma),
 	transactionRepo: createPrismaTransactionRepository(prisma),
 	budgetRepo: createPrismaBudgetRepository(prisma),
 	incomeRepo: createPrismaIncomeRepository(prisma),

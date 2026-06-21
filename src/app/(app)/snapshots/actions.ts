@@ -3,10 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
-import { monthlySnapshotService } from '@/lib/container'
+import { snapshotService } from '@/lib/container'
 
 export type CreateSnapshotPayload = {
-	month: Date
+	date: Date
 	incomeUsd?: number
 	exchangeRateValue?: number
 	balanceItauUsd?: number
@@ -52,7 +52,7 @@ export async function createSnapshot(
 	payload: CreateSnapshotPayload,
 ): Promise<{ error: string } | undefined> {
 	try {
-		await monthlySnapshotService.create(payload)
+		await snapshotService.create(payload)
 	} catch (e) {
 		return {
 			error: e instanceof Error ? e.message : 'Error al crear el snapshot',
@@ -67,7 +67,7 @@ export async function updateSnapshot(
 	payload: UpdateSnapshotPayload,
 ): Promise<{ error: string } | undefined> {
 	try {
-		await monthlySnapshotService.update(id, payload)
+		await snapshotService.update(id, payload)
 	} catch (e) {
 		return {
 			error: e instanceof Error ? e.message : 'Error al actualizar el snapshot',
