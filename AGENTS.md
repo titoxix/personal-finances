@@ -154,7 +154,7 @@ pnpm prisma generate
 - **Linting/formatting:** Biome 2
 - **Language:** TypeScript
 - **Package manager:** pnpm (always — never npm or yarn)
-- **Node version:** 22.20.0 (see `.nvmrc`)
+- **Node version:** 24.17.0 (see `.nvmrc`)
 
 ## UI conventions
 

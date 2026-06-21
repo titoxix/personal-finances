@@ -11,11 +11,11 @@ Mobile-first PWA for personal finance tracking.
 - **Testing:** Vitest + React Testing Library
 - **Linting/Formatting:** Biome 2
 - **Language:** TypeScript
-- **Node:** 22.20.0
+- **Node:** 24.17.0
 
 ## Requirements
 
-- Node 22.20.0 (use `nvm use`)
+- Node 24.17.0 (use `nvm use`)
 - pnpm
 - Docker
 
