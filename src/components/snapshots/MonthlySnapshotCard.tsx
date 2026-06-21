@@ -1,5 +1,8 @@
-import { ChevronRight } from 'lucide-react'
+'use client'
+
+import { ChevronRight, Copy } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { MonthlySnapshot } from '@/domain/entities/monthly-snapshot'
 
 const MONTHS_ES = [
@@ -26,6 +29,8 @@ type Props = {
 }
 
 export function MonthlySnapshotCard({ snapshot }: Props) {
+	const router = useRouter()
+
 	const netWorthStr =
 		snapshot.netWorthUsd != null
 			? new Intl.NumberFormat('en-US', {
@@ -84,6 +89,17 @@ export function MonthlySnapshotCard({ snapshot }: Props) {
 					)}
 				</div>
 			</div>
+			<button
+				type="button"
+				onClick={(e) => {
+					e.preventDefault()
+					e.stopPropagation()
+					router.push(`/snapshots/new?copyFrom=${snapshot.id}`)
+				}}
+				className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+			>
+				<Copy className="h-4 w-4" />
+			</button>
 			<ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
 		</Link>
 	)

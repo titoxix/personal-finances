@@ -26,6 +26,10 @@ export type SnapshotDerivedMetrics = {
 	savingsRatePct: number | null
 }
 
+function round2(v: number): number {
+	return Math.round(v * 100) / 100
+}
+
 export function calculateDerivedMetrics(
 	fields: SnapshotRawFields,
 	previousTotalInvestedUsd: number | null,
@@ -43,14 +47,15 @@ export function calculateDerivedMetrics(
 		}
 	}
 
-	const totalDebtUsd =
+	const totalDebtUsd = round2(
 		(n(fields.itauCardGs) +
 			n(fields.uenoCardGs) +
 			n(fields.gnbCardGs) +
 			n(fields.pendingInstallmentsGs)) /
-		rate
+			rate,
+	)
 
-	const totalInvestedUsd = currentTotalInvestedUsd
+	const totalInvestedUsd = round2(currentTotalInvestedUsd)
 
 	const activosTotalesUsd =
 		n(fields.balanceItauUsd) +
@@ -61,13 +66,15 @@ export function calculateDerivedMetrics(
 		n(fields.balanceGnbGs) / rate +
 		totalInvestedUsd
 
-	const netWorthUsd = activosTotalesUsd - totalDebtUsd
+	const netWorthUsd = round2(activosTotalesUsd - totalDebtUsd)
 
 	const incomeUsd = fields.incomeUsd
-	const savingsRatePct =
-		previousTotalInvestedUsd !== null && incomeUsd
-			? ((totalInvestedUsd - previousTotalInvestedUsd) / incomeUsd) * 100
-			: null
+	let savingsRatePct: number | null = null
+	if (previousTotalInvestedUsd !== null && incomeUsd) {
+		const raw =
+			((totalInvestedUsd - previousTotalInvestedUsd) / incomeUsd) * 100
+		savingsRatePct = Math.abs(raw) > 999.99 ? null : round2(raw)
+	}
 
 	return { totalDebtUsd, totalInvestedUsd, netWorthUsd, savingsRatePct }
 }

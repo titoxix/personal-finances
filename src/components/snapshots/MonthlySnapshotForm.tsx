@@ -58,6 +58,7 @@ type NewProps = {
 		payload: CreateSnapshotPayload,
 	) => Promise<{ error: string } | undefined>
 	previousTotalInvestedUsd?: number | null
+	initialValues?: MonthlySnapshot
 }
 
 type EditProps = {
@@ -161,7 +162,8 @@ function MetricRow({
 
 export function MonthlySnapshotForm(props: Props) {
 	const { mode } = props
-	const iv = mode === 'edit' ? props.initialValues : undefined
+	const iv =
+		mode === 'edit' ? props.initialValues : (props.initialValues ?? undefined)
 	const previousTotalInvestedUsd = props.previousTotalInvestedUsd ?? null
 
 	const [month, setMonth] = useState(iv ? toMonthInputValue(iv.month) : '')
