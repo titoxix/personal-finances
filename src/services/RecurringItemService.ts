@@ -1,9 +1,11 @@
 import type { RecurringItem } from '@/domain/entities/recurring-item'
+import type { RecurringItemSkip } from '@/domain/entities/recurring-item-skip'
 import type {
 	CreateRecurringItemInput,
 	IRecurringItemRepository,
 	UpdateRecurringItemInput,
 } from '@/domain/repositories/IRecurringItemRepository'
+import type { IRecurringItemSkipRepository } from '@/domain/repositories/IRecurringItemSkipRepository'
 
 function validateCreate(input: CreateRecurringItemInput): void {
 	if (input.frequency === 'monthly') {
@@ -18,7 +20,10 @@ function validateCreate(input: CreateRecurringItemInput): void {
 		throw new Error('non-variable item requires amountGs or amountUsd')
 }
 
-export function createRecurringItemService(repo: IRecurringItemRepository) {
+export function createRecurringItemService(
+	repo: IRecurringItemRepository,
+	skipRepo: IRecurringItemSkipRepository,
+) {
 	return {
 		findAll: (): Promise<RecurringItem[]> => repo.findAll(),
 
@@ -48,6 +53,27 @@ export function createRecurringItemService(repo: IRecurringItemRepository) {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('RecurringItem not found')
 			return repo.deactivate(id)
+		},
+
+		findSkipsByMonth: (month: Date): Promise<RecurringItemSkip[]> =>
+			skipRepo.findByMonth(month),
+
+		skipForMonth: async (
+			recurringItemId: number,
+			month: Date,
+			reason: string,
+		): Promise<RecurringItemSkip> => {
+			const item = await repo.findById(recurringItemId)
+			if (!item) throw new Error('RecurringItem not found')
+			if (!item.active) throw new Error('Cannot skip an inactive item')
+			return skipRepo.create({ recurringItemId, month, reason })
+		},
+
+		unskipForMonth: async (
+			recurringItemId: number,
+			month: Date,
+		): Promise<void> => {
+			await skipRepo.delete(recurringItemId, month)
 		},
 	}
 }

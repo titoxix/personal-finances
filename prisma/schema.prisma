@@ -238,6 +238,20 @@ model RecurringItem {
   category     Category          @relation(fields: [categoryId], references: [id])
   essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
   transactions Transaction[]
+  skips        RecurringItemSkip[]
 
   @@map("recurring_items")
+}
+
+model RecurringItemSkip {
+  id              Int           @id @default(autoincrement())
+  recurringItemId Int           @map("recurring_item_id")
+  month           DateTime      @db.Date
+  reason          String        @db.VarChar(255)
+  createdAt       DateTime      @default(now()) @map("created_at")
+
+  recurringItem RecurringItem @relation(fields: [recurringItemId], references: [id], onDelete: Cascade)
+
+  @@unique([recurringItemId, month])
+  @@map("recurring_item_skips")
 }

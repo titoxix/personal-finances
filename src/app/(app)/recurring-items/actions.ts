@@ -85,3 +85,44 @@ export async function deactivateRecurringItem(
 	revalidatePath('/recurring-items')
 	redirect('/recurring-items')
 }
+
+export async function skipRecurringItem(
+	recurringItemId: number,
+	month: string,
+	reason: string,
+): Promise<{ error: string } | undefined> {
+	try {
+		await recurringItemService.skipForMonth(
+			recurringItemId,
+			new Date(month),
+			reason,
+		)
+	} catch (e) {
+		return {
+			error:
+				e instanceof Error ? e.message : 'Error al saltar el gasto recurrente',
+		}
+	}
+	revalidatePath('/')
+	revalidatePath('/recurring-items')
+	return undefined
+}
+
+export async function unskipRecurringItem(
+	recurringItemId: number,
+	month: string,
+): Promise<{ error: string } | undefined> {
+	try {
+		await recurringItemService.unskipForMonth(recurringItemId, new Date(month))
+	} catch (e) {
+		return {
+			error:
+				e instanceof Error
+					? e.message
+					: 'Error al revertir el salto del gasto recurrente',
+		}
+	}
+	revalidatePath('/')
+	revalidatePath('/recurring-items')
+	return undefined
+}

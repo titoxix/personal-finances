@@ -1,5 +1,28 @@
-import { AlertTriangle, CheckCircle2, Clock } from 'lucide-react'
+'use client'
+
+import {
+	AlertTriangle,
+	CheckCircle2,
+	Clock,
+	SkipForward,
+	Undo2,
+} from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
+import {
+	skipRecurringItem,
+	unskipRecurringItem,
+} from '@/app/(app)/recurring-items/actions'
+import { Button } from '@/components/ui/button'
+import {
+	Sheet,
+	SheetClose,
+	SheetContent,
+	SheetDescription,
+	SheetFooter,
+	SheetHeader,
+	SheetTitle,
+} from '@/components/ui/sheet'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
 
 function fmtGs(amount: number): string {
@@ -39,6 +62,8 @@ type RecurringRow = {
 type Props = {
 	pending: RecurringRow[]
 	paid: RecurringRow[]
+	skipped: RecurringRow[]
+	skipReasonByItemId: Map<number, string>
 	recurringIdToTxInfo: Map<number, TxInfo>
 	currentMonth: Date
 }
@@ -66,9 +91,11 @@ function isOverdue(
 function PendingItem({
 	item,
 	overdue,
+	onSkip,
 }: {
 	item: RecurringRow
 	overdue: boolean
+	onSkip: (item: RecurringRow) => void
 }) {
 	return (
 		<li
@@ -95,12 +122,19 @@ function PendingItem({
 					</p>
 				)}
 			</div>
-			<div className="flex items-center gap-3 shrink-0">
+			<div className="flex items-center gap-2 shrink-0">
 				<span
 					className={`text-sm font-semibold${overdue ? ' text-destructive' : ' text-foreground'}`}
 				>
 					{formatAmount(item)}
 				</span>
+				<button
+					type="button"
+					onClick={() => onSkip(item)}
+					className="rounded-full px-2.5 py-1 text-xs font-bold text-muted-foreground bg-muted hover:bg-muted/80 transition-opacity"
+				>
+					Saltar
+				</button>
 				<Link
 					href={`/transactions/new?recurringItemId=${item.id}`}
 					className={`rounded-full px-3 py-1 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity${overdue ? ' bg-destructive' : ' bg-primary'}`}
@@ -151,6 +185,58 @@ function PaidItem({
 	)
 }
 
+function SkippedItem({
+	item,
+	reason,
+	monthIso,
+	onUnskipped,
+}: {
+	item: RecurringRow
+	reason: string
+	monthIso: string
+	onUnskipped: () => void
+}) {
+	const [loading, setLoading] = useState(false)
+
+	async function handleUnskip() {
+		setLoading(true)
+		const result = await unskipRecurringItem(item.id, monthIso)
+		if (result?.error) {
+			setLoading(false)
+		} else {
+			onUnskipped()
+		}
+	}
+
+	return (
+		<li className="flex items-center justify-between px-4 py-3 gap-3">
+			<div className="min-w-0 flex items-center gap-2">
+				<SkipForward className="h-4 w-4 text-amber-500 shrink-0" />
+				<div className="min-w-0">
+					<p className="text-sm font-medium text-foreground truncate">
+						{item.description}
+					</p>
+					<p className="text-xs text-muted-foreground truncate">{reason}</p>
+				</div>
+			</div>
+			<div className="flex items-center gap-2 shrink-0">
+				<span className="text-sm text-muted-foreground line-through">
+					{formatAmount(item)}
+				</span>
+				<button
+					type="button"
+					onClick={handleUnskip}
+					disabled={loading}
+					className="rounded-full p-1.5 text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+					title="Revertir"
+				>
+					<Undo2 className="h-3.5 w-3.5" />
+				</button>
+			</div>
+		</li>
+	)
+}
+
 function ViewAllFooter({ href, label }: { href: string; label: string }) {
 	return (
 		<div className="border-t border-border px-4 py-2 text-center">
@@ -167,10 +253,17 @@ function ViewAllFooter({ href, label }: { href: string; label: string }) {
 export function RecurringSection({
 	pending,
 	paid,
+	skipped,
+	skipReasonByItemId,
 	recurringIdToTxInfo,
 	currentMonth,
 }: Props) {
-	if (pending.length === 0 && paid.length === 0) return null
+	const [skipTarget, setSkipTarget] = useState<RecurringRow | null>(null)
+	const [reason, setReason] = useState('')
+	const [submitting, setSubmitting] = useState(false)
+
+	if (pending.length === 0 && paid.length === 0 && skipped.length === 0)
+		return null
 
 	const now = new Date()
 	const viewingYear = currentMonth.getUTCFullYear()
@@ -197,6 +290,23 @@ export function RecurringSection({
 	const hasMoreUpcoming = upcomingItems.length > maxUpcoming
 	const hasMorePaid = paid.length > maxPaid
 
+	const monthIso = currentMonth.toISOString()
+
+	async function handleSkipSubmit() {
+		if (!skipTarget || !reason.trim()) return
+		setSubmitting(true)
+		const result = await skipRecurringItem(
+			skipTarget.id,
+			monthIso,
+			reason.trim(),
+		)
+		setSubmitting(false)
+		if (!result?.error) {
+			setSkipTarget(null)
+			setReason('')
+		}
+	}
+
 	return (
 		<div className="space-y-3">
 			<h2 className="text-base font-bold text-foreground">Recurrentes</h2>
@@ -211,7 +321,12 @@ export function RecurringSection({
 					</div>
 					<ul className="divide-y divide-border">
 						{overdueItems.map((item) => (
-							<PendingItem key={item.id} item={item} overdue />
+							<PendingItem
+								key={item.id}
+								item={item}
+								overdue
+								onSkip={setSkipTarget}
+							/>
 						))}
 					</ul>
 				</div>
@@ -227,7 +342,12 @@ export function RecurringSection({
 					</div>
 					<ul className="divide-y divide-border">
 						{visibleUpcoming.map((item) => (
-							<PendingItem key={item.id} item={item} overdue={false} />
+							<PendingItem
+								key={item.id}
+								item={item}
+								overdue={false}
+								onSkip={setSkipTarget}
+							/>
 						))}
 					</ul>
 					{hasMoreUpcoming && (
@@ -236,6 +356,28 @@ export function RecurringSection({
 							label={`Ver todos (${upcomingItems.length})`}
 						/>
 					)}
+				</div>
+			)}
+
+			{skipped.length > 0 && (
+				<div className="rounded-2xl border border-border bg-card overflow-hidden">
+					<div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-amber-500/10">
+						<SkipForward className="h-3.5 w-3.5 text-amber-500" />
+						<span className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+							Saltados ({skipped.length})
+						</span>
+					</div>
+					<ul className="divide-y divide-border">
+						{skipped.map((item) => (
+							<SkippedItem
+								key={item.id}
+								item={item}
+								reason={skipReasonByItemId.get(item.id) ?? ''}
+								monthIso={monthIso}
+								onUnskipped={() => {}}
+							/>
+						))}
+					</ul>
 				</div>
 			)}
 
@@ -264,6 +406,53 @@ export function RecurringSection({
 					)}
 				</div>
 			)}
+
+			<Sheet
+				open={skipTarget != null}
+				onOpenChange={(open) => {
+					if (!open) {
+						setSkipTarget(null)
+						setReason('')
+					}
+				}}
+			>
+				<SheetContent side="bottom">
+					<SheetHeader>
+						<SheetTitle>Saltar recurrente</SheetTitle>
+						<SheetDescription>
+							{skipTarget?.description} — no se contará en el resumen de este
+							mes.
+						</SheetDescription>
+					</SheetHeader>
+					<div className="px-4">
+						<label
+							htmlFor="skip-reason"
+							className="block text-sm font-medium text-foreground mb-1.5"
+						>
+							Motivo
+						</label>
+						<input
+							id="skip-reason"
+							type="text"
+							value={reason}
+							onChange={(e) => setReason(e.target.value)}
+							placeholder="Ej: Lo pagó mi esposa"
+							className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+						/>
+					</div>
+					<SheetFooter>
+						<SheetClose asChild>
+							<Button variant="outline">Cancelar</Button>
+						</SheetClose>
+						<Button
+							onClick={handleSkipSubmit}
+							disabled={!reason.trim() || submitting}
+						>
+							{submitting ? 'Saltando...' : 'Confirmar'}
+						</Button>
+					</SheetFooter>
+				</SheetContent>
+			</Sheet>
 		</div>
 	)
 }

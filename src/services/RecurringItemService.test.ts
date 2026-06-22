@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RecurringItem } from '@/domain/entities/recurring-item'
+import type { RecurringItemSkip } from '@/domain/entities/recurring-item-skip'
 import type { IRecurringItemRepository } from '@/domain/repositories/IRecurringItemRepository'
+import type { IRecurringItemSkipRepository } from '@/domain/repositories/IRecurringItemSkipRepository'
 import { createRecurringItemService } from './RecurringItemService'
 
 const makeRepo = (): IRecurringItemRepository => ({
@@ -10,6 +12,12 @@ const makeRepo = (): IRecurringItemRepository => ({
 	create: vi.fn(),
 	update: vi.fn(),
 	deactivate: vi.fn(),
+})
+
+const makeSkipRepo = (): IRecurringItemSkipRepository => ({
+	findByMonth: vi.fn(),
+	create: vi.fn(),
+	delete: vi.fn(),
 })
 
 const makeItem = (overrides: Partial<RecurringItem> = {}): RecurringItem => ({
@@ -32,11 +40,13 @@ const makeItem = (overrides: Partial<RecurringItem> = {}): RecurringItem => ({
 
 describe('createRecurringItemService', () => {
 	let repo: IRecurringItemRepository
+	let skipRepo: IRecurringItemSkipRepository
 	let service: ReturnType<typeof createRecurringItemService>
 
 	beforeEach(() => {
 		repo = makeRepo()
-		service = createRecurringItemService(repo)
+		skipRepo = makeSkipRepo()
+		service = createRecurringItemService(repo, skipRepo)
 	})
 
 	describe('findAll', () => {
@@ -231,6 +241,87 @@ describe('createRecurringItemService', () => {
 			await expect(service.deactivate(999)).rejects.toThrow(
 				'RecurringItem not found',
 			)
+		})
+	})
+
+	describe('findSkipsByMonth', () => {
+		it('returns skips for the given month', async () => {
+			const month = new Date(Date.UTC(2026, 5, 1))
+			const skips: RecurringItemSkip[] = [
+				{
+					id: 1,
+					recurringItemId: 1,
+					month,
+					reason: 'Pagó mi esposa',
+					createdAt: new Date(),
+				},
+			]
+			vi.mocked(skipRepo.findByMonth).mockResolvedValue(skips)
+
+			const result = await service.findSkipsByMonth(month)
+
+			expect(result).toBe(skips)
+			expect(skipRepo.findByMonth).toHaveBeenCalledWith(month)
+		})
+	})
+
+	describe('skipForMonth', () => {
+		it('creates a skip for an active item', async () => {
+			const item = makeItem()
+			const month = new Date(Date.UTC(2026, 5, 1))
+			const skip: RecurringItemSkip = {
+				id: 1,
+				recurringItemId: 1,
+				month,
+				reason: 'Pagó mi esposa',
+				createdAt: new Date(),
+			}
+			vi.mocked(repo.findById).mockResolvedValue(item)
+			vi.mocked(skipRepo.create).mockResolvedValue(skip)
+
+			const result = await service.skipForMonth(1, month, 'Pagó mi esposa')
+
+			expect(result).toBe(skip)
+			expect(skipRepo.create).toHaveBeenCalledWith({
+				recurringItemId: 1,
+				month,
+				reason: 'Pagó mi esposa',
+			})
+		})
+
+		it('throws when item does not exist', async () => {
+			vi.mocked(repo.findById).mockResolvedValue(null)
+
+			await expect(
+				service.skipForMonth(
+					999,
+					new Date(Date.UTC(2026, 5, 1)),
+					'Pagó mi esposa',
+				),
+			).rejects.toThrow('RecurringItem not found')
+		})
+
+		it('throws when item is inactive', async () => {
+			vi.mocked(repo.findById).mockResolvedValue(makeItem({ active: false }))
+
+			await expect(
+				service.skipForMonth(
+					1,
+					new Date(Date.UTC(2026, 5, 1)),
+					'Pagó mi esposa',
+				),
+			).rejects.toThrow('Cannot skip an inactive item')
+		})
+	})
+
+	describe('unskipForMonth', () => {
+		it('deletes the skip', async () => {
+			const month = new Date(Date.UTC(2026, 5, 1))
+			vi.mocked(skipRepo.delete).mockResolvedValue(undefined)
+
+			await service.unskipForMonth(1, month)
+
+			expect(skipRepo.delete).toHaveBeenCalledWith(1, month)
 		})
 	})
 })

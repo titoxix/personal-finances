@@ -3,10 +3,14 @@ import { ZodError } from 'zod'
 import { CreateRecurringItemSchema } from '@/domain/entities/recurring-item'
 import { prisma } from '@/lib/prisma'
 import { createPrismaRecurringItemRepository } from '@/repositories/prisma/PrismaRecurringItemRepository'
+import { createPrismaRecurringItemSkipRepository } from '@/repositories/prisma/PrismaRecurringItemSkipRepository'
 import { createRecurringItemService } from '@/services/RecurringItemService'
 
 function makeService() {
-	return createRecurringItemService(createPrismaRecurringItemRepository(prisma))
+	return createRecurringItemService(
+		createPrismaRecurringItemRepository(prisma),
+		createPrismaRecurringItemSkipRepository(prisma),
+	)
 }
 
 export async function GET() {

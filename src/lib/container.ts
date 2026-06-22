@@ -6,6 +6,7 @@ import { createPrismaExchangeRateRepository } from '@/repositories/prisma/Prisma
 import { createPrismaIncomeRepository } from '@/repositories/prisma/PrismaIncomeRepository'
 import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
 import { createPrismaRecurringItemRepository } from '@/repositories/prisma/PrismaRecurringItemRepository'
+import { createPrismaRecurringItemSkipRepository } from '@/repositories/prisma/PrismaRecurringItemSkipRepository'
 import { createPrismaSnapshotRepository } from '@/repositories/prisma/PrismaSnapshotRepository'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
 import { createBudgetService } from '@/services/BudgetService'
@@ -51,6 +52,7 @@ export const incomeService = createIncomeService(
 
 export const recurringItemService = createRecurringItemService(
 	createPrismaRecurringItemRepository(prisma),
+	createPrismaRecurringItemSkipRepository(prisma),
 )
 
 export const installmentPlanService = createInstallmentPlanService(

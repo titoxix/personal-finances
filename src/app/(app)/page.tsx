@@ -64,6 +64,7 @@ export default async function HomePage({
 		income,
 		activeRecurring,
 		activePlans,
+		monthSkips,
 	] = await Promise.all([
 		transactionService.findAll(),
 		categoryService.findAll(),
@@ -72,6 +73,7 @@ export default async function HomePage({
 		incomeService.findByMonth(currentMonth),
 		recurringItemService.findActive(),
 		installmentPlanService.findActive(),
+		recurringItemService.findSkipsByMonth(currentMonth),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c]))
@@ -153,9 +155,19 @@ export default async function HomePage({
 			.map((tx) => tx.recurringItemId)
 			.filter((id): id is number => id != null),
 	)
+	const skippedRecurringIds = new Set(monthSkips.map((s) => s.recurringItemId))
+	const skipReasonByItemId = new Map(
+		monthSkips.map((s) => [s.recurringItemId, s.reason]),
+	)
 	const pendingRecurringItems = monthlyRecurring
-		.filter((item) => !paidRecurringIds.has(item.id))
+		.filter(
+			(item) =>
+				!paidRecurringIds.has(item.id) && !skippedRecurringIds.has(item.id),
+		)
 		.sort((a, b) => (a.billingDay ?? 99) - (b.billingDay ?? 99))
+	const skippedRecurringItems = monthlyRecurring.filter((item) =>
+		skippedRecurringIds.has(item.id),
+	)
 	const recurringIdToTxInfo = new Map(
 		monthTransactions
 			.filter((tx) => tx.recurringItemId != null)
@@ -253,6 +265,8 @@ export default async function HomePage({
 			<RecurringSection
 				pending={pendingRecurringItems}
 				paid={paidRecurringItems}
+				skipped={skippedRecurringItems}
+				skipReasonByItemId={skipReasonByItemId}
 				recurringIdToTxInfo={recurringIdToTxInfo}
 				currentMonth={currentMonth}
 			/>
