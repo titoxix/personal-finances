@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { JetBrains_Mono, Manrope } from 'next/font/google'
 import './globals.css'
 
@@ -13,6 +13,10 @@ const jetbrainsMono = JetBrains_Mono({
 	display: 'swap',
 	preload: false,
 })
+
+export const viewport: Viewport = {
+	interactiveWidget: 'resizes-content',
+}
 
 export const metadata: Metadata = {
 	title: 'Kashi - Smart Finance',
