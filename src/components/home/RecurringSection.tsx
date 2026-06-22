@@ -13,16 +13,16 @@ import {
 	skipRecurringItem,
 	unskipRecurringItem,
 } from '@/app/(app)/recurring-items/actions'
-import { Button } from '@/components/ui/button'
 import {
-	Sheet,
-	SheetClose,
-	SheetContent,
-	SheetDescription,
-	SheetFooter,
-	SheetHeader,
-	SheetTitle,
-} from '@/components/ui/sheet'
+	AlertDialog,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
 
 function fmtGs(amount: number): string {
@@ -407,7 +407,7 @@ export function RecurringSection({
 				</div>
 			)}
 
-			<Sheet
+			<AlertDialog
 				open={skipTarget != null}
 				onOpenChange={(open) => {
 					if (!open) {
@@ -416,15 +416,15 @@ export function RecurringSection({
 					}
 				}}
 			>
-				<SheetContent side="bottom">
-					<SheetHeader>
-						<SheetTitle>Saltar recurrente</SheetTitle>
-						<SheetDescription>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Saltar recurrente</AlertDialogTitle>
+						<AlertDialogDescription>
 							{skipTarget?.description} — no se contará en el resumen de este
 							mes.
-						</SheetDescription>
-					</SheetHeader>
-					<div className="px-4">
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<div>
 						<label
 							htmlFor="skip-reason"
 							className="block text-sm font-medium text-foreground mb-1.5"
@@ -440,19 +440,17 @@ export function RecurringSection({
 							className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
 						/>
 					</div>
-					<SheetFooter>
-						<SheetClose asChild>
-							<Button variant="outline">Cancelar</Button>
-						</SheetClose>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancelar</AlertDialogCancel>
 						<Button
 							onClick={handleSkipSubmit}
 							disabled={!reason.trim() || submitting}
 						>
 							{submitting ? 'Saltando...' : 'Confirmar'}
 						</Button>
-					</SheetFooter>
-				</SheetContent>
-			</Sheet>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</div>
 	)
 }
