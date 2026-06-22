@@ -40,6 +40,7 @@ type Props = {
 	pending: RecurringRow[]
 	paid: RecurringRow[]
 	recurringIdToTxInfo: Map<number, TxInfo>
+	currentMonth: Date
 }
 
 function formatAmount(item: RecurringRow): string {
@@ -53,10 +54,20 @@ export function RecurringSection({
 	pending,
 	paid,
 	recurringIdToTxInfo,
+	currentMonth,
 }: Props) {
 	if (pending.length === 0 && paid.length === 0) return null
 
-	const todayDay = new Date().getUTCDate()
+	const now = new Date()
+	const viewingYear = currentMonth.getUTCFullYear()
+	const viewingMonth = currentMonth.getUTCMonth()
+	const isFutureMonth =
+		viewingYear > now.getUTCFullYear() ||
+		(viewingYear === now.getUTCFullYear() && viewingMonth > now.getUTCMonth())
+	const isPastMonth =
+		viewingYear < now.getUTCFullYear() ||
+		(viewingYear === now.getUTCFullYear() && viewingMonth < now.getUTCMonth())
+	const todayDay = now.getUTCDate()
 
 	return (
 		<div className="space-y-3">
@@ -73,7 +84,9 @@ export function RecurringSection({
 					<ul className="divide-y divide-border">
 						{pending.map((item) => {
 							const overdue =
-								item.billingDay != null && item.billingDay < todayDay
+								!isFutureMonth &&
+								item.billingDay != null &&
+								(isPastMonth || item.billingDay < todayDay)
 							return (
 								<li
 									key={item.id}
