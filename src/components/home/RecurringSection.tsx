@@ -50,6 +50,120 @@ function formatAmount(item: RecurringRow): string {
 	return '—'
 }
 
+function isOverdue(
+	item: RecurringRow,
+	isFutureMonth: boolean,
+	isPastMonth: boolean,
+	todayDay: number,
+): boolean {
+	return (
+		!isFutureMonth &&
+		item.billingDay != null &&
+		(isPastMonth || item.billingDay < todayDay)
+	)
+}
+
+function PendingItem({
+	item,
+	overdue,
+}: {
+	item: RecurringRow
+	overdue: boolean
+}) {
+	return (
+		<li
+			className={`flex items-center justify-between px-4 py-3 gap-3${overdue ? ' bg-destructive/5' : ''}`}
+		>
+			<div className="min-w-0">
+				<div className="flex items-center gap-1.5">
+					{overdue && (
+						<AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+					)}
+					<p
+						className={`text-sm font-medium truncate${overdue ? ' text-destructive' : ' text-foreground'}`}
+					>
+						{item.description}
+					</p>
+				</div>
+				{item.billingDay != null && (
+					<p
+						className={`text-xs${overdue ? ' text-destructive/70 font-semibold' : ' text-muted-foreground'}`}
+					>
+						{overdue
+							? `Venció el día ${item.billingDay}`
+							: `Día ${item.billingDay}`}
+					</p>
+				)}
+			</div>
+			<div className="flex items-center gap-3 shrink-0">
+				<span
+					className={`text-sm font-semibold${overdue ? ' text-destructive' : ' text-foreground'}`}
+				>
+					{formatAmount(item)}
+				</span>
+				<Link
+					href={`/transactions/new?recurringItemId=${item.id}`}
+					className={`rounded-full px-3 py-1 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity${overdue ? ' bg-destructive' : ' bg-primary'}`}
+				>
+					Pagar
+				</Link>
+			</div>
+		</li>
+	)
+}
+
+function PaidItem({
+	item,
+	info,
+}: {
+	item: RecurringRow
+	info: TxInfo | undefined
+}) {
+	return (
+		<li className="flex items-center justify-between px-4 py-3 gap-3">
+			<div className="min-w-0 flex items-center gap-2">
+				<CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+				<div className="min-w-0">
+					<p className="text-sm font-medium text-foreground truncate">
+						{item.description}
+					</p>
+					{info != null && (
+						<p className="text-xs text-muted-foreground">
+							{fmtPaidAt(info.paidAt)} · {PAYMENT_LABELS[info.paymentMethod]}
+						</p>
+					)}
+				</div>
+			</div>
+			<div className="flex items-center gap-3 shrink-0">
+				<span className="text-sm text-muted-foreground">
+					{formatAmount(item)}
+				</span>
+				{info != null && (
+					<Link
+						href={`/transactions/${info.txId}/edit`}
+						className="text-xs text-primary hover:underline"
+					>
+						Ver
+					</Link>
+				)}
+			</div>
+		</li>
+	)
+}
+
+function ViewAllFooter({ href, label }: { href: string; label: string }) {
+	return (
+		<div className="border-t border-border px-4 py-2 text-center">
+			<Link
+				href={href}
+				className="text-xs font-semibold text-primary hover:underline"
+			>
+				{label}
+			</Link>
+		</div>
+	)
+}
+
 export function RecurringSection({
 	pending,
 	paid,
@@ -69,11 +183,41 @@ export function RecurringSection({
 		(viewingYear === now.getUTCFullYear() && viewingMonth < now.getUTCMonth())
 	const todayDay = now.getUTCDate()
 
+	const overdueItems = pending.filter((item) =>
+		isOverdue(item, isFutureMonth, isPastMonth, todayDay),
+	)
+	const upcomingItems = pending.filter(
+		(item) => !isOverdue(item, isFutureMonth, isPastMonth, todayDay),
+	)
+
+	const maxUpcoming = 3
+	const maxPaid = 3
+	const visibleUpcoming = upcomingItems.slice(0, maxUpcoming)
+	const visiblePaid = paid.slice(0, maxPaid)
+	const hasMoreUpcoming = upcomingItems.length > maxUpcoming
+	const hasMorePaid = paid.length > maxPaid
+
 	return (
 		<div className="space-y-3">
 			<h2 className="text-base font-bold text-foreground">Recurrentes</h2>
 
-			{pending.length > 0 && (
+			{overdueItems.length > 0 && (
+				<div className="rounded-2xl border border-border bg-card overflow-hidden">
+					<div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-destructive/10">
+						<AlertTriangle className="h-3.5 w-3.5 text-destructive" />
+						<span className="text-xs font-semibold uppercase tracking-wider text-destructive">
+							Vencidos ({overdueItems.length})
+						</span>
+					</div>
+					<ul className="divide-y divide-border">
+						{overdueItems.map((item) => (
+							<PendingItem key={item.id} item={item} overdue />
+						))}
+					</ul>
+				</div>
+			)}
+
+			{visibleUpcoming.length > 0 && (
 				<div className="rounded-2xl border border-border bg-card overflow-hidden">
 					<div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/30">
 						<Clock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -82,58 +226,20 @@ export function RecurringSection({
 						</span>
 					</div>
 					<ul className="divide-y divide-border">
-						{pending.map((item) => {
-							const overdue =
-								!isFutureMonth &&
-								item.billingDay != null &&
-								(isPastMonth || item.billingDay < todayDay)
-							return (
-								<li
-									key={item.id}
-									className={`flex items-center justify-between px-4 py-3 gap-3${overdue ? ' bg-destructive/5' : ''}`}
-								>
-									<div className="min-w-0">
-										<div className="flex items-center gap-1.5">
-											{overdue && (
-												<AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
-											)}
-											<p
-												className={`text-sm font-medium truncate${overdue ? ' text-destructive' : ' text-foreground'}`}
-											>
-												{item.description}
-											</p>
-										</div>
-										{item.billingDay != null && (
-											<p
-												className={`text-xs${overdue ? ' text-destructive/70 font-semibold' : ' text-muted-foreground'}`}
-											>
-												{overdue
-													? `Venció el día ${item.billingDay}`
-													: `Día ${item.billingDay}`}
-											</p>
-										)}
-									</div>
-									<div className="flex items-center gap-3 shrink-0">
-										<span
-											className={`text-sm font-semibold${overdue ? ' text-destructive' : ' text-foreground'}`}
-										>
-											{formatAmount(item)}
-										</span>
-										<Link
-											href={`/transactions/new?recurringItemId=${item.id}`}
-											className={`rounded-full px-3 py-1 text-xs font-bold text-primary-foreground hover:opacity-90 transition-opacity${overdue ? ' bg-destructive' : ' bg-primary'}`}
-										>
-											Pagar
-										</Link>
-									</div>
-								</li>
-							)
-						})}
+						{visibleUpcoming.map((item) => (
+							<PendingItem key={item.id} item={item} overdue={false} />
+						))}
 					</ul>
+					{hasMoreUpcoming && (
+						<ViewAllFooter
+							href="/recurring-items"
+							label={`Ver todos (${upcomingItems.length})`}
+						/>
+					)}
 				</div>
 			)}
 
-			{paid.length > 0 && (
+			{visiblePaid.length > 0 && (
 				<div className="rounded-2xl border border-border bg-card overflow-hidden">
 					<div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-muted/30">
 						<CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
@@ -142,44 +248,20 @@ export function RecurringSection({
 						</span>
 					</div>
 					<ul className="divide-y divide-border">
-						{paid.map((item) => {
-							const info = recurringIdToTxInfo.get(item.id)
-							return (
-								<li
-									key={item.id}
-									className="flex items-center justify-between px-4 py-3 gap-3"
-								>
-									<div className="min-w-0 flex items-center gap-2">
-										<CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
-										<div className="min-w-0">
-											<p className="text-sm font-medium text-foreground truncate">
-												{item.description}
-											</p>
-											{info != null && (
-												<p className="text-xs text-muted-foreground">
-													{fmtPaidAt(info.paidAt)} ·{' '}
-													{PAYMENT_LABELS[info.paymentMethod]}
-												</p>
-											)}
-										</div>
-									</div>
-									<div className="flex items-center gap-3 shrink-0">
-										<span className="text-sm text-muted-foreground">
-											{formatAmount(item)}
-										</span>
-										{info != null && (
-											<Link
-												href={`/transactions/${info.txId}/edit`}
-												className="text-xs text-primary hover:underline"
-											>
-												Ver
-											</Link>
-										)}
-									</div>
-								</li>
-							)
-						})}
+						{visiblePaid.map((item) => (
+							<PaidItem
+								key={item.id}
+								item={item}
+								info={recurringIdToTxInfo.get(item.id)}
+							/>
+						))}
 					</ul>
+					{hasMorePaid && (
+						<ViewAllFooter
+							href="/recurring-items"
+							label={`Ver todos (${paid.length})`}
+						/>
+					)}
 				</div>
 			)}
 		</div>

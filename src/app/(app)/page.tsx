@@ -249,13 +249,13 @@ export default async function HomePage({
 				prevHref={prevHref}
 				nextHref={nextHref}
 			/>
+			<BudgetSection items={budgetItems} alertCount={alertCount} />
 			<RecurringSection
 				pending={pendingRecurringItems}
 				paid={paidRecurringItems}
 				recurringIdToTxInfo={recurringIdToTxInfo}
 				currentMonth={currentMonth}
 			/>
-			<BudgetSection items={budgetItems} alertCount={alertCount} />
 			<TransactionSection transactions={recentTransactions} />
 		</div>
 	)
