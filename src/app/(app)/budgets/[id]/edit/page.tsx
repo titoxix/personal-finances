@@ -6,14 +6,17 @@ import {
 	essentialityService,
 } from '@/lib/container'
 import type { UpdateBudgetPayload } from '../../actions'
-import { deleteBudget, updateBudget } from '../../actions'
+import { deleteBudget, updateBudget as updateBudgetAction } from '../../actions'
 
 export default async function EditBudgetPage({
 	params,
+	searchParams,
 }: {
 	params: Promise<{ id: string }>
+	searchParams: Promise<{ month?: string }>
 }) {
 	const { id: idStr } = await params
+	const { month: monthParam } = await searchParams
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
@@ -33,9 +36,13 @@ export default async function EditBudgetPage({
 	const currency: 'usd' | 'gs' = budget.budgetedUsd != null ? 'usd' : 'gs'
 	const amount = budget.budgetedUsd ?? budget.budgetedGs ?? 0
 
+	const targetMonth =
+		monthParam ??
+		`${budget.month.getUTCFullYear()}-${String(budget.month.getUTCMonth() + 1).padStart(2, '0')}`
+
 	async function handleUpdate(payload: UpdateBudgetPayload) {
 		'use server'
-		return updateBudget(id, payload)
+		return updateBudgetAction(id, { ...payload, targetMonth })
 	}
 
 	async function handleDelete(reason?: string) {

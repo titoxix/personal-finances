@@ -15,6 +15,7 @@ const makeRepo = (): IBudgetRepository => ({
 	softDelete: vi.fn(),
 })
 
+const JUN_2026 = new Date('2026-06-01')
 const MAY_2026 = new Date('2026-05-01')
 const APR_2026 = new Date('2026-04-01')
 
@@ -194,6 +195,96 @@ describe('createBudgetService', () => {
 			await expect(service.update(999, { budgetedUsd: 600 })).rejects.toThrow(
 				'Budget not found',
 			)
+		})
+	})
+
+	describe('adjustForMonth', () => {
+		it('updates in place when budget month matches target month', async () => {
+			const existing = makeBudget({ month: MAY_2026, isRecurring: true })
+			const updated = makeBudget({
+				month: MAY_2026,
+				budgetedUsd: 600,
+				isRecurring: true,
+			})
+			vi.mocked(repo.findById).mockResolvedValue(existing)
+			vi.mocked(repo.update).mockResolvedValue(updated)
+
+			const result = await service.adjustForMonth(1, MAY_2026, {
+				budgetedUsd: 600,
+			})
+
+			expect(result).toBe(updated)
+			expect(repo.update).toHaveBeenCalledWith(1, { budgetedUsd: 600 })
+			expect(repo.create).not.toHaveBeenCalled()
+		})
+
+		it('creates a new recurring budget when editing an inherited budget', async () => {
+			const inherited = makeBudget({
+				id: 1,
+				month: MAY_2026,
+				categoryId: 3,
+				essentialityId: 2,
+				budgetedUsd: 100,
+				isRecurring: true,
+			})
+			const created = makeBudget({
+				id: 2,
+				month: JUN_2026,
+				categoryId: 3,
+				essentialityId: 2,
+				budgetedUsd: 150,
+				isRecurring: true,
+			})
+			vi.mocked(repo.findById).mockResolvedValue(inherited)
+			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(null)
+			vi.mocked(repo.create).mockResolvedValue(created)
+
+			const result = await service.adjustForMonth(1, JUN_2026, {
+				budgetedUsd: 150,
+				budgetedGs: null,
+				essentialityId: 2,
+				isRecurring: true,
+				notes: null,
+			})
+
+			expect(result).toBe(created)
+			expect(repo.create).toHaveBeenCalledWith({
+				month: JUN_2026,
+				categoryId: 3,
+				essentialityId: 2,
+				budgetedUsd: 150,
+				budgetedGs: undefined,
+				isRecurring: true,
+				notes: undefined,
+			})
+			expect(repo.update).not.toHaveBeenCalled()
+		})
+
+		it('throws when budget does not exist', async () => {
+			vi.mocked(repo.findById).mockResolvedValue(null)
+
+			await expect(
+				service.adjustForMonth(999, MAY_2026, { budgetedUsd: 600 }),
+			).rejects.toThrow('Budget not found')
+		})
+
+		it('throws when a specific budget already exists for the target month and category', async () => {
+			const inherited = makeBudget({
+				month: MAY_2026,
+				categoryId: 3,
+				isRecurring: true,
+			})
+			const existing = makeBudget({
+				id: 5,
+				month: JUN_2026,
+				categoryId: 3,
+			})
+			vi.mocked(repo.findById).mockResolvedValue(inherited)
+			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(existing)
+
+			await expect(
+				service.adjustForMonth(1, JUN_2026, { budgetedUsd: 150 }),
+			).rejects.toThrow('Budget already exists for this month and category')
 		})
 	})
 })

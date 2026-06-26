@@ -230,7 +230,7 @@ export default async function BudgetsPage({
 						return (
 							<Link
 								key={budget.id}
-								href={`/budgets/${budget.id}/edit`}
+								href={`/budgets/${budget.id}/edit?month=${toMonthParam(targetDate)}`}
 								className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3.5 transition-colors hover:bg-card/80"
 							>
 								{/* Ícono */}

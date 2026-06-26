@@ -22,6 +22,10 @@ export type UpdateBudgetPayload = {
 	notes?: string
 }
 
+export type UpdateBudgetPayloadWithMonth = UpdateBudgetPayload & {
+	targetMonth: string // 'YYYY-MM'
+}
+
 function parseMonthDate(monthStr: string): Date {
 	const parts = monthStr.split('-').map(Number)
 	const year = parts[0] ?? new Date().getUTCFullYear()
@@ -54,16 +58,20 @@ export async function createBudget(
 
 export async function updateBudget(
 	id: number,
-	payload: UpdateBudgetPayload,
+	payload: UpdateBudgetPayloadWithMonth,
 ): Promise<{ error: string } | undefined> {
 	try {
-		await budgetService.update(id, {
-			essentialityId: payload.essentialityId,
-			budgetedUsd: payload.currency === 'usd' ? payload.amount : null,
-			budgetedGs: payload.currency === 'gs' ? payload.amount : null,
-			isRecurring: payload.isRecurring,
-			notes: payload.notes ?? null,
-		})
+		await budgetService.adjustForMonth(
+			id,
+			parseMonthDate(payload.targetMonth),
+			{
+				essentialityId: payload.essentialityId,
+				budgetedUsd: payload.currency === 'usd' ? payload.amount : null,
+				budgetedGs: payload.currency === 'gs' ? payload.amount : null,
+				isRecurring: payload.isRecurring,
+				notes: payload.notes ?? null,
+			},
+		)
 	} catch (e) {
 		return {
 			error:

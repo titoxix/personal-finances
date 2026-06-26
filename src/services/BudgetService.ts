@@ -5,6 +5,13 @@ import type {
 	UpdateBudgetInput,
 } from '@/domain/repositories/IBudgetRepository'
 
+function sameMonth(a: Date, b: Date): boolean {
+	return (
+		a.getUTCFullYear() === b.getUTCFullYear() &&
+		a.getUTCMonth() === b.getUTCMonth()
+	)
+}
+
 export function createBudgetService(repo: IBudgetRepository) {
 	return {
 		findAll: (): Promise<Budget[]> => repo.findAll(),
@@ -48,6 +55,36 @@ export function createBudgetService(repo: IBudgetRepository) {
 			const existing = await repo.findById(id)
 			if (!existing) throw new Error('Budget not found')
 			return repo.update(id, input)
+		},
+
+		adjustForMonth: async (
+			id: number,
+			targetMonth: Date,
+			input: UpdateBudgetInput,
+		): Promise<Budget> => {
+			const existing = await repo.findById(id)
+			if (!existing) throw new Error('Budget not found')
+
+			if (sameMonth(existing.month, targetMonth)) {
+				return repo.update(id, input)
+			}
+
+			const duplicate = await repo.findByMonthAndCategory(
+				targetMonth,
+				existing.categoryId,
+			)
+			if (duplicate)
+				throw new Error('Budget already exists for this month and category')
+
+			return repo.create({
+				month: targetMonth,
+				categoryId: existing.categoryId,
+				essentialityId: input.essentialityId ?? existing.essentialityId,
+				budgetedUsd: input.budgetedUsd ?? undefined,
+				budgetedGs: input.budgetedGs ?? undefined,
+				isRecurring: true,
+				notes: input.notes ?? undefined,
+			})
 		},
 
 		delete: async (id: number, reason?: string): Promise<Budget> => {
