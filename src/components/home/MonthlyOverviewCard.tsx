@@ -69,17 +69,17 @@ export function MonthlyOverviewCard({
 
 			{/* Header */}
 			<div className="relative flex items-start justify-between">
-				<p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#003824]/75">
+				<p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#003824]/90">
 					Resumen Mensual
 				</p>
-				<Calendar className="h-4 w-4 text-[#003824]/70" />
+				<Calendar className="h-4 w-4 text-[#003824]/90" />
 			</div>
 
 			{/* Month with navigation */}
 			<div className="relative mt-1 flex items-center gap-1">
 				<Link
 					href={prevHref}
-					className="rounded-full p-0.5 text-[#003824]/60 transition-colors hover:bg-white/20 hover:text-[#003824]"
+					className="rounded-full p-0.5 text-[#003824]/75 transition-colors hover:bg-white/20 hover:text-[#003824]"
 				>
 					<ChevronLeft className="h-5 w-5" />
 				</Link>
@@ -89,7 +89,7 @@ export function MonthlyOverviewCard({
 				{nextHref ? (
 					<Link
 						href={nextHref}
-						className="rounded-full p-0.5 text-[#003824]/60 transition-colors hover:bg-white/20 hover:text-[#003824]"
+						className="rounded-full p-0.5 text-[#003824]/75 transition-colors hover:bg-white/20 hover:text-[#003824]"
 					>
 						<ChevronRight className="h-5 w-5" />
 					</Link>
@@ -99,7 +99,7 @@ export function MonthlyOverviewCard({
 			</div>
 
 			{/* Amounts */}
-			<div className="relative mt-1 inline-flex items-center gap-1 font-mono text-sm text-[#003824]/80">
+			<div className="relative mt-1 inline-flex items-center gap-1 font-mono text-sm text-[#003824]/90">
 				<span>
 					{gs(totalSpentGs)} gastados de {gs(capGs)}
 				</span>
@@ -124,7 +124,7 @@ export function MonthlyOverviewCard({
 						)}
 					</div>
 				</div>
-				<div className="mt-1.5 flex items-center justify-center gap-3 text-[10px] text-[#003824]/60">
+				<div className="mt-1.5 flex items-center justify-center gap-3 text-[10px] text-[#003824]/75">
 					<span className="font-mono">{spentPct}% gastado</span>
 					{pendingPct > 0 && (
 						<>
@@ -141,7 +141,7 @@ export function MonthlyOverviewCard({
 			{incomeGs && incomeGs.projectedGs > 0 && (
 				<div className="relative mt-3 rounded-xl bg-white/10 px-3 py-2">
 					<div className="flex items-center justify-between">
-						<span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+						<span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#003824]/75">
 							Proyectado del mes
 							<InfoPopover content="Recurrentes + cuotas + suma de presupuestos del mes." />
 						</span>
@@ -150,26 +150,27 @@ export function MonthlyOverviewCard({
 						</span>
 					</div>
 					<div className="mt-1 flex items-center justify-between">
-						<span className="text-[10px] text-[#003824]/50">Recurrentes</span>
-						<span className="font-mono text-[10px] text-[#003824]/70">
+						<span className="text-[10px] text-[#003824]/85">Recurrentes</span>
+						<span className="font-mono text-[10px] text-[#003824]/85">
 							{gs(incomeGs.recurringOnlyGs)}
 						</span>
 					</div>
 					<div className="mt-1 flex items-center justify-between">
-						<span className="text-[10px] text-[#003824]/50">Cuotas</span>
-						<span className="font-mono text-[10px] text-[#003824]/70">
+						<span className="text-[10px] text-[#003824]/85">Cuotas</span>
+						<span className="font-mono text-[10px] text-[#003824]/85">
 							{gs(incomeGs.installmentsOnlyGs)}
 						</span>
 					</div>
 					<div className="mt-1 flex items-center justify-between">
-						<span className="text-[10px] text-[#003824]/50">Presupuestado</span>
-						<span className="font-mono text-[10px] text-[#003824]/70">
+						<span className="text-[10px] text-[#003824]/85">Presupuestado</span>
+						<span className="font-mono text-[10px] text-[#003824]/85">
 							{gs(incomeGs.budgetedGs)}
 						</span>
 					</div>
 					<div className="mt-1 flex items-center justify-between">
-						<span className="text-[10px] text-[#003824]/50">
+						<span className="inline-flex items-center gap-0.5 text-[10px] text-[#003824]/85">
 							Libre proyectado
+							<InfoPopover content="Lo que te sobraría al final del mes si gastás todo lo proyectado: recurrentes, cuotas y presupuestos de categorías." />
 						</span>
 						<span
 							className={`font-mono text-[10px] font-semibold ${freeColor(incomeGs.libreProyectadoGs, capGs)}`}
