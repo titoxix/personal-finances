@@ -101,9 +101,12 @@ export function MonthlyOverviewCard({
 			</div>
 
 			{/* Amounts */}
-			<p className="relative mt-1 font-mono text-sm text-[#003824]/80">
-				{gs(totalSpentGs)} gastados de {gs(capGs)}
-			</p>
+			<div className="relative mt-1 inline-flex items-center gap-1 font-mono text-sm text-[#003824]/80">
+				<span>
+					{gs(totalSpentGs)} gastados de {gs(capGs)}
+				</span>
+				<InfoPopover content="Límite de gasto del mes. Se define al cargar el ingreso mensual como 'Cap de presupuesto' y se convierte a Gs usando la tasa del momento." />
+			</div>
 
 			{/* Progress — dos segmentos: gastado + pendiente */}
 			<div className="relative mt-4">

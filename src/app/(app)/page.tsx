@@ -136,9 +136,7 @@ export default async function HomePage({
 	const totalBudgetedFromBudgetsGs = budgets.reduce((sum, b) => {
 		return sum + (b.budgetedGs ?? (b.budgetedUsd ? b.budgetedUsd * refRate : 0))
 	}, 0)
-	const capGs = income
-		? income.budgetCapUsd * refRate
-		: totalBudgetedFromBudgetsGs
+	const capGs = income ? income.budgetCapUsd * refRate : 0
 	const spentPct = capGs > 0 ? Math.round((totalSpentGs / capGs) * 100) : 0
 
 	// Compromisos recurrentes del mes: todos los activos mensuales +
