@@ -35,11 +35,9 @@ type Props = {
 	prevHref: string
 	nextHref?: string
 	incomeGs?: {
-		grossGs: number
-		investmentGs: number
-		spentGs: number
-		pendingGs: number
-		freeGs: number
+		recurringOnlyGs: number
+		installmentsOnlyGs: number
+		budgetedGs: number
 		projectedGs: number
 		libreProyectadoGs: number
 	}
@@ -60,7 +58,7 @@ export function MonthlyOverviewCard({
 	const spentPct2 = capGs > 0 ? Math.min((totalSpentGs / capGs) * 100, 100) : 0
 	const pendingPct =
 		incomeGs && capGs > 0
-			? Math.min((incomeGs.pendingGs / capGs) * 100, 100 - spentPct2)
+			? Math.min((incomeGs.projectedGs / capGs) * 100, 100 - spentPct2)
 			: 0
 
 	return (
@@ -139,85 +137,47 @@ export function MonthlyOverviewCard({
 				</div>
 			</div>
 
-			{/* Breakdown — Gastado | Pendiente | Libre */}
-			{incomeGs && (
-				<>
-					<div className="relative mt-4 rounded-xl bg-white/10 px-3 py-2">
-						<div className="flex items-center justify-between">
-							<div className="text-center">
-								<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-									Gastado
-								</p>
-								<p className="font-mono text-sm font-bold text-[#003824]">
-									{gs(incomeGs.spentGs)}
-								</p>
-							</div>
-							<div className="h-6 w-px bg-white/20" />
-							<div className="text-center">
-								<div className="inline-flex items-center gap-0.5">
-									<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-										Recurrentes
-									</p>
-									<InfoPopover content="Recurrentes + cuotas" />
-								</div>
-								<p className="font-mono text-sm font-bold text-[#003824]">
-									{gs(incomeGs.pendingGs)}
-								</p>
-							</div>
-							<div className="h-6 w-px bg-white/20" />
-							<div className="text-center">
-								<p className="text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-									Libre
-								</p>
-								<p
-									className={`font-mono text-sm font-bold ${freeColor(incomeGs.freeGs, capGs)}`}
-								>
-									{gs(incomeGs.freeGs)}
-								</p>
-							</div>
-						</div>
-						{incomeGs.pendingGs > 0 && (
-							<p className="mt-2 text-center text-[10px] text-[#003824]/50">
-								Libre estimado asumiendo recurrentes impagos
-							</p>
-						)}
+			{/* Proyectado del mes */}
+			{incomeGs && incomeGs.projectedGs > 0 && (
+				<div className="relative mt-3 rounded-xl bg-white/10 px-3 py-2">
+					<div className="flex items-center justify-between">
+						<span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
+							Proyectado del mes
+							<InfoPopover content="Recurrentes + cuotas + suma de presupuestos del mes." />
+						</span>
+						<span className="font-mono text-sm font-bold text-[#003824]">
+							{gs(incomeGs.projectedGs)}
+						</span>
 					</div>
-
-					{/* Proyectado del mes */}
-					{incomeGs.projectedGs > 0 && (
-						<div className="relative mt-3 rounded-xl bg-white/10 px-3 py-2">
-							<div className="flex items-center justify-between">
-								<span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#003824]/60">
-									Proyectado del mes
-									<InfoPopover content="Recurrentes + cuotas + suma de presupuestos del mes." />
-								</span>
-								<span className="font-mono text-sm font-bold text-[#003824]">
-									{gs(incomeGs.projectedGs)}
-								</span>
-							</div>
-							<div className="mt-1 flex items-center justify-between">
-								<span className="text-[10px] text-[#003824]/50">
-									Real gastado
-								</span>
-								<span className="font-mono text-[10px] text-[#003824]/70">
-									{gs(incomeGs.spentGs)} (
-									{Math.round((incomeGs.spentGs / incomeGs.projectedGs) * 100)}
-									%)
-								</span>
-							</div>
-							<div className="mt-1 flex items-center justify-between">
-								<span className="text-[10px] text-[#003824]/50">
-									Libre proyectado
-								</span>
-								<span
-									className={`font-mono text-[10px] font-semibold ${freeColor(incomeGs.libreProyectadoGs, capGs)}`}
-								>
-									{gs(incomeGs.libreProyectadoGs)}
-								</span>
-							</div>
-						</div>
-					)}
-				</>
+					<div className="mt-1 flex items-center justify-between">
+						<span className="text-[10px] text-[#003824]/50">Recurrentes</span>
+						<span className="font-mono text-[10px] text-[#003824]/70">
+							{gs(incomeGs.recurringOnlyGs)}
+						</span>
+					</div>
+					<div className="mt-1 flex items-center justify-between">
+						<span className="text-[10px] text-[#003824]/50">Cuotas</span>
+						<span className="font-mono text-[10px] text-[#003824]/70">
+							{gs(incomeGs.installmentsOnlyGs)}
+						</span>
+					</div>
+					<div className="mt-1 flex items-center justify-between">
+						<span className="text-[10px] text-[#003824]/50">Presupuestado</span>
+						<span className="font-mono text-[10px] text-[#003824]/70">
+							{gs(incomeGs.budgetedGs)}
+						</span>
+					</div>
+					<div className="mt-1 flex items-center justify-between">
+						<span className="text-[10px] text-[#003824]/50">
+							Libre proyectado
+						</span>
+						<span
+							className={`font-mono text-[10px] font-semibold ${freeColor(incomeGs.libreProyectadoGs, capGs)}`}
+						>
+							{gs(incomeGs.libreProyectadoGs)}
+						</span>
+					</div>
+				</div>
 			)}
 		</div>
 	)

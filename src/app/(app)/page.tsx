@@ -213,12 +213,9 @@ export default async function HomePage({
 
 	const incomeGs = income
 		? {
-				grossGs: income.grossIncomeUsd * refRate,
-				investmentGs: income.automaticInvestmentUsd * refRate,
-				spentGs: totalSpentGs,
-				pendingGs: pendingRecurringGs + pendingInstallmentsGs,
-				freeGs:
-					capGs - totalSpentGs - pendingRecurringGs - pendingInstallmentsGs,
+				recurringOnlyGs: pendingRecurringGs,
+				installmentsOnlyGs: pendingInstallmentsGs,
+				budgetedGs: totalBudgetedFromBudgetsGs,
 				projectedGs:
 					pendingRecurringGs +
 					pendingInstallmentsGs +
