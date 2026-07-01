@@ -182,12 +182,30 @@ export default async function HomePage({
 			return bTime - aTime
 		})
 
-	// Solo descontar los pendientes del "libre" — los pagados ya están en totalSpentGs
-	const pendingRecurringGs = pendingRecurringItems.reduce((sum, item) => {
-		const amountGs =
-			item.amountGs ?? (item.amountUsd ? item.amountUsd * refRate : 0)
-		return sum + amountGs
-	}, 0)
+	// Para la proyección: todos los recurrentes activos del mes (pagados o no), salvo los salteados.
+	// Usar solo pendientes causaría que el libre suba al registrar un pago, lo cual es incorrecto.
+	const allRecurringGs = monthlyRecurring
+		.filter((item) => !skippedRecurringIds.has(item.id))
+		.reduce((sum, item) => {
+			const amountGs =
+				item.amountGs ?? (item.amountUsd ? item.amountUsd * refRate : 0)
+			return sum + amountGs
+		}, 0)
+
+	// Gastos reales del mes que no están cubiertos por recurrentes, cuotas ni presupuestos.
+	// Son transacciones en categorías sin presupuesto — reducen el libre en tiempo real.
+	const budgetedCategoryIds = new Set(budgets.map((b) => b.categoryId))
+	const unclassifiedSpentGs = monthTransactions
+		.filter(
+			(tx) =>
+				tx.recurringItemId == null &&
+				tx.installmentPlanId == null &&
+				!budgetedCategoryIds.has(tx.categoryId),
+		)
+		.reduce((sum, tx) => {
+			const gs = tx.amountGs ?? (tx.amountUsd ? tx.amountUsd * refRate : 0)
+			return sum + gs
+		}, 0)
 
 	// Cuotas activas con saldo pendiente: se suma el monto por cuota (Gs) al pendiente mensual.
 	// Mismo criterio conservador que los recurrentes: si ya registraste el pago como
@@ -213,18 +231,21 @@ export default async function HomePage({
 
 	const incomeGs = income
 		? {
-				recurringOnlyGs: pendingRecurringGs,
+				recurringOnlyGs: allRecurringGs,
 				installmentsOnlyGs: pendingInstallmentsGs,
 				budgetedGs: totalBudgetedFromBudgetsGs,
+				unclassifiedSpentGs,
 				projectedGs:
-					pendingRecurringGs +
+					allRecurringGs +
 					pendingInstallmentsGs +
-					totalBudgetedFromBudgetsGs,
+					totalBudgetedFromBudgetsGs +
+					unclassifiedSpentGs,
 				libreProyectadoGs:
 					capGs -
-					(pendingRecurringGs +
+					(allRecurringGs +
 						pendingInstallmentsGs +
-						totalBudgetedFromBudgetsGs),
+						totalBudgetedFromBudgetsGs +
+						unclassifiedSpentGs),
 			}
 		: undefined
 	const alertCount = budgetItems.filter(

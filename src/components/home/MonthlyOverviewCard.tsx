@@ -38,6 +38,7 @@ type Props = {
 		recurringOnlyGs: number
 		installmentsOnlyGs: number
 		budgetedGs: number
+		unclassifiedSpentGs: number
 		projectedGs: number
 		libreProyectadoGs: number
 	}
@@ -143,7 +144,7 @@ export function MonthlyOverviewCard({
 					<div className="flex items-center justify-between">
 						<span className="inline-flex items-center gap-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#003824]/75">
 							Proyectado del mes
-							<InfoPopover content="Recurrentes + cuotas + suma de presupuestos del mes." />
+							<InfoPopover content="Recurrentes + cuotas + suma de presupuestos del mes + gastos en categorías sin presupuesto." />
 						</span>
 						<span className="font-mono text-sm font-bold text-[#003824]">
 							{gs(incomeGs.projectedGs)}
@@ -167,10 +168,20 @@ export function MonthlyOverviewCard({
 							{gs(incomeGs.budgetedGs)}
 						</span>
 					</div>
+					{incomeGs.unclassifiedSpentGs > 0 && (
+						<div className="mt-1 flex items-center justify-between">
+							<span className="text-[10px] text-[#003824]/85">
+								Gastos extra
+							</span>
+							<span className="font-mono text-[10px] text-[#003824]/85">
+								{gs(incomeGs.unclassifiedSpentGs)}
+							</span>
+						</div>
+					)}
 					<div className="mt-1 flex items-center justify-between">
 						<span className="inline-flex items-center gap-0.5 text-[10px] text-[#003824]/85">
 							Libre proyectado
-							<InfoPopover content="Lo que te sobraría al final del mes si gastás todo lo proyectado: recurrentes, cuotas y presupuestos de categorías." />
+							<InfoPopover content="Lo que te sobraría al final del mes si gastás todo lo proyectado: recurrentes, cuotas, presupuestos y gastos en categorías sin presupuesto." />
 						</span>
 						<span
 							className={`font-mono text-[10px] font-semibold ${freeColor(incomeGs.libreProyectadoGs, capGs)}`}
