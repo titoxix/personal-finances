@@ -1,5 +1,6 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
+import { RecurringByCategory } from '@/components/recurring-items/RecurringByCategory'
 import { RecurringItemList } from '@/components/recurring-items/RecurringItemList'
 import { RecurringTotalsSummary } from '@/components/recurring-items/RecurringTotalsSummary'
 import { TopRecurringItems } from '@/components/recurring-items/TopRecurringItems'
@@ -43,6 +44,30 @@ export default async function RecurringItemsPage() {
 		.sort((a, b) => b.amountGs - a.amountGs)
 		.slice(0, 3)
 
+	const categoryLabels = new Map(categories.map((c) => [c.id, c.label]))
+	const byCategoryMap = new Map<
+		number,
+		{ categoryId: number; label: string; totalGs: number; count: number }
+	>()
+	for (const item of activeItems) {
+		const existing = byCategoryMap.get(item.categoryId)
+		const amountGs = toGs(item.amountGs, item.amountUsd)
+		if (existing) {
+			existing.totalGs += amountGs
+			existing.count += 1
+		} else {
+			byCategoryMap.set(item.categoryId, {
+				categoryId: item.categoryId,
+				label: categoryLabels.get(item.categoryId) ?? 'Sin categoría',
+				totalGs: amountGs,
+				count: 1,
+			})
+		}
+	}
+	const byCategory = [...byCategoryMap.values()].sort(
+		(a, b) => b.totalGs - a.totalGs,
+	)
+
 	return (
 		<div>
 			<div className="mb-5 flex items-end justify-between">
@@ -68,6 +93,7 @@ export default async function RecurringItemsPage() {
 						combinedTotalGs={monthlyTotalGs + annualTotalGs}
 					/>
 					<TopRecurringItems items={topExpensive} />
+					<RecurringByCategory items={byCategory} />
 				</>
 			)}
 
