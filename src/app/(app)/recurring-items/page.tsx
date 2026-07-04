@@ -46,26 +46,37 @@ export default async function RecurringItemsPage() {
 
 	const categoryLabels = new Map(categories.map((c) => [c.id, c.label]))
 	const byCategoryMap = new Map<
-		number,
-		{ categoryId: number; label: string; totalGs: number; count: number }
+		string,
+		{
+			categoryId: number
+			label: string
+			frequency: 'monthly' | 'annual'
+			totalGs: number
+			count: number
+		}
 	>()
 	for (const item of activeItems) {
-		const existing = byCategoryMap.get(item.categoryId)
+		const key = `${item.categoryId}-${item.frequency}`
+		const existing = byCategoryMap.get(key)
 		const amountGs = toGs(item.amountGs, item.amountUsd)
 		if (existing) {
 			existing.totalGs += amountGs
 			existing.count += 1
 		} else {
-			byCategoryMap.set(item.categoryId, {
+			byCategoryMap.set(key, {
 				categoryId: item.categoryId,
 				label: categoryLabels.get(item.categoryId) ?? 'Sin categoría',
+				frequency: item.frequency,
 				totalGs: amountGs,
 				count: 1,
 			})
 		}
 	}
+	const frequencyOrder = { monthly: 0, annual: 1 } as const
 	const byCategory = [...byCategoryMap.values()].sort(
-		(a, b) => b.totalGs - a.totalGs,
+		(a, b) =>
+			a.label.localeCompare(b.label) ||
+			frequencyOrder[a.frequency] - frequencyOrder[b.frequency],
 	)
 
 	return (
