@@ -72,11 +72,8 @@ export default async function RecurringItemsPage() {
 			})
 		}
 	}
-	const frequencyOrder = { monthly: 0, annual: 1 } as const
 	const byCategory = [...byCategoryMap.values()].sort(
-		(a, b) =>
-			a.label.localeCompare(b.label) ||
-			frequencyOrder[a.frequency] - frequencyOrder[b.frequency],
+		(a, b) => b.totalGs - a.totalGs,
 	)
 
 	return (
