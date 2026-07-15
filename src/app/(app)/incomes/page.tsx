@@ -113,7 +113,7 @@ export default async function IncomesPage() {
 											</span>
 										</span>
 										<span className="text-xs text-muted-foreground">
-											Inv:{' '}
+											Exc:{' '}
 											<span className="font-mono text-foreground">
 												{fmtUsd(income.automaticInvestmentUsd)}
 											</span>{' '}

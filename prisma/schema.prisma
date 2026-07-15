@@ -93,7 +93,10 @@ model Income {
   month                  DateTime @db.Date
   grossIncomeUsd         Decimal  @db.Decimal(10, 2) @map("gross_income_usd")
   budgetCapUsd           Decimal  @db.Decimal(10, 2) @map("budget_cap_usd")
+  // TODO(rename): no siempre es "inversión" — es el excedente asignado a lo que sea ese mes.
+  // Refactor pendiente: automaticInvestmentUsd -> surplusAllocatedUsd, requiere migración RENAME COLUMN.
   automaticInvestmentUsd Decimal  @db.Decimal(10, 2) @map("automatic_investment_usd")
+  // TODO(rename): ver nota de automaticInvestmentUsd. automaticDest -> surplusDest.
   automaticDest          String   @db.VarChar(50) @map("automatic_dest")
   exchangeRate           Decimal  @db.Decimal(10, 2) @map("exchange_rate")
   notes                  String?

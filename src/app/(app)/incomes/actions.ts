@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { incomeService } from '@/lib/container'
 
+// TODO(rename): automaticInvestmentUsd/automaticDest -> surplusAllocatedUsd/surplusDest
+// en ambos payloads, ver TODO en domain/entities/income.ts.
 export type CreateIncomePayload = {
 	month: string // 'YYYY-MM'
 	grossIncomeUsd: number

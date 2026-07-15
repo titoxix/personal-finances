@@ -27,6 +27,8 @@ type EditProps = {
 	mode: 'edit'
 	monthLabel: string
 	latestRates?: ExchangeRate[]
+	// TODO(rename): automaticInvestmentUsd/automaticDest -> surplusAllocatedUsd/surplusDest,
+	// ver TODO en domain/entities/income.ts.
 	initialValues: {
 		grossIncomeUsd: number
 		budgetCapUsd: number
@@ -207,13 +209,13 @@ export function IncomeForm(props: Props) {
 				</div>
 			</div>
 
-			{/* ── Inversión automática ── */}
+			{/* ── Excedente asignado ── */}
 			<div className="space-y-2">
 				<label
 					htmlFor="income-auto-invest"
 					className="text-sm font-semibold text-foreground"
 				>
-					Inversión automática (USD)
+					Excedente asignado (USD)
 				</label>
 				<div className="flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3.5">
 					<span className="text-sm font-bold text-muted-foreground">$</span>
@@ -231,20 +233,20 @@ export function IncomeForm(props: Props) {
 				</div>
 			</div>
 
-			{/* ── Destino de inversión ── */}
+			{/* ── Destino del excedente ── */}
 			<div className="space-y-2">
 				<label
 					htmlFor="income-auto-dest"
 					className="text-sm font-semibold text-foreground"
 				>
-					Destino de inversión automática
+					Destino del excedente
 				</label>
 				<input
 					id="income-auto-dest"
 					type="text"
 					value={automaticDest}
 					onChange={(e) => setAutomaticDest(e.target.value)}
-					placeholder="ej. ETF, Fondo inversor..."
+					placeholder="ej. Ahorro, ETF, Fondo de emergencia..."
 					className="w-full rounded-2xl border border-border bg-card px-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/60 transition-colors"
 				/>
 			</div>

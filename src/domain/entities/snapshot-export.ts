@@ -33,6 +33,9 @@ export const ExportInstallmentPlanSchema = InstallmentPlanSchema.extend(
 )
 export type ExportInstallmentPlan = z.infer<typeof ExportInstallmentPlanSchema>
 
+// TODO(rename): automaticInvestmentUsd/automaticDest -> surplusAllocatedUsd/surplusDest,
+// ver TODO en domain/entities/income.ts. Al renombrar acá, definir si versionamos el
+// schema de export para no romper snapshots ya exportados con el nombre viejo.
 export const ExportIncomeSchema = z.object({
 	grossIncomeUsd: z.number(),
 	budgetCapUsd: z.number().nullable(),

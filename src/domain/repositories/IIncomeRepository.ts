@@ -1,5 +1,7 @@
 import type { Income } from '@/domain/entities/income'
 
+// TODO(rename): automaticInvestmentUsd/automaticDest -> surplusAllocatedUsd/surplusDest,
+// ver TODO en domain/entities/income.ts.
 export type CreateIncomeInput = {
 	month: Date
 	grossIncomeUsd: number

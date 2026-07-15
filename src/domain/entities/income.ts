@@ -1,5 +1,8 @@
 import { z } from 'zod'
 
+// TODO(rename): automaticInvestmentUsd/automaticDest (en los 3 schemas de este archivo)
+// deberían llamarse surplusAllocatedUsd/surplusDest — no siempre es una inversión.
+// Pendiente de migración de BD, ver prisma/schema.prisma.
 export const IncomeSchema = z.object({
 	id: z.number(),
 	month: z.date(),

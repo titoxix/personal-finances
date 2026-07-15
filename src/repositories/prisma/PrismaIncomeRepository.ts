@@ -6,6 +6,8 @@ import type {
 } from '@/domain/repositories/IIncomeRepository'
 import type { PrismaClient } from '@/generated/prisma/client'
 
+// TODO(rename): automaticInvestmentUsd/automaticDest -> surplusAllocatedUsd/surplusDest,
+// ver TODO en domain/entities/income.ts.
 type PrismaIncome = {
 	id: number
 	month: Date
