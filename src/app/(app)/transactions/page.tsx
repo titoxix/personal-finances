@@ -11,14 +11,29 @@ import {
 	transactionService,
 } from '@/lib/container'
 
-export default async function TransactionsPage() {
-	const [transactions, categories, latestRate] = await Promise.all([
+export default async function TransactionsPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ categoryId?: string }>
+}) {
+	const { categoryId: categoryIdParam } = await searchParams
+	const filterCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined
+
+	const [allTransactions, categories, latestRate] = await Promise.all([
 		transactionService.findAll(),
 		categoryService.findAll(),
 		exchangeRateService.findLatestBySource('itau'),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c.label]))
+
+	const transactions = filterCategoryId
+		? allTransactions.filter((tx) => tx.categoryId === filterCategoryId)
+		: allTransactions
+
+	const filterCategoryLabel = filterCategoryId
+		? (categoryMap.get(filterCategoryId) ?? `#${filterCategoryId}`)
+		: undefined
 
 	const rows: TransactionListRow[] = transactions
 		.sort((a, b) => b.date.getTime() - a.date.getTime())
@@ -43,7 +58,7 @@ export default async function TransactionsPage() {
 	const gsRate = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000
 
 	const spentMap = new Map<number, number>()
-	for (const tx of transactions) {
+	for (const tx of allTransactions) {
 		if (tx.date < thisMonthStart || tx.date >= nextMonthStart) continue
 		const gs = tx.amountGs ?? (tx.amountUsd ? tx.amountUsd * gsRate : 0)
 		spentMap.set(tx.categoryId, (spentMap.get(tx.categoryId) ?? 0) + gs)
@@ -76,6 +91,21 @@ export default async function TransactionsPage() {
 					Nueva
 				</Link>
 			</div>
+
+			{filterCategoryLabel && (
+				<div className="mb-4 flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-2.5">
+					<p className="text-sm text-foreground">
+						Filtrando por{' '}
+						<span className="font-semibold">{filterCategoryLabel}</span>
+					</p>
+					<Link
+						href="/transactions"
+						className="ml-auto text-xs font-semibold text-primary hover:underline"
+					>
+						Quitar filtro
+					</Link>
+				</div>
+			)}
 
 			<div className="lg:grid lg:grid-cols-[1fr_272px] lg:gap-6">
 				<TransactionList

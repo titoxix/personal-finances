@@ -3,6 +3,7 @@ import { BudgetCard } from './BudgetCard'
 
 type BudgetItem = {
 	id: number
+	categoryId: number
 	categoryLabel: string
 	spent: number
 	budgeted: number
@@ -48,6 +49,7 @@ export function BudgetSection({ items, alertCount }: Props) {
 					{items.map((item, idx) => (
 						<BudgetCard
 							key={item.id}
+							categoryId={item.categoryId}
 							label={item.categoryLabel}
 							spent={item.spent}
 							budgeted={item.budgeted}

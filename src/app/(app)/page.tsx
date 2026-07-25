@@ -120,6 +120,7 @@ export default async function HomePage({
 			: Math.round((spentByCategory.get(b.categoryId) ?? 0) * 100) / 100
 		return {
 			id: b.id,
+			categoryId: b.categoryId,
 			categoryLabel: cat?.label ?? `#${b.categoryId}`,
 			spent,
 			budgeted,

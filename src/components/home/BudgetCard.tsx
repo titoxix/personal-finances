@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 const COLOR_VARIANTS = [
@@ -23,6 +24,7 @@ function fmtGs(n: number): string {
 }
 
 type Props = {
+	categoryId: number
 	label: string
 	spent: number
 	budgeted: number
@@ -31,6 +33,7 @@ type Props = {
 }
 
 export function BudgetCard({
+	categoryId,
 	label,
 	spent,
 	budgeted,
@@ -53,7 +56,10 @@ export function BudgetCard({
 			: 'bg-primary'
 
 	return (
-		<div className="flex w-[148px] shrink-0 flex-col gap-3 rounded-2xl border border-border bg-card p-4">
+		<Link
+			href={`/transactions?categoryId=${categoryId}`}
+			className="flex w-[148px] shrink-0 cursor-pointer touch-manipulation select-none flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm shadow-black/5 transition-all duration-150 ease-out active:scale-[0.96] active:border-border/80 active:bg-card/70 active:shadow-none lg:hover:-translate-y-0.5 lg:hover:border-border/80 lg:hover:shadow-md"
+		>
 			{/* Icon */}
 			<div
 				className={cn(
@@ -84,6 +90,6 @@ export function BudgetCard({
 					style={{ width: `${Math.min(pct, 100)}%` }}
 				/>
 			</div>
-		</div>
+		</Link>
 	)
 }
