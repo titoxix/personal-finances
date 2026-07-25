@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Bell, LogOut, Menu, MoreVertical } from 'lucide-react'
 import dynamic from 'next/dynamic'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 import { logoutAction } from '@/app/login/actions'
 
@@ -23,7 +23,12 @@ const STATIC_INNER_PAGES: Record<string, { title: string }> = {
 	'/snapshots/new': { title: 'Nuevo Snapshot' },
 }
 
-function getInnerPage(pathname: string): { title: string } | undefined {
+function getInnerPage(
+	pathname: string,
+	hasCategoryFilter: boolean,
+): { title: string } | undefined {
+	if (pathname === '/transactions' && hasCategoryFilter)
+		return { title: 'Transacciones' }
 	const staticPage = STATIC_INNER_PAGES[pathname]
 	if (staticPage) return staticPage
 	if (/^\/transactions\/\d+\/edit$/.test(pathname))
@@ -55,7 +60,8 @@ export function TopBar({ balance }: Props) {
 	const [open, setOpen] = useState(false)
 	const pathname = usePathname()
 	const router = useRouter()
-	const innerPage = getInnerPage(pathname)
+	const searchParams = useSearchParams()
+	const innerPage = getInnerPage(pathname, searchParams.has('categoryId'))
 
 	if (innerPage) {
 		return (

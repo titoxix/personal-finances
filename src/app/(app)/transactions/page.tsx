@@ -1,4 +1,4 @@
-import { ChevronLeft, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import {
 	TransactionList,
@@ -78,19 +78,9 @@ export default async function TransactionsPage({
 		<div>
 			<div className="mb-5 flex items-end justify-between">
 				<div>
-					{filterCategoryLabel ? (
-						<Link
-							href="/"
-							className="mb-1 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-						>
-							<ChevronLeft className="h-3.5 w-3.5" />
-							Volver
-						</Link>
-					) : (
-						<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-							Dashboard
-						</p>
-					)}
+					<p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+						Dashboard
+					</p>
 					<h1 className="text-2xl font-bold text-foreground">Transacciones</h1>
 				</div>
 				<Link
