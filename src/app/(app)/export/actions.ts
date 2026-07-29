@@ -1,5 +1,6 @@
 'use server'
 
+import { requireUser } from '@/lib/auth-helpers'
 import { exportService } from '@/lib/container'
 import type { ExportEntityType } from '@/services/ExportService'
 
@@ -70,8 +71,10 @@ function buildFilename(filter: ExportFilter): string {
 export async function countExportItems(
 	filter: ExportFilter,
 ): Promise<{ count: number; breakdown?: Record<string, number> }> {
+	const user = await requireUser()
 	const range = computeRange(filter)
 	const result = await exportService.count(
+		user.id,
 		filter.entityType as ExportEntityType,
 		range,
 	)
@@ -81,8 +84,10 @@ export async function countExportItems(
 export async function getExportData(
 	filter: ExportFilter,
 ): Promise<{ data: string; filename: string }> {
+	const user = await requireUser()
 	const range = computeRange(filter)
 	const result = await exportService.exportData(
+		user.id,
 		filter.entityType as ExportEntityType,
 		range,
 	)

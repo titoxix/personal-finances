@@ -1,24 +1,37 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { createTestUser } from '@/test/factories'
 import { prismaTest } from '@/test/prisma'
 import { createPrismaTransactionRepository } from './PrismaTransactionRepository'
 
 const repository = createPrismaTransactionRepository(prismaTest)
 
-let categoryId: number
-let category2Id: number
-let essentialityId: number
-let recurringItemId: number
+beforeEach(async () => {
+	await prismaTest.transaction.deleteMany()
+	await prismaTest.recurringItem.deleteMany()
+	await prismaTest.category.deleteMany()
+	await prismaTest.essentialityLevel.deleteMany()
+	await prismaTest.user.deleteMany()
+})
 
-beforeAll(async () => {
+afterAll(async () => {
+	await prismaTest.transaction.deleteMany()
+	await prismaTest.recurringItem.deleteMany()
+	await prismaTest.category.deleteMany()
+	await prismaTest.essentialityLevel.deleteMany()
+	await prismaTest.user.deleteMany()
+	await prismaTest.$disconnect()
+})
+
+async function setupFixtures(userId: string) {
 	const cat1 = await prismaTest.category.create({
-		data: { code: 'alimentacion', label: 'Alimentación' },
+		data: { code: 'alimentacion', label: 'Alimentación', userId },
 	})
 	const cat2 = await prismaTest.category.create({
-		data: { code: 'transporte', label: 'Transporte' },
+		data: { code: 'transporte', label: 'Transporte', userId },
 	})
 	const essentiality = await prismaTest.essentialityLevel.create({
-		data: { code: 'esencial', label: 'Esencial', sortOrder: 1 },
+		data: { code: 'esencial', label: 'Esencial', sortOrder: 1, userId },
 	})
 	const recurringItem = await prismaTest.recurringItem.create({
 		data: {
@@ -29,27 +42,18 @@ beforeAll(async () => {
 			frequency: 'monthly',
 			amountGs: 7000000,
 			billingDay: 1,
+			userId,
 		},
 	})
-	categoryId = cat1.id
-	category2Id = cat2.id
-	essentialityId = essentiality.id
-	recurringItemId = recurringItem.id
-})
+	return {
+		categoryId: cat1.id,
+		category2Id: cat2.id,
+		essentialityId: essentiality.id,
+		recurringItemId: recurringItem.id,
+	}
+}
 
-beforeEach(async () => {
-	await prismaTest.transaction.deleteMany()
-})
-
-afterAll(async () => {
-	await prismaTest.transaction.deleteMany()
-	await prismaTest.recurringItem.deleteMany()
-	await prismaTest.category.deleteMany()
-	await prismaTest.essentialityLevel.deleteMany()
-	await prismaTest.$disconnect()
-})
-
-const baseTx = () => ({
+const baseTx = (categoryId: number, essentialityId: number) => ({
 	date: new Date('2026-05-10'),
 	description: 'Supermercado',
 	categoryId,
@@ -60,27 +64,32 @@ const baseTx = () => ({
 describe('PrismaTransactionRepository', () => {
 	describe('findAll', () => {
 		it('returns empty array when no transactions exist', async () => {
-			const result = await repository.findAll()
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findAll(user.id)
 			expect(result).toEqual([])
 		})
 
 		it('returns all transactions ordered by date descending', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.transaction.create({
 				data: {
-					...baseTx(),
+					...baseTx(categoryId, essentialityId),
 					date: new Date('2026-05-05'),
 					description: 'Farmacia',
+					userId: user.id,
 				},
 			})
 			await prismaTest.transaction.create({
 				data: {
-					...baseTx(),
+					...baseTx(categoryId, essentialityId),
 					date: new Date('2026-05-10'),
 					description: 'Supermercado',
+					userId: user.id,
 				},
 			})
 
-			const result = await repository.findAll()
+			const result = await repository.findAll(user.id)
 
 			expect(result).toHaveLength(2)
 			expect(result[0]?.description).toBe('Supermercado')
@@ -88,16 +97,19 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('returns numeric values for Decimal fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.transaction.create({
 				data: {
-					...baseTx(),
+					...baseTx(categoryId, essentialityId),
 					amountGs: 150000,
 					amountUsd: 19.23,
 					exchangeRateValue: 7800,
+					userId: user.id,
 				},
 			})
 
-			const result = await repository.findAll()
+			const result = await repository.findAll(user.id)
 
 			expect(typeof result[0]?.amountGs).toBe('number')
 			expect(typeof result[0]?.amountUsd).toBe('number')
@@ -106,20 +118,38 @@ describe('PrismaTransactionRepository', () => {
 			expect(result[0]?.amountUsd).toBe(19.23)
 			expect(result[0]?.exchangeRateValue).toBe(7800)
 		})
+
+		it('does not return transactions belonging to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			await prismaTest.transaction.create({
+				data: {
+					...baseTx(categoryId, essentialityId),
+					userId: otherUser.id,
+				},
+			})
+
+			const result = await repository.findAll(user.id)
+			expect(result).toEqual([])
+		})
 	})
 
 	describe('findById', () => {
 		it('returns the transaction when it exists', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.transaction.create({
 				data: {
-					...baseTx(),
+					...baseTx(categoryId, essentialityId),
 					amountGs: 150000,
 					weekOfMonth: 2,
 					isRecurring: false,
+					userId: user.id,
 				},
 			})
 
-			const result = await repository.findById(created.id)
+			const result = await repository.findById(user.id, created.id)
 
 			expect(result).not.toBeNull()
 			expect(result?.description).toBe('Supermercado')
@@ -131,70 +161,110 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('returns null when transaction does not exist', async () => {
-			const result = await repository.findById(999)
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findById(user.id, 999)
+			expect(result).toBeNull()
+		})
+
+		it('returns null when transaction belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			const created = await prismaTest.transaction.create({
+				data: { ...baseTx(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			const result = await repository.findById(user.id, created.id)
 			expect(result).toBeNull()
 		})
 	})
 
 	describe('findByMonth', () => {
 		it('returns transactions whose date falls within the given month', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.transaction.create({
-				data: { ...baseTx(), date: new Date('2026-05-01') },
-			})
-			await prismaTest.transaction.create({
-				data: { ...baseTx(), date: new Date('2026-05-31') },
+				data: {
+					...baseTx(categoryId, essentialityId),
+					date: new Date('2026-05-01'),
+					userId: user.id,
+				},
 			})
 			await prismaTest.transaction.create({
 				data: {
-					...baseTx(),
+					...baseTx(categoryId, essentialityId),
+					date: new Date('2026-05-31'),
+					userId: user.id,
+				},
+			})
+			await prismaTest.transaction.create({
+				data: {
+					...baseTx(categoryId, essentialityId),
 					date: new Date('2026-04-30'),
 					description: 'Otro mes',
+					userId: user.id,
 				},
 			})
 
-			const result = await repository.findByMonth(new Date('2026-05-01'))
+			const result = await repository.findByMonth(
+				user.id,
+				new Date('2026-05-01'),
+			)
 
 			expect(result).toHaveLength(2)
 			expect(result.every((t) => t.date.getUTCMonth() === 4)).toBe(true)
 		})
 
 		it('returns empty array when no transactions exist for that month', async () => {
-			const result = await repository.findByMonth(new Date('2026-05-01'))
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findByMonth(
+				user.id,
+				new Date('2026-05-01'),
+			)
 			expect(result).toEqual([])
 		})
 	})
 
 	describe('findByMonthAndCategory', () => {
 		it('returns transactions for the given month and category', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, category2Id, essentialityId } = await setupFixtures(
+				user.id,
+			)
 			await prismaTest.transaction.createMany({
 				data: [
 					{
-						...baseTx(),
+						...baseTx(categoryId, essentialityId),
 						date: new Date('2026-05-10'),
 						description: 'Super',
 						categoryId,
+						userId: user.id,
 					},
 					{
-						...baseTx(),
+						...baseTx(categoryId, essentialityId),
 						date: new Date('2026-05-15'),
 						description: 'Almuerzo',
 						categoryId,
+						userId: user.id,
 					},
 					{
-						...baseTx(),
+						...baseTx(categoryId, essentialityId),
 						date: new Date('2026-05-12'),
 						categoryId: category2Id,
+						userId: user.id,
 					},
 					{
-						...baseTx(),
+						...baseTx(categoryId, essentialityId),
 						date: new Date('2026-04-10'),
 						description: 'Otro mes',
 						categoryId,
+						userId: user.id,
 					},
 				],
 			})
 
 			const result = await repository.findByMonthAndCategory(
+				user.id,
 				new Date('2026-05-01'),
 				categoryId,
 			)
@@ -204,7 +274,10 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('returns empty array when no matches', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId } = await setupFixtures(user.id)
 			const result = await repository.findByMonthAndCategory(
+				user.id,
 				new Date('2026-05-01'),
 				categoryId,
 			)
@@ -214,7 +287,12 @@ describe('PrismaTransactionRepository', () => {
 
 	describe('create', () => {
 		it('creates a transaction with required fields and defaults', async () => {
-			const result = await repository.create(baseTx())
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(
+				user.id,
+				baseTx(categoryId, essentialityId),
+			)
 
 			expect(result.id).toBeDefined()
 			expect(result.date).toEqual(new Date('2026-05-10'))
@@ -236,8 +314,10 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('creates a transaction with amounts and weekOfMonth', async () => {
-			const result = await repository.create({
-				...baseTx(),
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(user.id, {
+				...baseTx(categoryId, essentialityId),
 				amountGs: 150000,
 				amountUsd: 19.23,
 				exchangeRateValue: 7800,
@@ -251,8 +331,10 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('creates an installment transaction', async () => {
-			const result = await repository.create({
-				...baseTx(),
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(user.id, {
+				...baseTx(categoryId, essentialityId),
 				amountGs: 300000,
 				isInstallment: true,
 				installmentCurrent: 1,
@@ -265,8 +347,10 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('creates a recurring transaction', async () => {
-			const result = await repository.create({
-				...baseTx(),
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(user.id, {
+				...baseTx(categoryId, essentialityId),
 				amountGs: 95000,
 				isRecurring: true,
 				notes: 'Netflix mensual',
@@ -277,8 +361,11 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('creates a transaction linked to a recurring item', async () => {
-			const result = await repository.create({
-				...baseTx(),
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId, recurringItemId } =
+				await setupFixtures(user.id)
+			const result = await repository.create(user.id, {
+				...baseTx(categoryId, essentialityId),
 				amountGs: 7000000,
 				recurringItemId,
 			})
@@ -287,7 +374,12 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('defaults recurringItemId to null when not provided', async () => {
-			const result = await repository.create(baseTx())
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(
+				user.id,
+				baseTx(categoryId, essentialityId),
+			)
 
 			expect(result.recurringItemId).toBeNull()
 		})
@@ -295,11 +387,17 @@ describe('PrismaTransactionRepository', () => {
 
 	describe('update', () => {
 		it('updates the provided fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.transaction.create({
-				data: { ...baseTx(), amountGs: 140000 },
+				data: {
+					...baseTx(categoryId, essentialityId),
+					amountGs: 140000,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				amountGs: 150000,
 				notes: 'Corrección de monto',
 			})
@@ -310,11 +408,18 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('can set nullable fields to null', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.transaction.create({
-				data: { ...baseTx(), amountGs: 150000, notes: 'nota' },
+				data: {
+					...baseTx(categoryId, essentialityId),
+					amountGs: 150000,
+					notes: 'nota',
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				amountGs: null,
 				notes: null,
 			})
@@ -324,30 +429,64 @@ describe('PrismaTransactionRepository', () => {
 		})
 
 		it('can unlink a recurringItemId by setting it to null', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId, recurringItemId } =
+				await setupFixtures(user.id)
 			const created = await prismaTest.transaction.create({
-				data: { ...baseTx(), amountGs: 7000000, recurringItemId },
+				data: {
+					...baseTx(categoryId, essentialityId),
+					amountGs: 7000000,
+					recurringItemId,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				recurringItemId: null,
 			})
 
 			expect(result.recurringItemId).toBeNull()
 		})
+
+		it('rejects updating a transaction that belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			const created = await prismaTest.transaction.create({
+				data: { ...baseTx(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			await expect(
+				repository.update(user.id, created.id, { notes: 'Hackeado' }),
+			).rejects.toThrow()
+		})
 	})
 
 	describe('delete', () => {
 		it('removes the transaction from the database', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.transaction.create({
-				data: baseTx(),
+				data: { ...baseTx(categoryId, essentialityId), userId: user.id },
 			})
 
-			await repository.delete(created.id)
+			await repository.delete(user.id, created.id)
 
 			const gone = await prismaTest.transaction.findUnique({
 				where: { id: created.id },
 			})
 			expect(gone).toBeNull()
+		})
+
+		it('rejects deleting a transaction that belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			const created = await prismaTest.transaction.create({
+				data: { ...baseTx(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			await expect(repository.delete(user.id, created.id)).rejects.toThrow()
 		})
 	})
 })

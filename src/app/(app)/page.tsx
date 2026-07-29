@@ -3,6 +3,7 @@ import { MonthlyOverviewCard } from '@/components/home/MonthlyOverviewCard'
 import { RecurringSection } from '@/components/home/RecurringSection'
 import type { TransactionRow } from '@/components/home/TransactionSection'
 import { TransactionSection } from '@/components/home/TransactionSection'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	budgetService,
 	categoryService,
@@ -22,6 +23,7 @@ export default async function HomePage({
 }: {
 	searchParams: Promise<{ month?: string }>
 }) {
+	const user = await requireUser()
 	const { month: monthParam } = await searchParams
 	const now = new Date()
 	const realCurrentMonth = new Date(
@@ -66,14 +68,14 @@ export default async function HomePage({
 		activePlans,
 		monthSkips,
 	] = await Promise.all([
-		transactionService.findAll(),
-		categoryService.findAll(),
-		budgetService.findByMonth(currentMonth),
-		exchangeRateService.findLatestBySource('itau'),
-		incomeService.findByMonth(currentMonth),
-		recurringItemService.findActive(),
-		installmentPlanService.findActive(),
-		recurringItemService.findSkipsByMonth(currentMonth),
+		transactionService.findAll(user.id),
+		categoryService.findAll(user.id),
+		budgetService.findByMonth(user.id, currentMonth),
+		exchangeRateService.findLatestBySource(user.id, 'itau'),
+		incomeService.findByMonth(user.id, currentMonth),
+		recurringItemService.findActive(user.id),
+		installmentPlanService.findActive(user.id),
+		recurringItemService.findSkipsByMonth(user.id, currentMonth),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c]))

@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { CreateEssentialityLevelSchema } from '@/domain/entities/essentiality-level'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaEssentialityLevelRepository } from '@/repositories/prisma/PrismaEssentialityLevelRepository'
 import { createEssentialityLevelService } from '@/services/EssentialityLevelService'
@@ -12,15 +13,17 @@ function makeService() {
 }
 
 export async function GET() {
-	const levels = await makeService().findAll()
+	const user = await requireUser()
+	const levels = await makeService().findAll(user.id)
 	return Response.json(levels)
 }
 
 export async function POST(request: NextRequest) {
+	const user = await requireUser()
 	try {
 		const body = await request.json()
 		const input = CreateEssentialityLevelSchema.parse(body)
-		const level = await makeService().create(input)
+		const level = await makeService().create(user.id, input)
 		return Response.json(level, { status: 201 })
 	} catch (error) {
 		if (error instanceof ZodError) {

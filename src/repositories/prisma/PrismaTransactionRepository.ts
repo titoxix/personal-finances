@@ -67,50 +67,55 @@ export function createPrismaTransactionRepository(
 	prisma: PrismaClient,
 ): ITransactionRepository {
 	return {
-		findAll: async () => {
+		findAll: async (userId) => {
 			const rows = await prisma.transaction.findMany({
+				where: { userId },
 				orderBy: { date: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		findById: async (id) => {
-			const row = await prisma.transaction.findUnique({ where: { id } })
+		findById: async (userId, id) => {
+			const row = await prisma.transaction.findUnique({
+				where: { id, userId },
+			})
 			return row ? toDomain(row) : null
 		},
-		findByMonth: async (month: Date) => {
+		findByMonth: async (userId, month: Date) => {
 			const rows = await prisma.transaction.findMany({
-				where: { date: monthRange(month) },
+				where: { userId, date: monthRange(month) },
 				orderBy: { date: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		findByMonthAndCategory: async (month: Date, categoryId: number) => {
+		findByMonthAndCategory: async (userId, month: Date, categoryId: number) => {
 			const rows = await prisma.transaction.findMany({
-				where: { date: monthRange(month), categoryId },
+				where: { userId, date: monthRange(month), categoryId },
 				orderBy: { date: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		findByDateRange: async (start: Date, end: Date) => {
+		findByDateRange: async (userId, start: Date, end: Date) => {
 			const rows = await prisma.transaction.findMany({
-				where: { date: { gte: start, lt: end } },
+				where: { userId, date: { gte: start, lt: end } },
 				orderBy: { date: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		create: async (input: CreateTransactionInput) => {
-			const row = await prisma.transaction.create({ data: input })
+		create: async (userId, input: CreateTransactionInput) => {
+			const row = await prisma.transaction.create({
+				data: { ...input, userId },
+			})
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateTransactionInput) => {
+		update: async (userId, id: number, input: UpdateTransactionInput) => {
 			const row = await prisma.transaction.update({
-				where: { id },
+				where: { id, userId },
 				data: input,
 			})
 			return toDomain(row)
 		},
-		delete: async (id: number) => {
-			await prisma.transaction.delete({ where: { id } })
+		delete: async (userId, id: number) => {
+			await prisma.transaction.delete({ where: { id, userId } })
 		},
 	}
 }

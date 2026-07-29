@@ -3,6 +3,8 @@ import type { InstallmentPlan } from '@/domain/entities/installment-plan'
 import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallmentPlanRepository'
 import { createInstallmentPlanService } from './InstallmentPlanService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): IInstallmentPlanRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -48,10 +50,10 @@ describe('createInstallmentPlanService', () => {
 			const plans = [makePlan()]
 			vi.mocked(repo.findAll).mockResolvedValue(plans)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(plans)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -60,7 +62,7 @@ describe('createInstallmentPlanService', () => {
 			const plan = makePlan()
 			vi.mocked(repo.findById).mockResolvedValue(plan)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(plan)
 		})
@@ -68,7 +70,7 @@ describe('createInstallmentPlanService', () => {
 		it('throws when plan does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow(
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
 				'InstallmentPlan not found',
 			)
 		})
@@ -79,10 +81,10 @@ describe('createInstallmentPlanService', () => {
 			const plans = [makePlan()]
 			vi.mocked(repo.findActive).mockResolvedValue(plans)
 
-			const result = await service.findActive()
+			const result = await service.findActive(USER_ID)
 
 			expect(result).toBe(plans)
-			expect(repo.findActive).toHaveBeenCalledOnce()
+			expect(repo.findActive).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -91,7 +93,7 @@ describe('createInstallmentPlanService', () => {
 			const plan = makePlan()
 			vi.mocked(repo.create).mockResolvedValue(plan)
 
-			await service.create({
+			await service.create(USER_ID, {
 				description: 'iPhone 16',
 				installmentsTotal: 12,
 				startDate: new Date('2026-01-01'),
@@ -102,6 +104,7 @@ describe('createInstallmentPlanService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({
 					endDate: new Date('2027-01-01'),
 				}),
@@ -112,7 +115,7 @@ describe('createInstallmentPlanService', () => {
 			const plan = makePlan({ endDate: new Date('2026-06-01') })
 			vi.mocked(repo.create).mockResolvedValue(plan)
 
-			await service.create({
+			await service.create(USER_ID, {
 				description: 'iPhone 16',
 				installmentsTotal: 12,
 				startDate: new Date('2026-01-01'),
@@ -123,6 +126,7 @@ describe('createInstallmentPlanService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({
 					endDate: new Date('2026-06-01'),
 				}),
@@ -136,7 +140,7 @@ describe('createInstallmentPlanService', () => {
 			})
 			vi.mocked(repo.create).mockResolvedValue(plan)
 
-			await service.create({
+			await service.create(USER_ID, {
 				description: 'Test',
 				installmentsTotal: 6,
 				startDate: new Date('2026-08-01'),
@@ -146,6 +150,7 @@ describe('createInstallmentPlanService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({
 					endDate: new Date('2027-02-01'),
 				}),
@@ -154,7 +159,7 @@ describe('createInstallmentPlanService', () => {
 
 		it('throws when installmentsTotal is less than 1', async () => {
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					description: 'iPhone 16',
 					installmentsTotal: 0,
 					startDate: new Date('2026-01-01'),
@@ -173,17 +178,21 @@ describe('createInstallmentPlanService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { installmentsPaid: 3 })
+			const result = await service.update(USER_ID, 1, {
+				installmentsPaid: 3,
+			})
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { installmentsPaid: 3 })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
+				installmentsPaid: 3,
+			})
 		})
 
 		it('throws when plan does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
 			await expect(
-				service.update(999, { installmentsPaid: 3 }),
+				service.update(USER_ID, 999, { installmentsPaid: 3 }),
 			).rejects.toThrow('InstallmentPlan not found')
 		})
 	})
@@ -195,16 +204,16 @@ describe('createInstallmentPlanService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.deactivate).mockResolvedValue(deactivated)
 
-			const result = await service.deactivate(1)
+			const result = await service.deactivate(USER_ID, 1)
 
 			expect(result).toBe(deactivated)
-			expect(repo.deactivate).toHaveBeenCalledWith(1)
+			expect(repo.deactivate).toHaveBeenCalledWith(USER_ID, 1)
 		})
 
 		it('throws when plan does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.deactivate(999)).rejects.toThrow(
+			await expect(service.deactivate(USER_ID, 999)).rejects.toThrow(
 				'InstallmentPlan not found',
 			)
 		})

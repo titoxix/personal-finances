@@ -29,14 +29,22 @@ export type UpdateInstallmentPlanInput = {
 }
 
 export interface IInstallmentPlanRepository {
-	findAll(): Promise<InstallmentPlan[]>
-	findById(id: number): Promise<InstallmentPlan | null>
-	findActive(): Promise<InstallmentPlan[]>
-	findActiveInDateRange(start: Date, end: Date): Promise<InstallmentPlan[]>
-	create(input: CreateInstallmentPlanInput): Promise<InstallmentPlan>
+	findAll(userId: string): Promise<InstallmentPlan[]>
+	findById(userId: string, id: number): Promise<InstallmentPlan | null>
+	findActive(userId: string): Promise<InstallmentPlan[]>
+	findActiveInDateRange(
+		userId: string,
+		start: Date,
+		end: Date,
+	): Promise<InstallmentPlan[]>
+	create(
+		userId: string,
+		input: CreateInstallmentPlanInput,
+	): Promise<InstallmentPlan>
 	update(
+		userId: string,
 		id: number,
 		input: UpdateInstallmentPlanInput,
 	): Promise<InstallmentPlan>
-	deactivate(id: number): Promise<InstallmentPlan>
+	deactivate(userId: string, id: number): Promise<InstallmentPlan>
 }

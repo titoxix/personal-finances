@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	budgetService,
 	categoryService,
@@ -62,6 +63,7 @@ export default async function BudgetsPage({
 }: {
 	searchParams: Promise<{ month?: string }>
 }) {
+	const user = await requireUser()
 	const { month: monthParam } = await searchParams
 	const targetDate = parseMonthParam(monthParam)
 
@@ -74,11 +76,11 @@ export default async function BudgetsPage({
 
 	const [budgets, transactions, categories, essentialityLevels, latestRate] =
 		await Promise.all([
-			budgetService.findByMonth(targetDate),
-			transactionService.findByMonth(targetDate),
-			categoryService.findAll(),
-			essentialityService.findAll(),
-			exchangeRateService.findLatestBySource('itau'),
+			budgetService.findByMonth(user.id, targetDate),
+			transactionService.findByMonth(user.id, targetDate),
+			categoryService.findAll(user.id),
+			essentialityService.findAll(user.id),
+			exchangeRateService.findLatestBySource(user.id, 'itau'),
 		])
 
 	const gsToUsd = latestRate?.rateSell ?? latestRate?.rateMid ?? 6000

@@ -3,6 +3,8 @@ import type { Snapshot } from '@/domain/entities/snapshot'
 import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotRepository'
 import { createSnapshotService } from './SnapshotService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): ISnapshotRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -54,10 +56,10 @@ describe('createSnapshotService', () => {
 			const snapshots = [makeSnapshot()]
 			vi.mocked(repo.findAll).mockResolvedValue(snapshots)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(snapshots)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -66,7 +68,7 @@ describe('createSnapshotService', () => {
 			const snapshot = makeSnapshot()
 			vi.mocked(repo.findById).mockResolvedValue(snapshot)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(snapshot)
 		})
@@ -74,7 +76,9 @@ describe('createSnapshotService', () => {
 		it('throws when snapshot does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('Snapshot not found')
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
+				'Snapshot not found',
+			)
 		})
 	})
 
@@ -83,7 +87,7 @@ describe('createSnapshotService', () => {
 			const snapshot = makeSnapshot()
 			vi.mocked(repo.findLatest).mockResolvedValue(snapshot)
 
-			const result = await service.findLatest()
+			const result = await service.findLatest(USER_ID)
 
 			expect(result).toBe(snapshot)
 		})
@@ -91,7 +95,7 @@ describe('createSnapshotService', () => {
 		it('returns null when no snapshots exist', async () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(null)
 
-			const result = await service.findLatest()
+			const result = await service.findLatest(USER_ID)
 
 			expect(result).toBeNull()
 		})
@@ -103,7 +107,10 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(snapshot)
 
-			const result = await service.create({ date: MAY_15, incomeUsd: 3000 })
+			const result = await service.create(USER_ID, {
+				date: MAY_15,
+				incomeUsd: 3000,
+			})
 
 			expect(result).toBe(snapshot)
 			expect(repo.create).toHaveBeenCalledOnce()
@@ -114,7 +121,7 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(makeSnapshot({ id: 2 }))
 			vi.mocked(repo.create).mockResolvedValue(snapshot)
 
-			const result = await service.create({ date: MAY_15 })
+			const result = await service.create(USER_ID, { date: MAY_15 })
 
 			expect(result).toBe(snapshot)
 			expect(repo.create).toHaveBeenCalledOnce()
@@ -127,9 +134,10 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
 
-			await service.create({ date: MAY_15, investments })
+			await service.create(USER_ID, { date: MAY_15, investments })
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ investments }),
 			)
 		})
@@ -143,10 +151,11 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { incomeUsd: 3500 })
+			const result = await service.update(USER_ID, 1, { incomeUsd: 3500 })
 
 			expect(result).toBe(updated)
 			expect(repo.update).toHaveBeenCalledWith(
+				USER_ID,
 				1,
 				expect.objectContaining({ incomeUsd: 3500 }),
 			)
@@ -156,9 +165,9 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 			vi.mocked(repo.findLatest).mockResolvedValue(null)
 
-			await expect(service.update(999, { incomeUsd: 3500 })).rejects.toThrow(
-				'Snapshot not found',
-			)
+			await expect(
+				service.update(USER_ID, 999, { incomeUsd: 3500 }),
+			).rejects.toThrow('Snapshot not found')
 		})
 	})
 
@@ -189,9 +198,10 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(previousSnapshot)
 			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
 
-			await service.create(fullInput)
+			await service.create(USER_ID, fullInput)
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({
 					totalDebtUsd: 200,
 					totalInvestedUsd: 12000,
@@ -205,9 +215,10 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(makeSnapshot({ id: 2 }))
 			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
 
-			await service.create({ date: MAY_15, incomeUsd: 1000 })
+			await service.create(USER_ID, { date: MAY_15, incomeUsd: 1000 })
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({
 					netWorthUsd: undefined,
 					totalInvestedUsd: undefined,
@@ -223,9 +234,10 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(makeSnapshot({ id: 2 }))
 			vi.mocked(repo.update).mockResolvedValue(makeSnapshot())
 
-			await service.update(1, {})
+			await service.update(USER_ID, 1, {})
 
 			expect(repo.update).toHaveBeenCalledWith(
+				USER_ID,
 				1,
 				expect.objectContaining({
 					netWorthUsd: null,
@@ -242,9 +254,10 @@ describe('createSnapshotService', () => {
 			)
 			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
 
-			await service.create({ ...fullInput, incomeUsd: undefined })
+			await service.create(USER_ID, { ...fullInput, incomeUsd: undefined })
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ savingsRatePct: undefined }),
 			)
 		})
@@ -257,9 +270,10 @@ describe('createSnapshotService', () => {
 			)
 			vi.mocked(repo.update).mockResolvedValue(makeSnapshot())
 
-			await service.update(1, {})
+			await service.update(USER_ID, 1, {})
 
 			expect(repo.update).toHaveBeenCalledWith(
+				USER_ID,
 				1,
 				expect.objectContaining({ savingsRatePct: null }),
 			)
@@ -269,9 +283,10 @@ describe('createSnapshotService', () => {
 			vi.mocked(repo.findLatest).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(makeSnapshot())
 
-			await service.create(fullInput)
+			await service.create(USER_ID, fullInput)
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ savingsRatePct: undefined }),
 			)
 		})

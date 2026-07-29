@@ -19,23 +19,28 @@ export function createTransactionService(
 	installmentPlanRepo: IInstallmentPlanRepository,
 ) {
 	return {
-		findAll: (): Promise<Transaction[]> => repo.findAll(),
+		findAll: (userId: string): Promise<Transaction[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<Transaction> => {
-			const tx = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<Transaction> => {
+			const tx = await repo.findById(userId, id)
 			if (!tx) throw new Error('Transaction not found')
 			return tx
 		},
 
-		findByMonth: (month: Date): Promise<Transaction[]> =>
-			repo.findByMonth(month),
+		findByMonth: (userId: string, month: Date): Promise<Transaction[]> =>
+			repo.findByMonth(userId, month),
 
 		findByMonthAndCategory: (
+			userId: string,
 			month: Date,
 			categoryId: number,
-		): Promise<Transaction[]> => repo.findByMonthAndCategory(month, categoryId),
+		): Promise<Transaction[]> =>
+			repo.findByMonthAndCategory(userId, month, categoryId),
 
-		create: async (input: CreateTransactionInput): Promise<Transaction> => {
+		create: async (
+			userId: string,
+			input: CreateTransactionInput,
+		): Promise<Transaction> => {
 			if (input.amountGs == null && input.amountUsd == null)
 				throw new Error('transaction requires amountGs or amountUsd')
 			const weekOfMonth = input.weekOfMonth ?? calcWeekOfMonth(input.date)
@@ -46,7 +51,10 @@ export function createTransactionService(
 			let plan: Awaited<ReturnType<IInstallmentPlanRepository['findById']>> =
 				null
 			if (input.installmentPlanId != null) {
-				plan = await installmentPlanRepo.findById(input.installmentPlanId)
+				plan = await installmentPlanRepo.findById(
+					userId,
+					input.installmentPlanId,
+				)
 				if (!plan) throw new Error('InstallmentPlan not found')
 				installmentFields = {
 					isInstallment: true,
@@ -55,7 +63,7 @@ export function createTransactionService(
 				}
 			}
 
-			const created = await repo.create({
+			const created = await repo.create(userId, {
 				...input,
 				...installmentFields,
 				weekOfMonth,
@@ -63,7 +71,7 @@ export function createTransactionService(
 			})
 
 			if (plan) {
-				await installmentPlanRepo.update(plan.id, {
+				await installmentPlanRepo.update(userId, plan.id, {
 					installmentsPaid: plan.installmentsPaid + 1,
 				})
 			}
@@ -72,18 +80,19 @@ export function createTransactionService(
 		},
 
 		update: async (
+			userId: string,
 			id: number,
 			input: UpdateTransactionInput,
 		): Promise<Transaction> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Transaction not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
-		delete: async (id: number): Promise<void> => {
-			const existing = await repo.findById(id)
+		delete: async (userId: string, id: number): Promise<void> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Transaction not found')
-			return repo.delete(id)
+			return repo.delete(userId, id)
 		},
 	}
 }

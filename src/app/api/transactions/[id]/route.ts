@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { UpdateTransactionSchema } from '@/domain/entities/transaction'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
@@ -17,9 +18,10 @@ export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const transaction = await makeService().findById(Number(id))
+		const transaction = await makeService().findById(user.id, Number(id))
 		return Response.json(transaction)
 	} catch (error) {
 		if (error instanceof Error && error.message === 'Transaction not found') {
@@ -33,11 +35,12 @@ export async function PATCH(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
 		const body = await request.json()
 		const input = UpdateTransactionSchema.parse(body)
-		const transaction = await makeService().update(Number(id), input)
+		const transaction = await makeService().update(user.id, Number(id), input)
 		return Response.json(transaction)
 	} catch (error) {
 		if (error instanceof ZodError) {
@@ -54,9 +57,10 @@ export async function DELETE(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		await makeService().delete(Number(id))
+		await makeService().delete(user.id, Number(id))
 		return new Response(null, { status: 204 })
 	} catch (error) {
 		if (error instanceof Error && error.message === 'Transaction not found') {

@@ -1,17 +1,19 @@
 'use client'
 
-import { LogOut } from 'lucide-react'
+import { LogOut, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { logoutAction } from '@/app/login/actions'
+import { logout } from '@/lib/auth-actions'
 import { cn } from '@/lib/utils'
 import { NAV_ITEMS } from './nav-items'
 
 type Props = {
 	balance: number | null
+	userName: string
+	isAdmin?: boolean
 }
 
-export function Sidebar({ balance }: Props) {
+export function Sidebar({ balance, userName, isAdmin }: Props) {
 	const pathname = usePathname()
 
 	return (
@@ -26,13 +28,14 @@ export function Sidebar({ balance }: Props) {
 			{/* User */}
 			<div className="mx-4 mb-2 flex items-center gap-3 rounded-xl bg-secondary p-3">
 				<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/20">
-					<span className="text-sm font-bold text-primary">N</span>
+					<span className="text-sm font-bold text-primary">
+						{userName.charAt(0).toUpperCase()}
+					</span>
 				</div>
 				<div className="min-w-0">
 					<p className="truncate text-sm font-semibold text-foreground">
-						Nisrina Saidah
+						{userName}
 					</p>
-					<p className="text-xs text-muted-foreground">Premium Member</p>
 				</div>
 			</div>
 
@@ -70,6 +73,20 @@ export function Sidebar({ balance }: Props) {
 						</Link>
 					)
 				})}
+				{isAdmin && (
+					<Link
+						href="/admin/users"
+						className={cn(
+							'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
+							pathname === '/admin/users'
+								? 'bg-primary/10 text-primary'
+								: 'text-muted-foreground hover:bg-accent hover:text-foreground',
+						)}
+					>
+						<ShieldCheck className="h-4 w-4 shrink-0" />
+						Usuarios
+					</Link>
+				)}
 			</nav>
 
 			{/* Balance card */}
@@ -88,7 +105,7 @@ export function Sidebar({ balance }: Props) {
 			)}
 
 			<div className="px-3 pb-4">
-				<form action={logoutAction}>
+				<form action={logout}>
 					<button
 						type="submit"
 						className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"

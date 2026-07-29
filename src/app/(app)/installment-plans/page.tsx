@@ -2,6 +2,7 @@ import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { InstallmentPendingSummary } from '@/components/installment-plans/InstallmentPendingSummary'
 import { InstallmentPlanList } from '@/components/installment-plans/InstallmentPlanList'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	essentialityService,
@@ -10,12 +11,13 @@ import {
 } from '@/lib/container'
 
 export default async function InstallmentPlansPage() {
+	const user = await requireUser()
 	const [plans, categories, essentialityLevels, latestRate] = await Promise.all(
 		[
-			installmentPlanService.findAll(),
-			categoryService.findAll(),
-			essentialityService.findAll(),
-			exchangeRateService.findLatestBySource('itau'),
+			installmentPlanService.findAll(user.id),
+			categoryService.findAll(user.id),
+			essentialityService.findAll(user.id),
+			exchangeRateService.findLatestBySource(user.id, 'itau'),
 		],
 	)
 

@@ -33,10 +33,17 @@ export type UpdateRecurringItemInput = {
 }
 
 export interface IRecurringItemRepository {
-	findAll(): Promise<RecurringItem[]>
-	findById(id: number): Promise<RecurringItem | null>
-	findActive(): Promise<RecurringItem[]>
-	create(input: CreateRecurringItemInput): Promise<RecurringItem>
-	update(id: number, input: UpdateRecurringItemInput): Promise<RecurringItem>
-	deactivate(id: number): Promise<RecurringItem>
+	findAll(userId: string): Promise<RecurringItem[]>
+	findById(userId: string, id: number): Promise<RecurringItem | null>
+	findActive(userId: string): Promise<RecurringItem[]>
+	create(
+		userId: string,
+		input: CreateRecurringItemInput,
+	): Promise<RecurringItem>
+	update(
+		userId: string,
+		id: number,
+		input: UpdateRecurringItemInput,
+	): Promise<RecurringItem>
+	deactivate(userId: string, id: number): Promise<RecurringItem>
 }

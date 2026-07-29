@@ -8,6 +8,8 @@ import type { ISnapshotRepository } from '@/domain/repositories/ISnapshotReposit
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 import { createExportService, type ExportServiceDeps } from './ExportService'
 
+const USER_ID = 'user-1'
+
 const makeTransactionRepo = (): ITransactionRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -131,7 +133,7 @@ describe('createExportService', () => {
 				{ id: 2 } as never,
 			])
 
-			const result = await service.count('transactions', {
+			const result = await service.count(USER_ID, 'transactions', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -139,6 +141,7 @@ describe('createExportService', () => {
 			expect(result.entityType).toBe('transactions')
 			expect(result.count).toBe(2)
 			expect(d.transactionRepo.findByDateRange).toHaveBeenCalledWith(
+				USER_ID,
 				JUN_START,
 				JUL_START,
 			)
@@ -149,7 +152,7 @@ describe('createExportService', () => {
 				{ id: 1 } as never,
 			])
 
-			const result = await service.count('incomes', {
+			const result = await service.count(USER_ID, 'incomes', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -165,7 +168,7 @@ describe('createExportService', () => {
 				{ id: 3 } as never,
 			])
 
-			const result = await service.count('budgets', {
+			const result = await service.count(USER_ID, 'budgets', {
 				start: YEAR_START,
 				end: NEXT_YEAR_START,
 			})
@@ -178,7 +181,7 @@ describe('createExportService', () => {
 				{ id: 1 } as never,
 			])
 
-			const result = await service.count('exchange-rates', {
+			const result = await service.count(USER_ID, 'exchange-rates', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -191,7 +194,7 @@ describe('createExportService', () => {
 				{ id: 1 } as never,
 			])
 
-			const result = await service.count('snapshots', {
+			const result = await service.count(USER_ID, 'snapshots', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -205,13 +208,13 @@ describe('createExportService', () => {
 				{ id: 2 } as never,
 			])
 
-			const result = await service.count('recurring-items', {
+			const result = await service.count(USER_ID, 'recurring-items', {
 				start: JUN_START,
 				end: JUL_START,
 			})
 
 			expect(result.count).toBe(2)
-			expect(d.recurringItemRepo.findActive).toHaveBeenCalledOnce()
+			expect(d.recurringItemRepo.findActive).toHaveBeenCalledWith(USER_ID)
 		})
 
 		it('counts installment plans active in date range', async () => {
@@ -219,13 +222,14 @@ describe('createExportService', () => {
 				{ id: 1 } as never,
 			])
 
-			const result = await service.count('installment-plans', {
+			const result = await service.count(USER_ID, 'installment-plans', {
 				start: JUN_START,
 				end: JUL_START,
 			})
 
 			expect(result.count).toBe(1)
 			expect(d.installmentPlanRepo.findActiveInDateRange).toHaveBeenCalledWith(
+				USER_ID,
 				JUN_START,
 				JUL_START,
 			)
@@ -234,7 +238,7 @@ describe('createExportService', () => {
 		it('returns zero count for empty results', async () => {
 			vi.mocked(d.transactionRepo.findByDateRange).mockResolvedValue([])
 
-			const result = await service.count('transactions', {
+			const result = await service.count(USER_ID, 'transactions', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -268,7 +272,7 @@ describe('createExportService', () => {
 				{ id: 1 } as never,
 			])
 
-			const result = await service.count('all', {
+			const result = await service.count(USER_ID, 'all', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -294,7 +298,7 @@ describe('createExportService', () => {
 				txs as never,
 			)
 
-			const result = await service.exportData('transactions', {
+			const result = await service.exportData(USER_ID, 'transactions', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -312,7 +316,7 @@ describe('createExportService', () => {
 				items as never,
 			)
 
-			const result = await service.exportData('recurring-items', {
+			const result = await service.exportData(USER_ID, 'recurring-items', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -326,7 +330,7 @@ describe('createExportService', () => {
 				plans as never,
 			)
 
-			const result = await service.exportData('installment-plans', {
+			const result = await service.exportData(USER_ID, 'installment-plans', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -357,7 +361,7 @@ describe('createExportService', () => {
 				{ id: 7 } as never,
 			])
 
-			const result = await service.exportData('all', {
+			const result = await service.exportData(USER_ID, 'all', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -376,7 +380,7 @@ describe('createExportService', () => {
 		it('returns empty arrays for entity types with no data', async () => {
 			vi.mocked(d.transactionRepo.findByDateRange).mockResolvedValue([])
 
-			const result = await service.exportData('transactions', {
+			const result = await service.exportData(USER_ID, 'transactions', {
 				start: JUN_START,
 				end: JUL_START,
 			})
@@ -387,7 +391,7 @@ describe('createExportService', () => {
 		it('includes valid generatedAt ISO string', async () => {
 			vi.mocked(d.transactionRepo.findByDateRange).mockResolvedValue([])
 
-			const result = await service.exportData('transactions', {
+			const result = await service.exportData(USER_ID, 'transactions', {
 				start: JUN_START,
 				end: JUL_START,
 			})

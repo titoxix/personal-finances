@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { UpdateBudgetSchema } from '@/domain/entities/budget'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaBudgetRepository } from '@/repositories/prisma/PrismaBudgetRepository'
 import { createBudgetService } from '@/services/BudgetService'
@@ -13,9 +14,10 @@ export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const budget = await makeService().findById(Number(id))
+		const budget = await makeService().findById(user.id, Number(id))
 		return Response.json(budget)
 	} catch (error) {
 		if (error instanceof Error && error.message === 'Budget not found') {
@@ -29,11 +31,12 @@ export async function PATCH(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
 		const body = await request.json()
 		const input = UpdateBudgetSchema.parse(body)
-		const budget = await makeService().update(Number(id), input)
+		const budget = await makeService().update(user.id, Number(id), input)
 		return Response.json(budget)
 	} catch (error) {
 		if (error instanceof ZodError) {

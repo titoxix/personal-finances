@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { CategoryForm } from '@/components/categories/CategoryForm'
+import { requireUser } from '@/lib/auth-helpers'
 import { categoryService } from '@/lib/container'
 import type { UpdateCategoryPayload } from '../../actions'
 import { updateCategory } from '../../actions'
@@ -9,11 +10,12 @@ export default async function EditCategoryPage({
 }: {
 	params: Promise<{ id: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
-	const category = await categoryService.findById(id).catch(() => null)
+	const category = await categoryService.findById(user.id, id).catch(() => null)
 	if (!category) notFound()
 
 	async function handleUpdate(payload: UpdateCategoryPayload) {

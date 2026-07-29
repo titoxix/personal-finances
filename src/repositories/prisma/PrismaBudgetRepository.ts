@@ -40,38 +40,41 @@ export function createPrismaBudgetRepository(
 	prisma: PrismaClient,
 ): IBudgetRepository {
 	return {
-		findAll: async () => {
-			const rows = await prisma.budget.findMany({ where: { deletedAt: null } })
-			return rows.map(toDomain)
-		},
-		findById: async (id) => {
-			const row = await prisma.budget.findFirst({
-				where: { id, deletedAt: null },
-			})
-			return row ? toDomain(row) : null
-		},
-		findByMonth: async (month: Date) => {
+		findAll: async (userId) => {
 			const rows = await prisma.budget.findMany({
-				where: { month, deletedAt: null },
+				where: { userId, deletedAt: null },
 			})
 			return rows.map(toDomain)
 		},
-		findByMonthAndCategory: async (month: Date, categoryId: number) => {
+		findById: async (userId, id) => {
 			const row = await prisma.budget.findFirst({
-				where: { month, categoryId, deletedAt: null },
+				where: { id, userId, deletedAt: null },
 			})
 			return row ? toDomain(row) : null
 		},
-		findByDateRange: async (start: Date, end: Date) => {
+		findByMonth: async (userId, month: Date) => {
 			const rows = await prisma.budget.findMany({
-				where: { month: { gte: start, lt: end }, deletedAt: null },
+				where: { userId, month, deletedAt: null },
+			})
+			return rows.map(toDomain)
+		},
+		findByMonthAndCategory: async (userId, month: Date, categoryId: number) => {
+			const row = await prisma.budget.findFirst({
+				where: { userId, month, categoryId, deletedAt: null },
+			})
+			return row ? toDomain(row) : null
+		},
+		findByDateRange: async (userId, start: Date, end: Date) => {
+			const rows = await prisma.budget.findMany({
+				where: { userId, month: { gte: start, lt: end }, deletedAt: null },
 				orderBy: { month: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		findRecurring: async (upToMonth: Date) => {
+		findRecurring: async (userId, upToMonth: Date) => {
 			const rows = await prisma.budget.findMany({
 				where: {
+					userId,
 					isRecurring: true,
 					month: { lte: upToMonth },
 					deletedAt: null,
@@ -88,17 +91,20 @@ export function createPrismaBudgetRepository(
 			}
 			return latest.map(toDomain)
 		},
-		create: async (input: CreateBudgetInput) => {
-			const row = await prisma.budget.create({ data: input })
+		create: async (userId, input: CreateBudgetInput) => {
+			const row = await prisma.budget.create({ data: { ...input, userId } })
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateBudgetInput) => {
-			const row = await prisma.budget.update({ where: { id }, data: input })
-			return toDomain(row)
-		},
-		softDelete: async (id: number, reason?: string) => {
+		update: async (userId, id: number, input: UpdateBudgetInput) => {
 			const row = await prisma.budget.update({
-				where: { id },
+				where: { id, userId },
+				data: input,
+			})
+			return toDomain(row)
+		},
+		softDelete: async (userId, id: number, reason?: string) => {
+			const row = await prisma.budget.update({
+				where: { id, userId },
 				data: { deletedAt: new Date(), deleteReason: reason ?? null },
 			})
 			return toDomain(row)

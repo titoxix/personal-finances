@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { CreateIncomeSchema } from '@/domain/entities/income'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaIncomeRepository } from '@/repositories/prisma/PrismaIncomeRepository'
 import { createIncomeService } from '@/services/IncomeService'
@@ -10,15 +11,17 @@ function makeService() {
 }
 
 export async function GET() {
-	const incomes = await makeService().findAll()
+	const user = await requireUser()
+	const incomes = await makeService().findAll(user.id)
 	return Response.json(incomes)
 }
 
 export async function POST(request: NextRequest) {
+	const user = await requireUser()
 	try {
 		const body = await request.json()
 		const input = CreateIncomeSchema.parse(body)
-		const income = await makeService().create(input)
+		const income = await makeService().create(user.id, input)
 		return Response.json(income, { status: 201 })
 	} catch (error) {
 		if (error instanceof ZodError) {

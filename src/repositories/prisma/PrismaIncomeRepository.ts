@@ -38,31 +38,37 @@ export function createPrismaIncomeRepository(
 	prisma: PrismaClient,
 ): IIncomeRepository {
 	return {
-		findAll: async () => {
-			const rows = await prisma.income.findMany({ orderBy: { month: 'desc' } })
-			return rows.map(toDomain)
-		},
-		findById: async (id) => {
-			const row = await prisma.income.findUnique({ where: { id } })
-			return row ? toDomain(row) : null
-		},
-		findByMonth: async (month: Date) => {
-			const row = await prisma.income.findFirst({ where: { month } })
-			return row ? toDomain(row) : null
-		},
-		findByDateRange: async (start: Date, end: Date) => {
+		findAll: async (userId) => {
 			const rows = await prisma.income.findMany({
-				where: { month: { gte: start, lt: end } },
+				where: { userId },
 				orderBy: { month: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		create: async (input: CreateIncomeInput) => {
-			const row = await prisma.income.create({ data: input })
+		findById: async (userId, id) => {
+			const row = await prisma.income.findUnique({ where: { id, userId } })
+			return row ? toDomain(row) : null
+		},
+		findByMonth: async (userId, month: Date) => {
+			const row = await prisma.income.findFirst({ where: { userId, month } })
+			return row ? toDomain(row) : null
+		},
+		findByDateRange: async (userId, start: Date, end: Date) => {
+			const rows = await prisma.income.findMany({
+				where: { userId, month: { gte: start, lt: end } },
+				orderBy: { month: 'desc' },
+			})
+			return rows.map(toDomain)
+		},
+		create: async (userId, input: CreateIncomeInput) => {
+			const row = await prisma.income.create({ data: { ...input, userId } })
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateIncomeInput) => {
-			const row = await prisma.income.update({ where: { id }, data: input })
+		update: async (userId, id: number, input: UpdateIncomeInput) => {
+			const row = await prisma.income.update({
+				where: { id, userId },
+				data: input,
+			})
 			return toDomain(row)
 		},
 	}

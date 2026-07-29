@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { EssentialityLevelForm } from '@/components/essentiality-levels/EssentialityLevelForm'
+import { requireUser } from '@/lib/auth-helpers'
 import { essentialityService } from '@/lib/container'
 import type { UpdateEssentialityLevelPayload } from '../../actions'
 import {
@@ -12,11 +13,14 @@ export default async function EditEssentialityLevelPage({
 }: {
 	params: Promise<{ id: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
-	const level = await essentialityService.findById(id).catch(() => null)
+	const level = await essentialityService
+		.findById(user.id, id)
+		.catch(() => null)
 	if (!level) notFound()
 
 	async function handleUpdate(payload: UpdateEssentialityLevelPayload) {

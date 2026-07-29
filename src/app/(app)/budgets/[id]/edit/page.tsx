@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { BudgetForm } from '@/components/budgets/BudgetForm'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	budgetService,
 	categoryService,
@@ -15,15 +16,16 @@ export default async function EditBudgetPage({
 	params: Promise<{ id: string }>
 	searchParams: Promise<{ month?: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const { month: monthParam } = await searchParams
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
 	const [budget, categories, essentialityLevels] = await Promise.all([
-		budgetService.findById(id).catch(() => null),
-		categoryService.findAll(),
-		essentialityService.findAll(),
+		budgetService.findById(user.id, id).catch(() => null),
+		categoryService.findAll(user.id),
+		essentialityService.findAll(user.id),
 	])
 
 	if (!budget) notFound()

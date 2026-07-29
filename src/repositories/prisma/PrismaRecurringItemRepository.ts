@@ -50,34 +50,38 @@ export function createPrismaRecurringItemRepository(
 	prisma: PrismaClient,
 ): IRecurringItemRepository {
 	return {
-		findAll: async () => {
-			const rows = await prisma.recurringItem.findMany()
+		findAll: async (userId) => {
+			const rows = await prisma.recurringItem.findMany({ where: { userId } })
 			return rows.map(toDomain)
 		},
-		findById: async (id) => {
-			const row = await prisma.recurringItem.findUnique({ where: { id } })
+		findById: async (userId, id) => {
+			const row = await prisma.recurringItem.findUnique({
+				where: { id, userId },
+			})
 			return row ? toDomain(row) : null
 		},
-		findActive: async () => {
+		findActive: async (userId) => {
 			const rows = await prisma.recurringItem.findMany({
-				where: { active: true },
+				where: { userId, active: true },
 			})
 			return rows.map(toDomain)
 		},
-		create: async (input: CreateRecurringItemInput) => {
-			const row = await prisma.recurringItem.create({ data: input })
+		create: async (userId, input: CreateRecurringItemInput) => {
+			const row = await prisma.recurringItem.create({
+				data: { ...input, userId },
+			})
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateRecurringItemInput) => {
+		update: async (userId, id: number, input: UpdateRecurringItemInput) => {
 			const row = await prisma.recurringItem.update({
-				where: { id },
+				where: { id, userId },
 				data: input,
 			})
 			return toDomain(row)
 		},
-		deactivate: async (id: number) => {
+		deactivate: async (userId, id: number) => {
 			const row = await prisma.recurringItem.update({
-				where: { id },
+				where: { id, userId },
 				data: { active: false },
 			})
 			return toDomain(row)

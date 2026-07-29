@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { SnapshotList } from '@/components/snapshots/SnapshotList'
+import { requireUser } from '@/lib/auth-helpers'
 import { snapshotService } from '@/lib/container'
 
 export default async function SnapshotsPage() {
-	const snapshots = await snapshotService.findAll()
+	const user = await requireUser()
+	const snapshots = await snapshotService.findAll(user.id)
 
 	return (
 		<div>

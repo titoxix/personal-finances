@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { InstallmentPlanForm } from '@/components/installment-plans/InstallmentPlanForm'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	essentialityService,
@@ -13,14 +14,15 @@ export default async function EditInstallmentPlanPage({
 }: {
 	params: Promise<{ id: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
 	const [plan, categories, essentialityLevels] = await Promise.all([
-		installmentPlanService.findById(id).catch(() => null),
-		categoryService.findAll(),
-		essentialityService.findAll(),
+		installmentPlanService.findById(user.id, id).catch(() => null),
+		categoryService.findAll(user.id),
+		essentialityService.findAll(user.id),
 	])
 
 	if (!plan) notFound()

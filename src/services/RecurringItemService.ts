@@ -25,55 +25,64 @@ export function createRecurringItemService(
 	skipRepo: IRecurringItemSkipRepository,
 ) {
 	return {
-		findAll: (): Promise<RecurringItem[]> => repo.findAll(),
+		findAll: (userId: string): Promise<RecurringItem[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<RecurringItem> => {
-			const item = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<RecurringItem> => {
+			const item = await repo.findById(userId, id)
 			if (!item) throw new Error('RecurringItem not found')
 			return item
 		},
 
-		findActive: (): Promise<RecurringItem[]> => repo.findActive(),
+		findActive: (userId: string): Promise<RecurringItem[]> =>
+			repo.findActive(userId),
 
-		create: async (input: CreateRecurringItemInput): Promise<RecurringItem> => {
+		create: async (
+			userId: string,
+			input: CreateRecurringItemInput,
+		): Promise<RecurringItem> => {
 			validateCreate(input)
-			return repo.create(input)
+			return repo.create(userId, input)
 		},
 
 		update: async (
+			userId: string,
 			id: number,
 			input: UpdateRecurringItemInput,
 		): Promise<RecurringItem> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('RecurringItem not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
-		deactivate: async (id: number): Promise<RecurringItem> => {
-			const existing = await repo.findById(id)
+		deactivate: async (userId: string, id: number): Promise<RecurringItem> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('RecurringItem not found')
-			return repo.deactivate(id)
+			return repo.deactivate(userId, id)
 		},
 
-		findSkipsByMonth: (month: Date): Promise<RecurringItemSkip[]> =>
-			skipRepo.findByMonth(month),
+		findSkipsByMonth: (
+			userId: string,
+			month: Date,
+		): Promise<RecurringItemSkip[]> => skipRepo.findByMonth(userId, month),
 
 		skipForMonth: async (
+			userId: string,
 			recurringItemId: number,
 			month: Date,
 			reason: string,
 		): Promise<RecurringItemSkip> => {
-			const item = await repo.findById(recurringItemId)
+			const item = await repo.findById(userId, recurringItemId)
 			if (!item) throw new Error('RecurringItem not found')
 			if (!item.active) throw new Error('Cannot skip an inactive item')
-			return skipRepo.create({ recurringItemId, month, reason })
+			return skipRepo.create(userId, { recurringItemId, month, reason })
 		},
 
 		unskipForMonth: async (
+			userId: string,
 			recurringItemId: number,
 			month: Date,
 		): Promise<void> => {
-			await skipRepo.delete(recurringItemId, month)
+			await skipRepo.delete(userId, recurringItemId, month)
 		},
 	}
 }

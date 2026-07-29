@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { CreateExchangeRateSchema } from '@/domain/entities/exchange-rate'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaExchangeRateRepository } from '@/repositories/prisma/PrismaExchangeRateRepository'
 import { createExchangeRateService } from '@/services/ExchangeRateService'
@@ -10,15 +11,17 @@ function makeService() {
 }
 
 export async function GET() {
-	const rates = await makeService().findAll()
+	const user = await requireUser()
+	const rates = await makeService().findAll(user.id)
 	return Response.json(rates)
 }
 
 export async function POST(request: NextRequest) {
+	const user = await requireUser()
 	try {
 		const body = await request.json()
 		const input = CreateExchangeRateSchema.parse(body)
-		const rate = await makeService().create(input)
+		const rate = await makeService().create(user.id, input)
 		return Response.json(rate, { status: 201 })
 	} catch (error) {
 		if (error instanceof ZodError) {

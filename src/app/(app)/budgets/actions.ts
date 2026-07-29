@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth-helpers'
 import { budgetService } from '@/lib/container'
 
 export type CreateBudgetPayload = {
@@ -36,8 +37,9 @@ function parseMonthDate(monthStr: string): Date {
 export async function createBudget(
 	payload: CreateBudgetPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await budgetService.create({
+		await budgetService.create(user.id, {
 			month: parseMonthDate(payload.month),
 			categoryId: payload.categoryId,
 			essentialityId: payload.essentialityId,
@@ -60,8 +62,10 @@ export async function updateBudget(
 	id: number,
 	payload: UpdateBudgetPayloadWithMonth,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
 		await budgetService.adjustForMonth(
+			user.id,
 			id,
 			parseMonthDate(payload.targetMonth),
 			{
@@ -87,8 +91,9 @@ export async function deleteBudget(
 	id: number,
 	reason?: string,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await budgetService.delete(id, reason?.trim() || undefined)
+		await budgetService.delete(user.id, id, reason?.trim() || undefined)
 	} catch (e) {
 		return {
 			error:

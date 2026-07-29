@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { CategoryList } from '@/components/categories/CategoryList'
+import { requireUser } from '@/lib/auth-helpers'
 import { categoryService } from '@/lib/container'
 
 export default async function CategoriesPage() {
-	const categories = await categoryService.findAll()
+	const user = await requireUser()
+	const categories = await categoryService.findAll(user.id)
 
 	return (
 		<div>

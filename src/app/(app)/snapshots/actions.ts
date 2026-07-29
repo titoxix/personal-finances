@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { CreateSnapshotInvestmentInput } from '@/domain/entities/snapshot-investment'
+import { requireUser } from '@/lib/auth-helpers'
 import { snapshotService } from '@/lib/container'
 
 export type CreateSnapshotPayload = {
@@ -51,8 +52,9 @@ export type UpdateSnapshotPayload = {
 export async function createSnapshot(
 	payload: CreateSnapshotPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await snapshotService.create(payload)
+		await snapshotService.create(user.id, payload)
 	} catch (e) {
 		return {
 			error: e instanceof Error ? e.message : 'Error al crear el snapshot',
@@ -66,8 +68,9 @@ export async function updateSnapshot(
 	id: number,
 	payload: UpdateSnapshotPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await snapshotService.update(id, payload)
+		await snapshotService.update(user.id, id, payload)
 	} catch (e) {
 		return {
 			error: e instanceof Error ? e.message : 'Error al actualizar el snapshot',

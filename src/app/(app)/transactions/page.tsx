@@ -5,6 +5,7 @@ import {
 	type TransactionListRow,
 } from '@/components/transactions/TransactionList'
 import { TransactionPageSidebar } from '@/components/transactions/TransactionPageSidebar'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	exchangeRateService,
@@ -16,13 +17,14 @@ export default async function TransactionsPage({
 }: {
 	searchParams: Promise<{ categoryId?: string }>
 }) {
+	const user = await requireUser()
 	const { categoryId: categoryIdParam } = await searchParams
 	const filterCategoryId = categoryIdParam ? Number(categoryIdParam) : undefined
 
 	const [allTransactions, categories, latestRate] = await Promise.all([
-		transactionService.findAll(),
-		categoryService.findAll(),
-		exchangeRateService.findLatestBySource('itau'),
+		transactionService.findAll(user.id),
+		categoryService.findAll(user.id),
+		exchangeRateService.findLatestBySource(user.id, 'itau'),
 	])
 
 	const categoryMap = new Map(categories.map((c) => [c.id, c.label]))

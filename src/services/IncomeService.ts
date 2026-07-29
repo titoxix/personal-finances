@@ -7,27 +7,34 @@ import type {
 
 export function createIncomeService(repo: IIncomeRepository) {
 	return {
-		findAll: (): Promise<Income[]> => repo.findAll(),
+		findAll: (userId: string): Promise<Income[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<Income> => {
-			const income = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<Income> => {
+			const income = await repo.findById(userId, id)
 			if (!income) throw new Error('Income not found')
 			return income
 		},
 
-		findByMonth: (month: Date): Promise<Income | null> =>
-			repo.findByMonth(month),
+		findByMonth: (userId: string, month: Date): Promise<Income | null> =>
+			repo.findByMonth(userId, month),
 
-		create: async (input: CreateIncomeInput): Promise<Income> => {
-			const existing = await repo.findByMonth(input.month)
+		create: async (
+			userId: string,
+			input: CreateIncomeInput,
+		): Promise<Income> => {
+			const existing = await repo.findByMonth(userId, input.month)
 			if (existing) throw new Error('Income already exists for this month')
-			return repo.create(input)
+			return repo.create(userId, input)
 		},
 
-		update: async (id: number, input: UpdateIncomeInput): Promise<Income> => {
-			const existing = await repo.findById(id)
+		update: async (
+			userId: string,
+			id: number,
+			input: UpdateIncomeInput,
+		): Promise<Income> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Income not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 	}
 }

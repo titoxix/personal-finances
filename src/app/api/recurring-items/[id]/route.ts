@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { UpdateRecurringItemSchema } from '@/domain/entities/recurring-item'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaRecurringItemRepository } from '@/repositories/prisma/PrismaRecurringItemRepository'
 import { createPrismaRecurringItemSkipRepository } from '@/repositories/prisma/PrismaRecurringItemSkipRepository'
@@ -17,9 +18,10 @@ export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const item = await makeService().findById(Number(id))
+		const item = await makeService().findById(user.id, Number(id))
 		return Response.json(item)
 	} catch (error) {
 		if (error instanceof Error && error.message === 'RecurringItem not found') {
@@ -33,11 +35,12 @@ export async function PATCH(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
 		const body = await request.json()
 		const input = UpdateRecurringItemSchema.parse(body)
-		const item = await makeService().update(Number(id), input)
+		const item = await makeService().update(user.id, Number(id), input)
 		return Response.json(item)
 	} catch (error) {
 		if (error instanceof ZodError) {
@@ -54,9 +57,10 @@ export async function DELETE(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const item = await makeService().deactivate(Number(id))
+		const item = await makeService().deactivate(user.id, Number(id))
 		return Response.json(item)
 	} catch (error) {
 		if (error instanceof Error && error.message === 'RecurringItem not found') {

@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { CreateInstallmentPlanSchema } from '@/domain/entities/installment-plan'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
 import { createInstallmentPlanService } from '@/services/InstallmentPlanService'
@@ -12,15 +13,17 @@ function makeService() {
 }
 
 export async function GET() {
-	const plans = await makeService().findAll()
+	const user = await requireUser()
+	const plans = await makeService().findAll(user.id)
 	return Response.json(plans)
 }
 
 export async function POST(request: NextRequest) {
+	const user = await requireUser()
 	try {
 		const body = await request.json()
 		const input = CreateInstallmentPlanSchema.parse(body)
-		const plan = await makeService().create(input)
+		const plan = await makeService().create(user.id, input)
 		return Response.json(plan, { status: 201 })
 	} catch (error) {
 		if (error instanceof ZodError) {

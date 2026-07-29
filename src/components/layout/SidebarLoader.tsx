@@ -13,8 +13,8 @@ const Sidebar = dynamic(
 	},
 )
 
-type Props = { balance: number | null }
+type Props = { balance: number | null; userName: string; isAdmin?: boolean }
 
-export function SidebarLoader({ balance }: Props) {
-	return <Sidebar balance={balance} />
+export function SidebarLoader({ balance, userName, isAdmin }: Props) {
+	return <Sidebar balance={balance} userName={userName} isAdmin={isAdmin} />
 }

@@ -1,5 +1,6 @@
 import { ChevronRight, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { requireUser } from '@/lib/auth-helpers'
 import { incomeService } from '@/lib/container'
 
 const MONTHS_ES = [
@@ -30,7 +31,8 @@ function fmtUsd(n: number): string {
 }
 
 export default async function IncomesPage() {
-	const incomes = await incomeService.findAll()
+	const user = await requireUser()
+	const incomes = await incomeService.findAll(user.id)
 
 	const sorted = [...incomes].sort(
 		(a, b) => b.month.getTime() - a.month.getTime(),

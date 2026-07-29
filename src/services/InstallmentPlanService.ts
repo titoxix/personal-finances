@@ -17,39 +17,46 @@ function calcEndDate(startDate: Date, installmentsTotal: number): Date {
 
 export function createInstallmentPlanService(repo: IInstallmentPlanRepository) {
 	return {
-		findAll: (): Promise<InstallmentPlan[]> => repo.findAll(),
+		findAll: (userId: string): Promise<InstallmentPlan[]> =>
+			repo.findAll(userId),
 
-		findById: async (id: number): Promise<InstallmentPlan> => {
-			const plan = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<InstallmentPlan> => {
+			const plan = await repo.findById(userId, id)
 			if (!plan) throw new Error('InstallmentPlan not found')
 			return plan
 		},
 
-		findActive: (): Promise<InstallmentPlan[]> => repo.findActive(),
+		findActive: (userId: string): Promise<InstallmentPlan[]> =>
+			repo.findActive(userId),
 
 		create: async (
+			userId: string,
 			input: CreateInstallmentPlanInput,
 		): Promise<InstallmentPlan> => {
 			if (input.installmentsTotal < 1)
 				throw new Error('installmentsTotal must be at least 1')
 			const endDate =
 				input.endDate ?? calcEndDate(input.startDate, input.installmentsTotal)
-			return repo.create({ ...input, endDate })
+			return repo.create(userId, { ...input, endDate })
 		},
 
 		update: async (
+			userId: string,
 			id: number,
 			input: UpdateInstallmentPlanInput,
 		): Promise<InstallmentPlan> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('InstallmentPlan not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
-		deactivate: async (id: number): Promise<InstallmentPlan> => {
-			const existing = await repo.findById(id)
+		deactivate: async (
+			userId: string,
+			id: number,
+		): Promise<InstallmentPlan> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('InstallmentPlan not found')
-			return repo.deactivate(id)
+			return repo.deactivate(userId, id)
 		},
 	}
 }

@@ -18,18 +18,22 @@ function computeInvestedUsd(
 
 export function createSnapshotService(repo: ISnapshotRepository) {
 	return {
-		findAll: (): Promise<Snapshot[]> => repo.findAll(),
+		findAll: (userId: string): Promise<Snapshot[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<Snapshot> => {
-			const snapshot = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<Snapshot> => {
+			const snapshot = await repo.findById(userId, id)
 			if (!snapshot) throw new Error('Snapshot not found')
 			return snapshot
 		},
 
-		findLatest: (): Promise<Snapshot | null> => repo.findLatest(),
+		findLatest: (userId: string): Promise<Snapshot | null> =>
+			repo.findLatest(userId),
 
-		create: async (input: CreateSnapshot): Promise<Snapshot> => {
-			const previous = await repo.findLatest()
+		create: async (
+			userId: string,
+			input: CreateSnapshot,
+		): Promise<Snapshot> => {
+			const previous = await repo.findLatest(userId)
 
 			const currentTotalInvestedUsd = computeInvestedUsd(
 				input.investments ?? [],
@@ -41,7 +45,7 @@ export function createSnapshotService(repo: ISnapshotRepository) {
 				currentTotalInvestedUsd,
 			)
 
-			return repo.create({
+			return repo.create(userId, {
 				...input,
 				netWorthUsd: derived.netWorthUsd ?? undefined,
 				totalInvestedUsd: derived.totalInvestedUsd ?? undefined,
@@ -50,10 +54,14 @@ export function createSnapshotService(repo: ISnapshotRepository) {
 			})
 		},
 
-		update: async (id: number, input: UpdateSnapshot): Promise<Snapshot> => {
+		update: async (
+			userId: string,
+			id: number,
+			input: UpdateSnapshot,
+		): Promise<Snapshot> => {
 			const [existing, latest] = await Promise.all([
-				repo.findById(id),
-				repo.findLatest(),
+				repo.findById(userId, id),
+				repo.findLatest(userId),
 			])
 			if (!existing) throw new Error('Snapshot not found')
 
@@ -97,7 +105,7 @@ export function createSnapshotService(repo: ISnapshotRepository) {
 				currentTotalInvestedUsd,
 			)
 
-			return repo.update(id, {
+			return repo.update(userId, id, {
 				...input,
 				netWorthUsd: derived.netWorthUsd,
 				totalInvestedUsd: derived.totalInvestedUsd,

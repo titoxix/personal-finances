@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { CreateRecurringItemSchema } from '@/domain/entities/recurring-item'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaRecurringItemRepository } from '@/repositories/prisma/PrismaRecurringItemRepository'
 import { createPrismaRecurringItemSkipRepository } from '@/repositories/prisma/PrismaRecurringItemSkipRepository'
@@ -14,15 +15,17 @@ function makeService() {
 }
 
 export async function GET() {
-	const items = await makeService().findAll()
+	const user = await requireUser()
+	const items = await makeService().findAll(user.id)
 	return Response.json(items)
 }
 
 export async function POST(request: NextRequest) {
+	const user = await requireUser()
 	try {
 		const body = await request.json()
 		const input = CreateRecurringItemSchema.parse(body)
-		const item = await makeService().create(input)
+		const item = await makeService().create(user.id, input)
 		return Response.json(item, { status: 201 })
 	} catch (error) {
 		if (error instanceof ZodError) {

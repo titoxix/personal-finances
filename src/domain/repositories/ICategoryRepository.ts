@@ -13,10 +13,14 @@ export type UpdateCategoryInput = {
 }
 
 export interface ICategoryRepository {
-	findAll(): Promise<Category[]>
-	findById(id: number): Promise<Category | null>
-	findByCode(code: string): Promise<Category | null>
-	create(input: CreateCategoryInput): Promise<Category>
-	update(id: number, input: UpdateCategoryInput): Promise<Category>
-	deactivate(id: number): Promise<Category>
+	findAll(userId: string): Promise<Category[]>
+	findById(userId: string, id: number): Promise<Category | null>
+	findByCode(userId: string, code: string): Promise<Category | null>
+	create(userId: string, input: CreateCategoryInput): Promise<Category>
+	update(
+		userId: string,
+		id: number,
+		input: UpdateCategoryInput,
+	): Promise<Category>
+	deactivate(userId: string, id: number): Promise<Category>
 }

@@ -49,43 +49,50 @@ export function createPrismaInstallmentPlanRepository(
 	prisma: PrismaClient,
 ): IInstallmentPlanRepository {
 	return {
-		findAll: async () => {
-			const rows = await prisma.installmentPlan.findMany()
-			return rows.map(toDomain)
-		},
-		findById: async (id) => {
-			const row = await prisma.installmentPlan.findUnique({ where: { id } })
-			return row ? toDomain(row) : null
-		},
-		findActive: async () => {
+		findAll: async (userId) => {
 			const rows = await prisma.installmentPlan.findMany({
-				where: { active: true },
+				where: { userId },
 			})
 			return rows.map(toDomain)
 		},
-		findActiveInDateRange: async (start: Date, end: Date) => {
+		findById: async (userId, id) => {
+			const row = await prisma.installmentPlan.findUnique({
+				where: { id, userId },
+			})
+			return row ? toDomain(row) : null
+		},
+		findActive: async (userId) => {
+			const rows = await prisma.installmentPlan.findMany({
+				where: { userId, active: true },
+			})
+			return rows.map(toDomain)
+		},
+		findActiveInDateRange: async (userId, start: Date, end: Date) => {
 			const rows = await prisma.installmentPlan.findMany({
 				where: {
+					userId,
 					startDate: { lt: end },
 					OR: [{ endDate: null }, { endDate: { gte: start } }],
 				},
 			})
 			return rows.map(toDomain)
 		},
-		create: async (input: CreateInstallmentPlanInput) => {
-			const row = await prisma.installmentPlan.create({ data: input })
+		create: async (userId, input: CreateInstallmentPlanInput) => {
+			const row = await prisma.installmentPlan.create({
+				data: { ...input, userId },
+			})
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateInstallmentPlanInput) => {
+		update: async (userId, id: number, input: UpdateInstallmentPlanInput) => {
 			const row = await prisma.installmentPlan.update({
-				where: { id },
+				where: { id, userId },
 				data: input,
 			})
 			return toDomain(row)
 		},
-		deactivate: async (id: number) => {
+		deactivate: async (userId, id: number) => {
 			const row = await prisma.installmentPlan.update({
-				where: { id },
+				where: { id, userId },
 				data: { active: false },
 			})
 			return toDomain(row)

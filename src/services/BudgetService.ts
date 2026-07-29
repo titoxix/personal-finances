@@ -14,18 +14,18 @@ function sameMonth(a: Date, b: Date): boolean {
 
 export function createBudgetService(repo: IBudgetRepository) {
 	return {
-		findAll: (): Promise<Budget[]> => repo.findAll(),
+		findAll: (userId: string): Promise<Budget[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<Budget> => {
-			const budget = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<Budget> => {
+			const budget = await repo.findById(userId, id)
 			if (!budget) throw new Error('Budget not found')
 			return budget
 		},
 
-		findByMonth: async (month: Date): Promise<Budget[]> => {
+		findByMonth: async (userId: string, month: Date): Promise<Budget[]> => {
 			const [specific, recurring] = await Promise.all([
-				repo.findByMonth(month),
-				repo.findRecurring(month),
+				repo.findByMonth(userId, month),
+				repo.findRecurring(userId, month),
 			])
 			const specificCategoryIds = new Set(specific.map((b) => b.categoryId))
 			const inherited = recurring.filter(
@@ -35,48 +35,60 @@ export function createBudgetService(repo: IBudgetRepository) {
 		},
 
 		findByMonthAndCategory: (
+			userId: string,
 			month: Date,
 			categoryId: number,
-		): Promise<Budget | null> => repo.findByMonthAndCategory(month, categoryId),
+		): Promise<Budget | null> =>
+			repo.findByMonthAndCategory(userId, month, categoryId),
 
-		create: async (input: CreateBudgetInput): Promise<Budget> => {
+		create: async (
+			userId: string,
+			input: CreateBudgetInput,
+		): Promise<Budget> => {
 			if (input.budgetedUsd == null && input.budgetedGs == null)
 				throw new Error('budget requires budgetedUsd or budgetedGs')
 			const existing = await repo.findByMonthAndCategory(
+				userId,
 				input.month,
 				input.categoryId,
 			)
 			if (existing)
 				throw new Error('Budget already exists for this month and category')
-			return repo.create(input)
+			return repo.create(userId, input)
 		},
 
-		update: async (id: number, input: UpdateBudgetInput): Promise<Budget> => {
-			const existing = await repo.findById(id)
+		update: async (
+			userId: string,
+			id: number,
+			input: UpdateBudgetInput,
+		): Promise<Budget> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Budget not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
 		adjustForMonth: async (
+			userId: string,
 			id: number,
 			targetMonth: Date,
 			input: UpdateBudgetInput,
 		): Promise<Budget> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Budget not found')
 
 			if (sameMonth(existing.month, targetMonth)) {
-				return repo.update(id, input)
+				return repo.update(userId, id, input)
 			}
 
 			const duplicate = await repo.findByMonthAndCategory(
+				userId,
 				targetMonth,
 				existing.categoryId,
 			)
 			if (duplicate)
 				throw new Error('Budget already exists for this month and category')
 
-			return repo.create({
+			return repo.create(userId, {
 				month: targetMonth,
 				categoryId: existing.categoryId,
 				essentialityId: input.essentialityId ?? existing.essentialityId,
@@ -87,10 +99,14 @@ export function createBudgetService(repo: IBudgetRepository) {
 			})
 		},
 
-		delete: async (id: number, reason?: string): Promise<Budget> => {
-			const existing = await repo.findById(id)
+		delete: async (
+			userId: string,
+			id: number,
+			reason?: string,
+		): Promise<Budget> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Budget not found')
-			return repo.softDelete(id, reason)
+			return repo.softDelete(userId, id, reason)
 		},
 	}
 }

@@ -22,6 +22,8 @@ import {
 	type SnapshotExportDeps,
 } from './SnapshotExportService'
 
+const USER_ID = 'user-1'
+
 const makeSnapshotRepo = (): ISnapshotRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -362,7 +364,7 @@ describe('createSnapshotExportService', () => {
 			const snapshot = makeSnapshot()
 			stubDefaults(d)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.snapshot.id).toBe(1)
 			expect(result.income?.grossIncomeUsd).toBe(3000)
@@ -385,7 +387,7 @@ describe('createSnapshotExportService', () => {
 				makeEssentialityLevel({ id: 1, code: 'essential', label: 'Esencial' }),
 			])
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.transactions[0]).toMatchObject({
 				categoryCode: 'food',
@@ -414,7 +416,7 @@ describe('createSnapshotExportService', () => {
 				makeTransaction({ categoryId: 999, essentialityId: 999 }),
 			])
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.transactions[0]).toMatchObject({
 				categoryCode: null,
@@ -450,7 +452,7 @@ describe('createSnapshotExportService', () => {
 				makeTransaction({ categoryId: 2, essentialityId: 2 }),
 			])
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.transactions[0]).toMatchObject({
 				categoryCode: 'old',
@@ -469,7 +471,7 @@ describe('createSnapshotExportService', () => {
 			})
 			stubDefaults(d)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(d.exchangeRateRepo.findById).not.toHaveBeenCalled()
 			expect(result.exchangeRate).toEqual({
@@ -489,7 +491,7 @@ describe('createSnapshotExportService', () => {
 			})
 			stubDefaults(d)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.exchangeRate).toBeNull()
 		})
@@ -506,9 +508,9 @@ describe('createSnapshotExportService', () => {
 				}),
 			)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
-			expect(d.exchangeRateRepo.findById).toHaveBeenCalledWith(42)
+			expect(d.exchangeRateRepo.findById).toHaveBeenCalledWith(USER_ID, 42)
 			expect(result.exchangeRate).toEqual({
 				recordedAt: new Date('2026-06-01'),
 				source: 'itau',
@@ -527,7 +529,7 @@ describe('createSnapshotExportService', () => {
 			stubDefaults(d)
 			vi.mocked(d.incomeRepo.findByMonth).mockResolvedValue(null)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.income).toEqual({
 				grossIncomeUsd: 5000,
@@ -544,7 +546,7 @@ describe('createSnapshotExportService', () => {
 			stubDefaults(d)
 			vi.mocked(d.incomeRepo.findByMonth).mockResolvedValue(null)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.income).toBeNull()
 		})
@@ -553,7 +555,7 @@ describe('createSnapshotExportService', () => {
 			const snapshot = makeSnapshot()
 			stubDefaults(d)
 
-			const result = await service.buildExportForSnapshot(snapshot)
+			const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 			expect(result.income).toEqual({
 				grossIncomeUsd: 3000,
@@ -586,7 +588,7 @@ describe('createSnapshotExportService', () => {
 				])
 				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
 
-				const result = await service.buildExportForSnapshot(snapshot)
+				const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]).toMatchObject({
@@ -613,7 +615,7 @@ describe('createSnapshotExportService', () => {
 					}),
 				])
 
-				const result = await service.buildExportForSnapshot(snapshot)
+				const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]).toMatchObject({
@@ -638,7 +640,7 @@ describe('createSnapshotExportService', () => {
 				])
 				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
 
-				const result = await service.buildExportForSnapshot(snapshot)
+				const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 				expect(result.transactions).toHaveLength(0)
 			})
@@ -658,7 +660,7 @@ describe('createSnapshotExportService', () => {
 				])
 				vi.mocked(d.installmentPlanRepo.findAll).mockResolvedValue([])
 
-				const result = await service.buildExportForSnapshot(snapshot)
+				const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]).toMatchObject({
@@ -671,7 +673,7 @@ describe('createSnapshotExportService', () => {
 				const snapshot = makeSnapshot()
 				stubDefaults(d)
 
-				const result = await service.buildExportForSnapshot(snapshot)
+				const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 				expect(result.transactions).toHaveLength(1)
 				expect(result.transactions[0]?.estimated).toBeUndefined()
@@ -733,7 +735,7 @@ describe('createSnapshotExportService', () => {
 						makeInstallmentPlan(plan),
 					])
 
-					const result = await service.buildExportForSnapshot(snapshot)
+					const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 					expect(result.installmentPlans).toHaveLength(included ? 1 : 0)
 				})
@@ -745,7 +747,7 @@ describe('createSnapshotExportService', () => {
 				const snapshot = makeSnapshot({ date: new Date('2026-06-01') })
 				stubDefaults(d)
 
-				const result = await service.buildExportForSnapshot(snapshot)
+				const result = await service.buildExportForSnapshot(USER_ID, snapshot)
 
 				expect(result.meta.date).toBe(new Date('2026-06-01').toISOString())
 				expect(() =>
@@ -772,7 +774,7 @@ describe('createSnapshotExportService', () => {
 		it('returns an empty array when there are no snapshots', async () => {
 			vi.mocked(d.snapshotRepo.findAll).mockResolvedValue([])
 
-			const result = await service.buildAllExports()
+			const result = await service.buildAllExports(USER_ID)
 
 			expect(result).toEqual([])
 			expect(d.transactionRepo.findByMonth).not.toHaveBeenCalled()
@@ -785,7 +787,7 @@ describe('createSnapshotExportService', () => {
 			])
 			stubDefaults(d)
 
-			const result = await service.buildAllExports()
+			const result = await service.buildAllExports(USER_ID)
 
 			expect(result).toHaveLength(2)
 			expect(result[0]?.snapshot.id).toBe(1)

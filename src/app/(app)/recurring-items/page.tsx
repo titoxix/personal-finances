@@ -4,6 +4,7 @@ import { RecurringByCategory } from '@/components/recurring-items/RecurringByCat
 import { RecurringItemList } from '@/components/recurring-items/RecurringItemList'
 import { RecurringTotalsSummary } from '@/components/recurring-items/RecurringTotalsSummary'
 import { TopRecurringItems } from '@/components/recurring-items/TopRecurringItems'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	essentialityService,
@@ -12,12 +13,13 @@ import {
 } from '@/lib/container'
 
 export default async function RecurringItemsPage() {
+	const user = await requireUser()
 	const [items, categories, essentialityLevels, latestRate] = await Promise.all(
 		[
-			recurringItemService.findAll(),
-			categoryService.findAll(),
-			essentialityService.findAll(),
-			exchangeRateService.findLatestBySource('itau'),
+			recurringItemService.findAll(user.id),
+			categoryService.findAll(user.id),
+			essentialityService.findAll(user.id),
+			exchangeRateService.findLatestBySource(user.id, 'itau'),
 		],
 	)
 

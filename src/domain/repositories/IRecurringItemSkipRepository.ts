@@ -7,7 +7,10 @@ export type CreateRecurringItemSkipInput = {
 }
 
 export interface IRecurringItemSkipRepository {
-	findByMonth(month: Date): Promise<RecurringItemSkip[]>
-	create(input: CreateRecurringItemSkipInput): Promise<RecurringItemSkip>
-	delete(recurringItemId: number, month: Date): Promise<void>
+	findByMonth(userId: string, month: Date): Promise<RecurringItemSkip[]>
+	create(
+		userId: string,
+		input: CreateRecurringItemSkipInput,
+	): Promise<RecurringItemSkip>
+	delete(userId: string, recurringItemId: number, month: Date): Promise<void>
 }

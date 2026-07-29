@@ -3,6 +3,23 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/lib/auth-helpers', () => ({
+	requireUser: vi.fn(async () => ({
+		id: 'test-user-id',
+		email: 'test@example.com',
+		name: 'Test User',
+		role: 'USER',
+		country: 'Paraguay',
+	})),
+	requireAdmin: vi.fn(async () => ({
+		id: 'test-user-id',
+		email: 'test@example.com',
+		name: 'Test User',
+		role: 'ADMIN',
+		country: 'Paraguay',
+	})),
+}))
+
 vi.mock('@/lib/prisma', () => ({ prisma: {} }))
 vi.mock('@/repositories/prisma/PrismaCategoryRepository', () => ({
 	createPrismaCategoryRepository: vi.fn(() => ({})),

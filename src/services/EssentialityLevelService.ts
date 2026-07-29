@@ -9,38 +9,49 @@ export function createEssentialityLevelService(
 	repo: IEssentialityLevelRepository,
 ) {
 	return {
-		findAll: (): Promise<EssentialityLevel[]> => repo.findAll(),
+		findAll: (userId: string): Promise<EssentialityLevel[]> =>
+			repo.findAll(userId),
 
-		findById: async (id: number): Promise<EssentialityLevel> => {
-			const level = await repo.findById(id)
+		findById: async (
+			userId: string,
+			id: number,
+		): Promise<EssentialityLevel> => {
+			const level = await repo.findById(userId, id)
 			if (!level) throw new Error('EssentialityLevel not found')
 			return level
 		},
 
-		findByCode: (code: string): Promise<EssentialityLevel | null> =>
-			repo.findByCode(code),
+		findByCode: (
+			userId: string,
+			code: string,
+		): Promise<EssentialityLevel | null> => repo.findByCode(userId, code),
 
 		create: async (
+			userId: string,
 			input: CreateEssentialityLevelInput,
 		): Promise<EssentialityLevel> => {
-			const existing = await repo.findByCode(input.code)
+			const existing = await repo.findByCode(userId, input.code)
 			if (existing) throw new Error('EssentialityLevel code already exists')
-			return repo.create(input)
+			return repo.create(userId, input)
 		},
 
 		update: async (
+			userId: string,
 			id: number,
 			input: UpdateEssentialityLevelInput,
 		): Promise<EssentialityLevel> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('EssentialityLevel not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
-		deactivate: async (id: number): Promise<EssentialityLevel> => {
-			const existing = await repo.findById(id)
+		deactivate: async (
+			userId: string,
+			id: number,
+		): Promise<EssentialityLevel> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('EssentialityLevel not found')
-			return repo.deactivate(id)
+			return repo.deactivate(userId, id)
 		},
 	}
 }

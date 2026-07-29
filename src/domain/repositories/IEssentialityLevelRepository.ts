@@ -14,13 +14,17 @@ export type UpdateEssentialityLevelInput = {
 }
 
 export interface IEssentialityLevelRepository {
-	findAll(): Promise<EssentialityLevel[]>
-	findById(id: number): Promise<EssentialityLevel | null>
-	findByCode(code: string): Promise<EssentialityLevel | null>
-	create(input: CreateEssentialityLevelInput): Promise<EssentialityLevel>
+	findAll(userId: string): Promise<EssentialityLevel[]>
+	findById(userId: string, id: number): Promise<EssentialityLevel | null>
+	findByCode(userId: string, code: string): Promise<EssentialityLevel | null>
+	create(
+		userId: string,
+		input: CreateEssentialityLevelInput,
+	): Promise<EssentialityLevel>
 	update(
+		userId: string,
 		id: number,
 		input: UpdateEssentialityLevelInput,
 	): Promise<EssentialityLevel>
-	deactivate(id: number): Promise<EssentialityLevel>
+	deactivate(userId: string, id: number): Promise<EssentialityLevel>
 }
