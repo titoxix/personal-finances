@@ -6,6 +6,15 @@
 # claude code
 .claude/
 
+# generated agent tooling state
+/.atl/
+
+# local AI planning notes
+/ai-plans/
+
+# local database backups
+/backups/
+
 # testing
 /coverage
 /test-results
