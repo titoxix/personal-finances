@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { RecurringItemForm } from '@/components/recurring-items/RecurringItemForm'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	essentialityService,
@@ -13,14 +14,15 @@ export default async function EditRecurringItemPage({
 }: {
 	params: Promise<{ id: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
 	const [item, categories, essentialityLevels] = await Promise.all([
-		recurringItemService.findById(id).catch(() => null),
-		categoryService.findAll(),
-		essentialityService.findAll(),
+		recurringItemService.findById(user.id, id).catch(() => null),
+		categoryService.findAll(user.id),
+		essentialityService.findAll(user.id),
 	])
 
 	if (!item) notFound()

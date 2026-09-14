@@ -1,27 +1,17 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { createTestUser } from '@/test/factories'
 import { prismaTest } from '@/test/prisma'
 import { createPrismaRecurringItemRepository } from './PrismaRecurringItemRepository'
 
 const repository = createPrismaRecurringItemRepository(prismaTest)
 
-let categoryId: number
-let essentialityId: number
-
-beforeAll(async () => {
-	const category = await prismaTest.category.create({
-		data: { code: 'digital', label: 'Digital' },
-	})
-	const essentiality = await prismaTest.essentialityLevel.create({
-		data: { code: 'esencial', label: 'Esencial', sortOrder: 1 },
-	})
-	categoryId = category.id
-	essentialityId = essentiality.id
-})
-
 beforeEach(async () => {
 	await prismaTest.transaction.deleteMany()
 	await prismaTest.recurringItem.deleteMany()
+	await prismaTest.category.deleteMany()
+	await prismaTest.essentialityLevel.deleteMany()
+	await prismaTest.user.deleteMany()
 })
 
 afterAll(async () => {
@@ -29,10 +19,21 @@ afterAll(async () => {
 	await prismaTest.recurringItem.deleteMany()
 	await prismaTest.category.deleteMany()
 	await prismaTest.essentialityLevel.deleteMany()
+	await prismaTest.user.deleteMany()
 	await prismaTest.$disconnect()
 })
 
-const baseItem = () => ({
+async function setupFixtures(userId: string) {
+	const category = await prismaTest.category.create({
+		data: { code: 'digital', label: 'Digital', userId },
+	})
+	const essentiality = await prismaTest.essentialityLevel.create({
+		data: { code: 'esencial', label: 'Esencial', sortOrder: 1, userId },
+	})
+	return { categoryId: category.id, essentialityId: essentiality.id }
+}
+
+const baseItem = (categoryId: number, essentialityId: number) => ({
 	description: 'Netflix',
 	categoryId,
 	essentialityId,
@@ -43,43 +44,81 @@ const baseItem = () => ({
 describe('PrismaRecurringItemRepository', () => {
 	describe('findAll', () => {
 		it('returns empty array when no items exist', async () => {
-			const result = await repository.findAll()
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findAll(user.id)
 			expect(result).toEqual([])
 		})
 
 		it('returns both active and inactive items', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.recurringItem.createMany({
 				data: [
-					{ ...baseItem(), active: true },
-					{ ...baseItem(), description: 'Spotify', active: false },
+					{
+						...baseItem(categoryId, essentialityId),
+						active: true,
+						userId: user.id,
+					},
+					{
+						...baseItem(categoryId, essentialityId),
+						description: 'Spotify',
+						active: false,
+						userId: user.id,
+					},
 				],
 			})
 
-			const result = await repository.findAll()
+			const result = await repository.findAll(user.id)
 			expect(result).toHaveLength(2)
 		})
 
 		it('returns numeric values for Decimal fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.recurringItem.create({
-				data: { ...baseItem(), amountGs: 95000, amountUsd: 12.99 },
+				data: {
+					...baseItem(categoryId, essentialityId),
+					amountGs: 95000,
+					amountUsd: 12.99,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.findAll()
+			const result = await repository.findAll(user.id)
 
 			expect(typeof result[0]?.amountGs).toBe('number')
 			expect(typeof result[0]?.amountUsd).toBe('number')
 			expect(result[0]?.amountGs).toBe(95000)
 			expect(result[0]?.amountUsd).toBe(12.99)
 		})
+
+		it('does not return items belonging to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			await prismaTest.recurringItem.create({
+				data: { ...baseItem(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			const result = await repository.findAll(user.id)
+			expect(result).toEqual([])
+		})
 	})
 
 	describe('findById', () => {
 		it('returns the item when it exists', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.recurringItem.create({
-				data: { ...baseItem(), amountGs: 95000, billingDay: 5 },
+				data: {
+					...baseItem(categoryId, essentialityId),
+					amountGs: 95000,
+					billingDay: 5,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.findById(created.id)
+			const result = await repository.findById(user.id, created.id)
 
 			expect(result).not.toBeNull()
 			expect(result?.description).toBe('Netflix')
@@ -92,40 +131,81 @@ describe('PrismaRecurringItemRepository', () => {
 		})
 
 		it('returns null when item does not exist', async () => {
-			const result = await repository.findById(999)
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findById(user.id, 999)
+			expect(result).toBeNull()
+		})
+
+		it('returns null when item belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			const created = await prismaTest.recurringItem.create({
+				data: { ...baseItem(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			const result = await repository.findById(user.id, created.id)
 			expect(result).toBeNull()
 		})
 	})
 
 	describe('findActive', () => {
 		it('returns only active items', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.recurringItem.createMany({
 				data: [
-					{ ...baseItem(), description: 'Netflix', active: true },
-					{ ...baseItem(), description: 'Spotify', active: true },
-					{ ...baseItem(), description: 'HBO', active: false },
+					{
+						...baseItem(categoryId, essentialityId),
+						description: 'Netflix',
+						active: true,
+						userId: user.id,
+					},
+					{
+						...baseItem(categoryId, essentialityId),
+						description: 'Spotify',
+						active: true,
+						userId: user.id,
+					},
+					{
+						...baseItem(categoryId, essentialityId),
+						description: 'HBO',
+						active: false,
+						userId: user.id,
+					},
 				],
 			})
 
-			const result = await repository.findActive()
+			const result = await repository.findActive(user.id)
 
 			expect(result).toHaveLength(2)
 			expect(result.every((i) => i.active)).toBe(true)
 		})
 
 		it('returns empty array when no active items exist', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			await prismaTest.recurringItem.create({
-				data: { ...baseItem(), active: false },
+				data: {
+					...baseItem(categoryId, essentialityId),
+					active: false,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.findActive()
+			const result = await repository.findActive(user.id)
 			expect(result).toEqual([])
 		})
 	})
 
 	describe('create', () => {
 		it('creates an item with required fields', async () => {
-			const result = await repository.create(baseItem())
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(
+				user.id,
+				baseItem(categoryId, essentialityId),
+			)
 
 			expect(result.id).toBeDefined()
 			expect(result.description).toBe('Netflix')
@@ -143,8 +223,10 @@ describe('PrismaRecurringItemRepository', () => {
 		})
 
 		it('creates an annual item with billing month and amount', async () => {
-			const result = await repository.create({
-				...baseItem(),
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
+			const result = await repository.create(user.id, {
+				...baseItem(categoryId, essentialityId),
 				description: 'IRP',
 				frequency: 'annual',
 				billingMonth: 3,
@@ -163,11 +245,17 @@ describe('PrismaRecurringItemRepository', () => {
 
 	describe('update', () => {
 		it('updates the provided fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.recurringItem.create({
-				data: { ...baseItem(), amountGs: 90000 },
+				data: {
+					...baseItem(categoryId, essentialityId),
+					amountGs: 90000,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				amountGs: 95000,
 				notes: 'Nuevo plan',
 			})
@@ -178,11 +266,18 @@ describe('PrismaRecurringItemRepository', () => {
 		})
 
 		it('can set nullable fields to null', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.recurringItem.create({
-				data: { ...baseItem(), amountGs: 90000, notes: 'nota' },
+				data: {
+					...baseItem(categoryId, essentialityId),
+					amountGs: 90000,
+					notes: 'nota',
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				amountGs: null,
 				notes: null,
 			})
@@ -190,15 +285,30 @@ describe('PrismaRecurringItemRepository', () => {
 			expect(result.amountGs).toBeNull()
 			expect(result.notes).toBeNull()
 		})
+
+		it('rejects updating an item that belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			const created = await prismaTest.recurringItem.create({
+				data: { ...baseItem(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			await expect(
+				repository.update(user.id, created.id, { notes: 'Hackeado' }),
+			).rejects.toThrow()
+		})
 	})
 
 	describe('deactivate', () => {
 		it('sets active to false without deleting the record', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(user.id)
 			const created = await prismaTest.recurringItem.create({
-				data: { ...baseItem() },
+				data: { ...baseItem(categoryId, essentialityId), userId: user.id },
 			})
 
-			const result = await repository.deactivate(created.id)
+			const result = await repository.deactivate(user.id, created.id)
 
 			expect(result.active).toBe(false)
 			expect(result.id).toBe(created.id)
@@ -207,6 +317,17 @@ describe('PrismaRecurringItemRepository', () => {
 				where: { id: created.id },
 			})
 			expect(stillExists).not.toBeNull()
+		})
+
+		it('rejects deactivating an item that belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupFixtures(otherUser.id)
+			const created = await prismaTest.recurringItem.create({
+				data: { ...baseItem(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			await expect(repository.deactivate(user.id, created.id)).rejects.toThrow()
 		})
 	})
 })

@@ -1,11 +1,13 @@
 import { InstallmentPlanForm } from '@/components/installment-plans/InstallmentPlanForm'
+import { requireUser } from '@/lib/auth-helpers'
 import { categoryService, essentialityService } from '@/lib/container'
 import { createInstallmentPlan } from '../actions'
 
 export default async function NewInstallmentPlanPage() {
+	const user = await requireUser()
 	const [categories, essentialityLevels] = await Promise.all([
-		categoryService.findAll(),
-		essentialityService.findAll(),
+		categoryService.findAll(user.id),
+		essentialityService.findAll(user.id),
 	])
 
 	return (

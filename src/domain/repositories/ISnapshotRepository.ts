@@ -47,10 +47,14 @@ export type UpdateSnapshotInput = {
 }
 
 export interface ISnapshotRepository {
-	findAll(): Promise<Snapshot[]>
-	findById(id: number): Promise<Snapshot | null>
-	findLatest(): Promise<Snapshot | null>
-	findByDateRange(start: Date, end: Date): Promise<Snapshot[]>
-	create(input: CreateSnapshotInput): Promise<Snapshot>
-	update(id: number, input: UpdateSnapshotInput): Promise<Snapshot>
+	findAll(userId: string): Promise<Snapshot[]>
+	findById(userId: string, id: number): Promise<Snapshot | null>
+	findLatest(userId: string): Promise<Snapshot | null>
+	findByDateRange(userId: string, start: Date, end: Date): Promise<Snapshot[]>
+	create(userId: string, input: CreateSnapshotInput): Promise<Snapshot>
+	update(
+		userId: string,
+		id: number,
+		input: UpdateSnapshotInput,
+	): Promise<Snapshot>
 }

@@ -1,36 +1,37 @@
 // @vitest-environment node
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it } from 'vitest'
+import { createTestUser } from '@/test/factories'
 import { prismaTest } from '@/test/prisma'
 import { createPrismaInstallmentPlanRepository } from './PrismaInstallmentPlanRepository'
 
 const repository = createPrismaInstallmentPlanRepository(prismaTest)
 
-let categoryId: number
-let essentialityId: number
-
-beforeAll(async () => {
-	const category = await prismaTest.category.create({
-		data: { code: 'equipamiento', label: 'Equipamiento' },
-	})
-	const essentiality = await prismaTest.essentialityLevel.create({
-		data: { code: 'importante', label: 'Importante', sortOrder: 2 },
-	})
-	categoryId = category.id
-	essentialityId = essentiality.id
-})
-
 beforeEach(async () => {
 	await prismaTest.installmentPlan.deleteMany()
+	await prismaTest.category.deleteMany()
+	await prismaTest.essentialityLevel.deleteMany()
+	await prismaTest.user.deleteMany()
 })
 
 afterAll(async () => {
 	await prismaTest.installmentPlan.deleteMany()
 	await prismaTest.category.deleteMany()
 	await prismaTest.essentialityLevel.deleteMany()
+	await prismaTest.user.deleteMany()
 	await prismaTest.$disconnect()
 })
 
-const baseplan = () => ({
+async function setupCategoryAndEssentiality(userId: string) {
+	const category = await prismaTest.category.create({
+		data: { code: 'equipamiento', label: 'Equipamiento', userId },
+	})
+	const essentiality = await prismaTest.essentialityLevel.create({
+		data: { code: 'importante', label: 'Importante', sortOrder: 2, userId },
+	})
+	return { categoryId: category.id, essentialityId: essentiality.id }
+}
+
+const basePlan = (categoryId: number, essentialityId: number) => ({
 	description: 'Gym equipamiento',
 	installmentsTotal: 12,
 	startDate: new Date('2026-01-01'),
@@ -42,52 +43,90 @@ const baseplan = () => ({
 describe('PrismaInstallmentPlanRepository', () => {
 	describe('findAll', () => {
 		it('returns empty array when no plans exist', async () => {
-			const result = await repository.findAll()
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findAll(user.id)
 			expect(result).toEqual([])
 		})
 
 		it('returns both active and inactive plans', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			await prismaTest.installmentPlan.createMany({
 				data: [
-					{ ...baseplan(), active: true },
-					{ ...baseplan(), description: 'Laptop', active: false },
+					{
+						...basePlan(categoryId, essentialityId),
+						active: true,
+						userId: user.id,
+					},
+					{
+						...basePlan(categoryId, essentialityId),
+						description: 'Laptop',
+						active: false,
+						userId: user.id,
+					},
 				],
 			})
 
-			const result = await repository.findAll()
+			const result = await repository.findAll(user.id)
 			expect(result).toHaveLength(2)
 		})
 
 		it('returns numeric values for Decimal fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			await prismaTest.installmentPlan.create({
 				data: {
-					...baseplan(),
+					...basePlan(categoryId, essentialityId),
 					totalAmountGs: 3600000,
 					installmentAmountGs: 300000,
+					userId: user.id,
 				},
 			})
 
-			const result = await repository.findAll()
+			const result = await repository.findAll(user.id)
 
 			expect(typeof result[0]?.totalAmountGs).toBe('number')
 			expect(typeof result[0]?.installmentAmountGs).toBe('number')
 			expect(result[0]?.totalAmountGs).toBe(3600000)
 			expect(result[0]?.installmentAmountGs).toBe(300000)
 		})
+
+		it('does not return plans belonging to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				otherUser.id,
+			)
+			await prismaTest.installmentPlan.create({
+				data: { ...basePlan(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			const result = await repository.findAll(user.id)
+			expect(result).toEqual([])
+		})
 	})
 
 	describe('findById', () => {
 		it('returns the plan when it exists', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			const created = await prismaTest.installmentPlan.create({
 				data: {
-					...baseplan(),
+					...basePlan(categoryId, essentialityId),
 					totalAmountGs: 3600000,
 					installmentAmountGs: 300000,
 					endDate: new Date('2026-12-01'),
+					userId: user.id,
 				},
 			})
 
-			const result = await repository.findById(created.id)
+			const result = await repository.findById(user.id, created.id)
 
 			expect(result).not.toBeNull()
 			expect(result?.description).toBe('Gym equipamiento')
@@ -102,40 +141,89 @@ describe('PrismaInstallmentPlanRepository', () => {
 		})
 
 		it('returns null when plan does not exist', async () => {
-			const result = await repository.findById(999)
+			const user = await createTestUser(prismaTest)
+			const result = await repository.findById(user.id, 999)
+			expect(result).toBeNull()
+		})
+
+		it('returns null when plan belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				otherUser.id,
+			)
+			const created = await prismaTest.installmentPlan.create({
+				data: { ...basePlan(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			const result = await repository.findById(user.id, created.id)
 			expect(result).toBeNull()
 		})
 	})
 
 	describe('findActive', () => {
 		it('returns only active plans', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			await prismaTest.installmentPlan.createMany({
 				data: [
-					{ ...baseplan(), description: 'Gym', active: true },
-					{ ...baseplan(), description: 'Laptop', active: true },
-					{ ...baseplan(), description: 'TV', active: false },
+					{
+						...basePlan(categoryId, essentialityId),
+						description: 'Gym',
+						active: true,
+						userId: user.id,
+					},
+					{
+						...basePlan(categoryId, essentialityId),
+						description: 'Laptop',
+						active: true,
+						userId: user.id,
+					},
+					{
+						...basePlan(categoryId, essentialityId),
+						description: 'TV',
+						active: false,
+						userId: user.id,
+					},
 				],
 			})
 
-			const result = await repository.findActive()
+			const result = await repository.findActive(user.id)
 
 			expect(result).toHaveLength(2)
 			expect(result.every((p) => p.active)).toBe(true)
 		})
 
 		it('returns empty array when no active plans exist', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			await prismaTest.installmentPlan.create({
-				data: { ...baseplan(), active: false },
+				data: {
+					...basePlan(categoryId, essentialityId),
+					active: false,
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.findActive()
+			const result = await repository.findActive(user.id)
 			expect(result).toEqual([])
 		})
 	})
 
 	describe('create', () => {
 		it('creates a plan with required fields and defaults', async () => {
-			const result = await repository.create(baseplan())
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
+			const result = await repository.create(
+				user.id,
+				basePlan(categoryId, essentialityId),
+			)
 
 			expect(result.id).toBeDefined()
 			expect(result.description).toBe('Gym equipamiento')
@@ -151,10 +239,14 @@ describe('PrismaInstallmentPlanRepository', () => {
 		})
 
 		it('creates a plan with all optional fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			const endDate = new Date('2026-12-01')
 
-			const result = await repository.create({
-				...baseplan(),
+			const result = await repository.create(user.id, {
+				...basePlan(categoryId, essentialityId),
 				totalAmountGs: 3600000,
 				totalAmountUsd: 461.54,
 				installmentAmountGs: 300000,
@@ -172,11 +264,15 @@ describe('PrismaInstallmentPlanRepository', () => {
 
 	describe('update', () => {
 		it('updates installmentsPaid', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			const created = await prismaTest.installmentPlan.create({
-				data: baseplan(),
+				data: { ...basePlan(categoryId, essentialityId), userId: user.id },
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				installmentsPaid: 3,
 			})
 
@@ -185,11 +281,20 @@ describe('PrismaInstallmentPlanRepository', () => {
 		})
 
 		it('updates only the provided fields', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			const created = await prismaTest.installmentPlan.create({
-				data: { ...baseplan(), totalAmountGs: 3600000, notes: 'nota original' },
+				data: {
+					...basePlan(categoryId, essentialityId),
+					totalAmountGs: 3600000,
+					notes: 'nota original',
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				notes: 'nota actualizada',
 			})
 
@@ -198,11 +303,20 @@ describe('PrismaInstallmentPlanRepository', () => {
 		})
 
 		it('can set nullable fields to null', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			const created = await prismaTest.installmentPlan.create({
-				data: { ...baseplan(), totalAmountGs: 3600000, notes: 'nota' },
+				data: {
+					...basePlan(categoryId, essentialityId),
+					totalAmountGs: 3600000,
+					notes: 'nota',
+					userId: user.id,
+				},
 			})
 
-			const result = await repository.update(created.id, {
+			const result = await repository.update(user.id, created.id, {
 				totalAmountGs: null,
 				notes: null,
 			})
@@ -210,15 +324,34 @@ describe('PrismaInstallmentPlanRepository', () => {
 			expect(result.totalAmountGs).toBeNull()
 			expect(result.notes).toBeNull()
 		})
+
+		it('rejects updating a plan that belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				otherUser.id,
+			)
+			const created = await prismaTest.installmentPlan.create({
+				data: { ...basePlan(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			await expect(
+				repository.update(user.id, created.id, { installmentsPaid: 5 }),
+			).rejects.toThrow()
+		})
 	})
 
 	describe('deactivate', () => {
 		it('sets active to false without deleting the record', async () => {
+			const user = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				user.id,
+			)
 			const created = await prismaTest.installmentPlan.create({
-				data: baseplan(),
+				data: { ...basePlan(categoryId, essentialityId), userId: user.id },
 			})
 
-			const result = await repository.deactivate(created.id)
+			const result = await repository.deactivate(user.id, created.id)
 
 			expect(result.active).toBe(false)
 			expect(result.id).toBe(created.id)
@@ -227,6 +360,19 @@ describe('PrismaInstallmentPlanRepository', () => {
 				where: { id: created.id },
 			})
 			expect(stillExists).not.toBeNull()
+		})
+
+		it('rejects deactivating a plan that belongs to another user', async () => {
+			const user = await createTestUser(prismaTest)
+			const otherUser = await createTestUser(prismaTest)
+			const { categoryId, essentialityId } = await setupCategoryAndEssentiality(
+				otherUser.id,
+			)
+			const created = await prismaTest.installmentPlan.create({
+				data: { ...basePlan(categoryId, essentialityId), userId: otherUser.id },
+			})
+
+			await expect(repository.deactivate(user.id, created.id)).rejects.toThrow()
 		})
 	})
 })

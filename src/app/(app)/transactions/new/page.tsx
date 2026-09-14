@@ -1,4 +1,5 @@
 import { TransactionForm } from '@/components/transactions/TransactionForm'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	essentialityService,
@@ -12,13 +13,14 @@ export default async function NewTransactionPage({
 }: {
 	searchParams: Promise<{ recurringItemId?: string }>
 }) {
+	const user = await requireUser()
 	const { recurringItemId: recurringItemIdParam } = await searchParams
 	const [categories, essentialityLevels, recurringItems, installmentPlans] =
 		await Promise.all([
-			categoryService.findAll(),
-			essentialityService.findAll(),
-			recurringItemService.findActive(),
-			installmentPlanService.findActive(),
+			categoryService.findAll(user.id),
+			essentialityService.findAll(user.id),
+			recurringItemService.findActive(user.id),
+			installmentPlanService.findActive(user.id),
 		])
 
 	const activeCategories = categories.filter((c) => c.active)

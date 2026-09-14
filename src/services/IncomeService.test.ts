@@ -3,6 +3,8 @@ import type { Income } from '@/domain/entities/income'
 import type { IIncomeRepository } from '@/domain/repositories/IIncomeRepository'
 import { createIncomeService } from './IncomeService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): IIncomeRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -41,10 +43,10 @@ describe('createIncomeService', () => {
 			const incomes = [makeIncome()]
 			vi.mocked(repo.findAll).mockResolvedValue(incomes)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(incomes)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -53,7 +55,7 @@ describe('createIncomeService', () => {
 			const income = makeIncome()
 			vi.mocked(repo.findById).mockResolvedValue(income)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(income)
 		})
@@ -61,7 +63,9 @@ describe('createIncomeService', () => {
 		it('throws when income does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('Income not found')
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
+				'Income not found',
+			)
 		})
 	})
 
@@ -70,16 +74,16 @@ describe('createIncomeService', () => {
 			const income = makeIncome()
 			vi.mocked(repo.findByMonth).mockResolvedValue(income)
 
-			const result = await service.findByMonth(MAY_2026)
+			const result = await service.findByMonth(USER_ID, MAY_2026)
 
 			expect(result).toBe(income)
-			expect(repo.findByMonth).toHaveBeenCalledWith(MAY_2026)
+			expect(repo.findByMonth).toHaveBeenCalledWith(USER_ID, MAY_2026)
 		})
 
 		it('returns null when no income exists for the month', async () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue(null)
 
-			const result = await service.findByMonth(MAY_2026)
+			const result = await service.findByMonth(USER_ID, MAY_2026)
 
 			expect(result).toBeNull()
 		})
@@ -91,7 +95,7 @@ describe('createIncomeService', () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(income)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				month: MAY_2026,
 				grossIncomeUsd: 3000,
 				budgetCapUsd: 2000,
@@ -107,7 +111,7 @@ describe('createIncomeService', () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue(makeIncome())
 
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					month: MAY_2026,
 					grossIncomeUsd: 3000,
 					budgetCapUsd: 2000,
@@ -126,17 +130,21 @@ describe('createIncomeService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { grossIncomeUsd: 3500 })
+			const result = await service.update(USER_ID, 1, {
+				grossIncomeUsd: 3500,
+			})
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { grossIncomeUsd: 3500 })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
+				grossIncomeUsd: 3500,
+			})
 		})
 
 		it('throws when income does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
 			await expect(
-				service.update(999, { grossIncomeUsd: 3500 }),
+				service.update(USER_ID, 999, { grossIncomeUsd: 3500 }),
 			).rejects.toThrow('Income not found')
 		})
 	})

@@ -3,6 +3,8 @@ import type { ExchangeRate } from '@/domain/entities/exchange-rate'
 import type { IExchangeRateRepository } from '@/domain/repositories/IExchangeRateRepository'
 import { createExchangeRateService } from './ExchangeRateService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): IExchangeRateRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -49,10 +51,10 @@ describe('createExchangeRateService', () => {
 			]
 			vi.mocked(repo.findAll).mockResolvedValue(rates)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(rates)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -61,7 +63,7 @@ describe('createExchangeRateService', () => {
 			const rate = makeRate()
 			vi.mocked(repo.findById).mockResolvedValue(rate)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(rate)
 		})
@@ -69,7 +71,7 @@ describe('createExchangeRateService', () => {
 		it('throws when rate does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow(
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
 				'ExchangeRate not found',
 			)
 		})
@@ -80,10 +82,10 @@ describe('createExchangeRateService', () => {
 			const rates = [makeRate()]
 			vi.mocked(repo.findBySource).mockResolvedValue(rates)
 
-			const result = await service.findBySource('itau')
+			const result = await service.findBySource(USER_ID, 'itau')
 
 			expect(result).toBe(rates)
-			expect(repo.findBySource).toHaveBeenCalledWith('itau')
+			expect(repo.findBySource).toHaveBeenCalledWith(USER_ID, 'itau')
 		})
 	})
 
@@ -92,7 +94,7 @@ describe('createExchangeRateService', () => {
 			const rate = makeRate()
 			vi.mocked(repo.findLatestBySource).mockResolvedValue(rate)
 
-			const result = await service.findLatestBySource('itau')
+			const result = await service.findLatestBySource(USER_ID, 'itau')
 
 			expect(result).toBe(rate)
 		})
@@ -100,7 +102,7 @@ describe('createExchangeRateService', () => {
 		it('returns null when no rate exists for the source', async () => {
 			vi.mocked(repo.findLatestBySource).mockResolvedValue(null)
 
-			const result = await service.findLatestBySource('ueno')
+			const result = await service.findLatestBySource(USER_ID, 'ueno')
 
 			expect(result).toBeNull()
 		})
@@ -111,14 +113,14 @@ describe('createExchangeRateService', () => {
 			const rate = makeRate()
 			vi.mocked(repo.create).mockResolvedValue(rate)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				source: 'itau',
 				rateBuy: 7800,
 				rateSell: 7900,
 			})
 
 			expect(result).toBe(rate)
-			expect(repo.create).toHaveBeenCalledWith({
+			expect(repo.create).toHaveBeenCalledWith(USER_ID, {
 				source: 'itau',
 				rateBuy: 7800,
 				rateSell: 7900,
@@ -134,32 +136,43 @@ describe('createExchangeRateService', () => {
 			})
 			vi.mocked(repo.create).mockResolvedValue(rate)
 
-			const result = await service.create({ source: 'bcp', rateMid: 7850 })
+			const result = await service.create(USER_ID, {
+				source: 'bcp',
+				rateMid: 7850,
+			})
 
 			expect(result).toBe(rate)
 		})
 
 		it('throws when a bank rate has no rateBuy or rateSell', async () => {
-			await expect(service.create({ source: 'itau' })).rejects.toThrow(
+			await expect(service.create(USER_ID, { source: 'itau' })).rejects.toThrow(
 				'itau rate requires rateBuy or rateSell',
 			)
 		})
 
 		it('throws when a bank rate includes rateMid', async () => {
 			await expect(
-				service.create({ source: 'ueno', rateBuy: 7800, rateMid: 7850 }),
+				service.create(USER_ID, {
+					source: 'ueno',
+					rateBuy: 7800,
+					rateMid: 7850,
+				}),
 			).rejects.toThrow('ueno rate must not include rateMid')
 		})
 
 		it('throws when BCP rate has no rateMid', async () => {
 			await expect(
-				service.create({ source: 'bcp', rateBuy: 7800 }),
+				service.create(USER_ID, { source: 'bcp', rateBuy: 7800 }),
 			).rejects.toThrow('bcp rate requires rateMid')
 		})
 
 		it('throws when BCP rate includes rateBuy or rateSell', async () => {
 			await expect(
-				service.create({ source: 'bcp', rateMid: 7850, rateBuy: 7800 }),
+				service.create(USER_ID, {
+					source: 'bcp',
+					rateMid: 7850,
+					rateBuy: 7800,
+				}),
 			).rejects.toThrow('bcp rate must not include rateBuy or rateSell')
 		})
 	})

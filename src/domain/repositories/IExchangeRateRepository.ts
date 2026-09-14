@@ -21,12 +21,26 @@ export type UpdateExchangeRateInput = {
 }
 
 export interface IExchangeRateRepository {
-	findAll(): Promise<ExchangeRate[]>
-	findById(id: number): Promise<ExchangeRate | null>
-	findBySource(source: ExchangeRateSource): Promise<ExchangeRate[]>
-	findLatestBySource(source: ExchangeRateSource): Promise<ExchangeRate | null>
-	findByDateRange(start: Date, end: Date): Promise<ExchangeRate[]>
-	create(input: CreateExchangeRateInput): Promise<ExchangeRate>
-	update(id: number, input: UpdateExchangeRateInput): Promise<ExchangeRate>
-	delete(id: number): Promise<void>
+	findAll(userId: string): Promise<ExchangeRate[]>
+	findById(userId: string, id: number): Promise<ExchangeRate | null>
+	findBySource(
+		userId: string,
+		source: ExchangeRateSource,
+	): Promise<ExchangeRate[]>
+	findLatestBySource(
+		userId: string,
+		source: ExchangeRateSource,
+	): Promise<ExchangeRate | null>
+	findByDateRange(
+		userId: string,
+		start: Date,
+		end: Date,
+	): Promise<ExchangeRate[]>
+	create(userId: string, input: CreateExchangeRateInput): Promise<ExchangeRate>
+	update(
+		userId: string,
+		id: number,
+		input: UpdateExchangeRateInput,
+	): Promise<ExchangeRate>
+	delete(userId: string, id: number): Promise<void>
 }

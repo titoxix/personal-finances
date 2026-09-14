@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { UpdateIncomeSchema } from '@/domain/entities/income'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaIncomeRepository } from '@/repositories/prisma/PrismaIncomeRepository'
 import { createIncomeService } from '@/services/IncomeService'
@@ -13,9 +14,10 @@ export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const income = await makeService().findById(Number(id))
+		const income = await makeService().findById(user.id, Number(id))
 		return Response.json(income)
 	} catch (error) {
 		if (error instanceof Error && error.message === 'Income not found') {
@@ -29,11 +31,12 @@ export async function PATCH(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
 		const body = await request.json()
 		const input = UpdateIncomeSchema.parse(body)
-		const income = await makeService().update(Number(id), input)
+		const income = await makeService().update(user.id, Number(id), input)
 		return Response.json(income)
 	} catch (error) {
 		if (error instanceof ZodError) {

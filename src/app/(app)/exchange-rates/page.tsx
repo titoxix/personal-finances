@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { ExchangeRateList } from '@/components/exchange-rates/ExchangeRateList'
+import { requireUser } from '@/lib/auth-helpers'
 import { exchangeRateService } from '@/lib/container'
 
 export default async function ExchangeRatesPage() {
-	const rates = await exchangeRateService.findAll()
+	const user = await requireUser()
+	const rates = await exchangeRateService.findAll(user.id)
 
 	return (
 		<div>

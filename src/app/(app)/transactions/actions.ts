@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
+import { requireUser } from '@/lib/auth-helpers'
 import { transactionService } from '@/lib/container'
 
 export type CreateTransactionPayload = {
@@ -20,8 +21,9 @@ export type CreateTransactionPayload = {
 export async function createTransaction(
 	payload: CreateTransactionPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await transactionService.create({
+		await transactionService.create(user.id, {
 			date: new Date(payload.date),
 			description: payload.description,
 			categoryId: payload.categoryId,
@@ -47,8 +49,9 @@ export async function updateTransaction(
 	id: number,
 	payload: CreateTransactionPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await transactionService.update(id, {
+		await transactionService.update(user.id, id, {
 			date: new Date(payload.date),
 			description: payload.description,
 			categoryId: payload.categoryId,
@@ -74,8 +77,9 @@ export async function updateTransaction(
 export async function deleteTransaction(
 	id: number,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await transactionService.delete(id)
+		await transactionService.delete(user.id, id)
 	} catch (e) {
 		return {
 			error:

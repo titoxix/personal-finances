@@ -5,6 +5,8 @@ import type { IRecurringItemRepository } from '@/domain/repositories/IRecurringI
 import type { IRecurringItemSkipRepository } from '@/domain/repositories/IRecurringItemSkipRepository'
 import { createRecurringItemService } from './RecurringItemService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): IRecurringItemRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -54,10 +56,10 @@ describe('createRecurringItemService', () => {
 			const items = [makeItem()]
 			vi.mocked(repo.findAll).mockResolvedValue(items)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(items)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -66,7 +68,7 @@ describe('createRecurringItemService', () => {
 			const item = makeItem()
 			vi.mocked(repo.findById).mockResolvedValue(item)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(item)
 		})
@@ -74,7 +76,7 @@ describe('createRecurringItemService', () => {
 		it('throws when item does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow(
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
 				'RecurringItem not found',
 			)
 		})
@@ -85,10 +87,10 @@ describe('createRecurringItemService', () => {
 			const items = [makeItem()]
 			vi.mocked(repo.findActive).mockResolvedValue(items)
 
-			const result = await service.findActive()
+			const result = await service.findActive(USER_ID)
 
 			expect(result).toBe(items)
-			expect(repo.findActive).toHaveBeenCalledOnce()
+			expect(repo.findActive).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -97,7 +99,7 @@ describe('createRecurringItemService', () => {
 			const item = makeItem()
 			vi.mocked(repo.create).mockResolvedValue(item)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				description: 'Netflix',
 				categoryId: 1,
 				essentialityId: 1,
@@ -114,7 +116,7 @@ describe('createRecurringItemService', () => {
 			const item = makeItem({ frequency: 'annual', billingMonth: 3 })
 			vi.mocked(repo.create).mockResolvedValue(item)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				description: 'Spotify anual',
 				categoryId: 1,
 				essentialityId: 1,
@@ -132,7 +134,7 @@ describe('createRecurringItemService', () => {
 			const item = makeItem({ amountUsd: null, isVariable: true })
 			vi.mocked(repo.create).mockResolvedValue(item)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				description: 'Luz variable',
 				categoryId: 1,
 				essentialityId: 1,
@@ -147,7 +149,7 @@ describe('createRecurringItemService', () => {
 
 		it('throws when monthly item has no billingDay', async () => {
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					description: 'Netflix',
 					categoryId: 1,
 					essentialityId: 1,
@@ -160,7 +162,7 @@ describe('createRecurringItemService', () => {
 
 		it('throws when annual item has no billingMonth', async () => {
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					description: 'Spotify anual',
 					categoryId: 1,
 					essentialityId: 1,
@@ -174,7 +176,7 @@ describe('createRecurringItemService', () => {
 
 		it('throws when annual item has no billingDay', async () => {
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					description: 'Spotify anual',
 					categoryId: 1,
 					essentialityId: 1,
@@ -188,7 +190,7 @@ describe('createRecurringItemService', () => {
 
 		it('throws when non-variable item has no amount', async () => {
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					description: 'Netflix',
 					categoryId: 1,
 					essentialityId: 1,
@@ -207,18 +209,18 @@ describe('createRecurringItemService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { amountUsd: 18 })
+			const result = await service.update(USER_ID, 1, { amountUsd: 18 })
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { amountUsd: 18 })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, { amountUsd: 18 })
 		})
 
 		it('throws when item does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { amountUsd: 18 })).rejects.toThrow(
-				'RecurringItem not found',
-			)
+			await expect(
+				service.update(USER_ID, 999, { amountUsd: 18 }),
+			).rejects.toThrow('RecurringItem not found')
 		})
 	})
 
@@ -229,16 +231,16 @@ describe('createRecurringItemService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.deactivate).mockResolvedValue(deactivated)
 
-			const result = await service.deactivate(1)
+			const result = await service.deactivate(USER_ID, 1)
 
 			expect(result).toBe(deactivated)
-			expect(repo.deactivate).toHaveBeenCalledWith(1)
+			expect(repo.deactivate).toHaveBeenCalledWith(USER_ID, 1)
 		})
 
 		it('throws when item does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.deactivate(999)).rejects.toThrow(
+			await expect(service.deactivate(USER_ID, 999)).rejects.toThrow(
 				'RecurringItem not found',
 			)
 		})
@@ -258,10 +260,10 @@ describe('createRecurringItemService', () => {
 			]
 			vi.mocked(skipRepo.findByMonth).mockResolvedValue(skips)
 
-			const result = await service.findSkipsByMonth(month)
+			const result = await service.findSkipsByMonth(USER_ID, month)
 
 			expect(result).toBe(skips)
-			expect(skipRepo.findByMonth).toHaveBeenCalledWith(month)
+			expect(skipRepo.findByMonth).toHaveBeenCalledWith(USER_ID, month)
 		})
 	})
 
@@ -279,10 +281,15 @@ describe('createRecurringItemService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(item)
 			vi.mocked(skipRepo.create).mockResolvedValue(skip)
 
-			const result = await service.skipForMonth(1, month, 'Pagó mi esposa')
+			const result = await service.skipForMonth(
+				USER_ID,
+				1,
+				month,
+				'Pagó mi esposa',
+			)
 
 			expect(result).toBe(skip)
-			expect(skipRepo.create).toHaveBeenCalledWith({
+			expect(skipRepo.create).toHaveBeenCalledWith(USER_ID, {
 				recurringItemId: 1,
 				month,
 				reason: 'Pagó mi esposa',
@@ -294,6 +301,7 @@ describe('createRecurringItemService', () => {
 
 			await expect(
 				service.skipForMonth(
+					USER_ID,
 					999,
 					new Date(Date.UTC(2026, 5, 1)),
 					'Pagó mi esposa',
@@ -306,6 +314,7 @@ describe('createRecurringItemService', () => {
 
 			await expect(
 				service.skipForMonth(
+					USER_ID,
 					1,
 					new Date(Date.UTC(2026, 5, 1)),
 					'Pagó mi esposa',
@@ -319,9 +328,9 @@ describe('createRecurringItemService', () => {
 			const month = new Date(Date.UTC(2026, 5, 1))
 			vi.mocked(skipRepo.delete).mockResolvedValue(undefined)
 
-			await service.unskipForMonth(1, month)
+			await service.unskipForMonth(USER_ID, 1, month)
 
-			expect(skipRepo.delete).toHaveBeenCalledWith(1, month)
+			expect(skipRepo.delete).toHaveBeenCalledWith(USER_ID, 1, month)
 		})
 	})
 })

@@ -27,22 +27,26 @@ export function createPrismaRecurringItemSkipRepository(
 	prisma: PrismaClient,
 ): IRecurringItemSkipRepository {
 	return {
-		findByMonth: async (month) => {
+		findByMonth: async (userId, month) => {
 			const rows = await prisma.recurringItemSkip.findMany({
-				where: { month },
+				where: { month, recurringItem: { userId } },
 			})
 			return rows.map(toDomain)
 		},
-		create: async (input: CreateRecurringItemSkipInput) => {
+		create: async (userId, input: CreateRecurringItemSkipInput) => {
+			const owned = await prisma.recurringItem.findUnique({
+				where: { id: input.recurringItemId, userId },
+				select: { id: true },
+			})
+			if (!owned) throw new Error('RecurringItem not found')
 			const row = await prisma.recurringItemSkip.create({ data: input })
 			return toDomain(row)
 		},
-		delete: async (recurringItemId: number, month: Date) => {
-			await prisma.recurringItemSkip.delete({
-				where: {
-					recurringItemId_month: { recurringItemId, month },
-				},
+		delete: async (userId, recurringItemId: number, month: Date) => {
+			const result = await prisma.recurringItemSkip.deleteMany({
+				where: { recurringItemId, month, recurringItem: { userId } },
 			})
+			if (result.count === 0) throw new Error('RecurringItemSkip not found')
 		},
 	}
 }

@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { requireUser } from '@/lib/auth-helpers'
 import { snapshotExportService, snapshotService } from '@/lib/container'
 
 function formatFilenameDate(date: Date): string {
@@ -12,10 +13,14 @@ export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const snapshot = await snapshotService.findById(Number(id))
-		const data = await snapshotExportService.buildExportForSnapshot(snapshot)
+		const snapshot = await snapshotService.findById(user.id, Number(id))
+		const data = await snapshotExportService.buildExportForSnapshot(
+			user.id,
+			snapshot,
+		)
 		const filename = `snapshot-${formatFilenameDate(snapshot.date)}.json`
 		return Response.json(data, {
 			headers: {

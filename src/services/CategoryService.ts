@@ -7,36 +7,40 @@ import type {
 
 export function createCategoryService(repo: ICategoryRepository) {
 	return {
-		findAll: (): Promise<Category[]> => repo.findAll(),
+		findAll: (userId: string): Promise<Category[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<Category> => {
-			const category = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<Category> => {
+			const category = await repo.findById(userId, id)
 			if (!category) throw new Error('Category not found')
 			return category
 		},
 
-		findByCode: (code: string): Promise<Category | null> =>
-			repo.findByCode(code),
+		findByCode: (userId: string, code: string): Promise<Category | null> =>
+			repo.findByCode(userId, code),
 
-		create: async (input: CreateCategoryInput): Promise<Category> => {
-			const existing = await repo.findByCode(input.code)
+		create: async (
+			userId: string,
+			input: CreateCategoryInput,
+		): Promise<Category> => {
+			const existing = await repo.findByCode(userId, input.code)
 			if (existing) throw new Error('Category code already exists')
-			return repo.create(input)
+			return repo.create(userId, input)
 		},
 
 		update: async (
+			userId: string,
 			id: number,
 			input: UpdateCategoryInput,
 		): Promise<Category> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Category not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
-		deactivate: async (id: number): Promise<Category> => {
-			const existing = await repo.findById(id)
+		deactivate: async (userId: string, id: number): Promise<Category> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('Category not found')
-			return repo.deactivate(id)
+			return repo.deactivate(userId, id)
 		},
 	}
 }

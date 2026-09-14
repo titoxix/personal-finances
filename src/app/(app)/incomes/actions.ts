@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth-helpers'
 import { incomeService } from '@/lib/container'
 
 // TODO(rename): automaticInvestmentUsd/automaticDest -> surplusAllocatedUsd/surplusDest
@@ -33,8 +34,9 @@ function parseMonthDate(s: string): Date {
 export async function createIncome(
 	payload: CreateIncomePayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await incomeService.create({
+		await incomeService.create(user.id, {
 			month: parseMonthDate(payload.month),
 			grossIncomeUsd: payload.grossIncomeUsd,
 			budgetCapUsd: payload.budgetCapUsd,
@@ -57,8 +59,9 @@ export async function updateIncome(
 	id: number,
 	payload: UpdateIncomePayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await incomeService.update(id, {
+		await incomeService.update(user.id, id, {
 			grossIncomeUsd: payload.grossIncomeUsd,
 			budgetCapUsd: payload.budgetCapUsd,
 			automaticInvestmentUsd: payload.automaticInvestmentUsd,

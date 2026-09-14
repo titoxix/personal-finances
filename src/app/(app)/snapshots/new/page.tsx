@@ -1,4 +1,5 @@
 import { SnapshotForm } from '@/components/snapshots/SnapshotForm'
+import { requireUser } from '@/lib/auth-helpers'
 import { snapshotService } from '@/lib/container'
 import { createSnapshot } from '../actions'
 
@@ -7,10 +8,11 @@ export default async function NewSnapshotPage({
 }: {
 	searchParams: Promise<{ copyFrom?: string }>
 }) {
+	const user = await requireUser()
 	const { copyFrom } = await searchParams
 	const [latest, source] = await Promise.all([
-		snapshotService.findLatest(),
-		copyFrom ? snapshotService.findById(Number(copyFrom)) : null,
+		snapshotService.findLatest(user.id),
+		copyFrom ? snapshotService.findById(user.id, Number(copyFrom)) : null,
 	])
 
 	return (

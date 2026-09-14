@@ -4,7 +4,7 @@ import { ArrowLeft, Bell, LogOut, Menu, MoreVertical } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
-import { logoutAction } from '@/app/login/actions'
+import { logout } from '@/lib/auth-actions'
 
 const MobileDrawer = dynamic(
 	() => import('./MobileDrawer').then((m) => ({ default: m.MobileDrawer })),
@@ -54,9 +54,10 @@ function getInnerPage(
 
 type Props = {
 	balance: number | null
+	userName: string
 }
 
-export function TopBar({ balance }: Props) {
+export function TopBar({ balance, userName }: Props) {
 	const [open, setOpen] = useState(false)
 	const pathname = usePathname()
 	const router = useRouter()
@@ -109,7 +110,7 @@ export function TopBar({ balance }: Props) {
 							Hello!
 						</p>
 						<p className="text-sm font-semibold text-foreground leading-tight">
-							Nisrina Saidah
+							{userName}
 						</p>
 					</div>
 				</div>
@@ -122,7 +123,7 @@ export function TopBar({ balance }: Props) {
 					>
 						<Bell className="h-5 w-5" />
 					</button>
-					<form action={logoutAction}>
+					<form action={logout}>
 						<button
 							type="submit"
 							className="rounded-lg p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground"

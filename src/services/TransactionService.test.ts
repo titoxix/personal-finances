@@ -5,6 +5,8 @@ import type { IInstallmentPlanRepository } from '@/domain/repositories/IInstallm
 import type { ITransactionRepository } from '@/domain/repositories/ITransactionRepository'
 import { createTransactionService } from './TransactionService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): ITransactionRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -86,10 +88,10 @@ describe('createTransactionService', () => {
 			const txs = [makeTx()]
 			vi.mocked(repo.findAll).mockResolvedValue(txs)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(txs)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -98,7 +100,7 @@ describe('createTransactionService', () => {
 			const tx = makeTx()
 			vi.mocked(repo.findById).mockResolvedValue(tx)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(tx)
 		})
@@ -106,7 +108,7 @@ describe('createTransactionService', () => {
 		it('throws when transaction does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow(
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
 				'Transaction not found',
 			)
 		})
@@ -117,7 +119,7 @@ describe('createTransactionService', () => {
 			const txs = [makeTx()]
 			vi.mocked(repo.findByMonth).mockResolvedValue(txs)
 
-			const result = await service.findByMonth(new Date('2026-05-01'))
+			const result = await service.findByMonth(USER_ID, new Date('2026-05-01'))
 
 			expect(result).toBe(txs)
 		})
@@ -129,6 +131,7 @@ describe('createTransactionService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(txs)
 
 			const result = await service.findByMonthAndCategory(
+				USER_ID,
 				new Date('2026-05-01'),
 				1,
 			)
@@ -152,7 +155,7 @@ describe('createTransactionService', () => {
 				makeTx({ weekOfMonth: expectedWeek }),
 			)
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date(`2026-05-${String(day).padStart(2, '0')}`),
 				description: 'Test',
 				categoryId: 1,
@@ -162,6 +165,7 @@ describe('createTransactionService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ weekOfMonth: expectedWeek }),
 			)
 		})
@@ -169,7 +173,7 @@ describe('createTransactionService', () => {
 		it('does not override weekOfMonth when caller provides it', async () => {
 			vi.mocked(repo.create).mockResolvedValue(makeTx({ weekOfMonth: 1 }))
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date('2026-05-25'),
 				description: 'Test',
 				categoryId: 1,
@@ -180,13 +184,14 @@ describe('createTransactionService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ weekOfMonth: 1 }),
 			)
 		})
 
 		it('throws when neither amountGs nor amountUsd is provided', async () => {
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					date: new Date('2026-05-10'),
 					description: 'Test',
 					categoryId: 1,
@@ -201,7 +206,7 @@ describe('createTransactionService', () => {
 				makeTx({ isRecurring: true, recurringItemId: 5 }),
 			)
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date('2026-05-10'),
 				description: 'Alquiler',
 				categoryId: 1,
@@ -212,6 +217,7 @@ describe('createTransactionService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ isRecurring: true, recurringItemId: 5 }),
 			)
 		})
@@ -219,7 +225,7 @@ describe('createTransactionService', () => {
 		it('passes recurringItemId through to the repository', async () => {
 			vi.mocked(repo.create).mockResolvedValue(makeTx({ recurringItemId: 3 }))
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date('2026-05-10'),
 				description: 'Test',
 				categoryId: 1,
@@ -230,6 +236,7 @@ describe('createTransactionService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({ recurringItemId: 3 }),
 			)
 		})
@@ -245,7 +252,7 @@ describe('createTransactionService', () => {
 			vi.mocked(installmentPlanRepo.findById).mockResolvedValue(plan)
 			vi.mocked(repo.create).mockResolvedValue(makeTx({ installmentPlanId: 7 }))
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date('2026-05-10'),
 				description: 'Cuota iPhone',
 				categoryId: 1,
@@ -256,6 +263,7 @@ describe('createTransactionService', () => {
 			})
 
 			expect(repo.create).toHaveBeenCalledWith(
+				USER_ID,
 				expect.objectContaining({
 					installmentPlanId: 7,
 					isInstallment: true,
@@ -274,7 +282,7 @@ describe('createTransactionService', () => {
 			vi.mocked(installmentPlanRepo.findById).mockResolvedValue(plan)
 			vi.mocked(repo.create).mockResolvedValue(makeTx({ installmentPlanId: 7 }))
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date('2026-05-10'),
 				description: 'Cuota iPhone',
 				categoryId: 1,
@@ -284,7 +292,7 @@ describe('createTransactionService', () => {
 				installmentPlanId: 7,
 			})
 
-			expect(installmentPlanRepo.update).toHaveBeenCalledWith(7, {
+			expect(installmentPlanRepo.update).toHaveBeenCalledWith(USER_ID, 7, {
 				installmentsPaid: 4,
 			})
 		})
@@ -293,7 +301,7 @@ describe('createTransactionService', () => {
 			vi.mocked(installmentPlanRepo.findById).mockResolvedValue(null)
 
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					date: new Date('2026-05-10'),
 					description: 'Cuota iPhone',
 					categoryId: 1,
@@ -310,7 +318,7 @@ describe('createTransactionService', () => {
 		it('does not touch the installment plan repository when no plan is linked', async () => {
 			vi.mocked(repo.create).mockResolvedValue(makeTx())
 
-			await service.create({
+			await service.create(USER_ID, {
 				date: new Date('2026-05-10'),
 				description: 'Test',
 				categoryId: 1,
@@ -331,18 +339,20 @@ describe('createTransactionService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { amountGs: 200000 })
+			const result = await service.update(USER_ID, 1, { amountGs: 200000 })
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { amountGs: 200000 })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
+				amountGs: 200000,
+			})
 		})
 
 		it('throws when transaction does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { amountGs: 200000 })).rejects.toThrow(
-				'Transaction not found',
-			)
+			await expect(
+				service.update(USER_ID, 999, { amountGs: 200000 }),
+			).rejects.toThrow('Transaction not found')
 		})
 
 		it('can unlink a recurringItemId by passing null', async () => {
@@ -351,9 +361,11 @@ describe('createTransactionService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			await service.update(1, { recurringItemId: null })
+			await service.update(USER_ID, 1, { recurringItemId: null })
 
-			expect(repo.update).toHaveBeenCalledWith(1, { recurringItemId: null })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
+				recurringItemId: null,
+			})
 		})
 	})
 
@@ -362,15 +374,17 @@ describe('createTransactionService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(makeTx())
 			vi.mocked(repo.delete).mockResolvedValue(undefined)
 
-			await service.delete(1)
+			await service.delete(USER_ID, 1)
 
-			expect(repo.delete).toHaveBeenCalledWith(1)
+			expect(repo.delete).toHaveBeenCalledWith(USER_ID, 1)
 		})
 
 		it('throws when transaction does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.delete(999)).rejects.toThrow('Transaction not found')
+			await expect(service.delete(USER_ID, 999)).rejects.toThrow(
+				'Transaction not found',
+			)
 		})
 	})
 })

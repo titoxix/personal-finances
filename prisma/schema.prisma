@@ -35,54 +35,138 @@ enum Currency {
   GS
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  firstName     String?   @map("first_name")
+  lastName      String?   @map("last_name")
+  country       String?
+  role          UserRole  @default(USER)
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  accounts Account[]
+  sessions Session[]
+
+  categories         Category[]
+  essentialityLevels EssentialityLevel[]
+  exchangeRates      ExchangeRate[]
+  incomes            Income[]
+  installmentPlans   InstallmentPlan[]
+  transactions       Transaction[]
+  budgets            Budget[]
+  snapshots          Snapshot[]
+  recurringItems     RecurringItem[]
+
+  @@map("users")
+}
+
+model Account {
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
 // ─── Reference tables ────────────────────────────────────────────────────────
 
 model Category {
   id          Int      @id @default(autoincrement())
-  code        String   @unique @db.VarChar(50)
+  userId      String   @map("user_id")
+  code        String   @db.VarChar(50)
   label       String   @db.VarChar(100)
   description String?
   active      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
 
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   transactions     Transaction[]
   budgets          Budget[]
   recurringItems   RecurringItem[]
   installmentPlans InstallmentPlan[]
 
+  @@unique([userId, code])
   @@map("categories")
 }
 
 model EssentialityLevel {
   id          Int      @id @default(autoincrement())
-  code        String   @unique @db.VarChar(20)
+  userId      String   @map("user_id")
+  code        String   @db.VarChar(20)
   label       String   @db.VarChar(50)
   description String?
-  sortOrder   Int      @db.SmallInt @map("sort_order")
+  sortOrder   Int      @map("sort_order") @db.SmallInt
   active      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
 
+  user             User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   transactions     Transaction[]
   budgets          Budget[]
   recurringItems   RecurringItem[]
   installmentPlans InstallmentPlan[]
 
+  @@unique([userId, code])
   @@map("essentiality_levels")
 }
 
 model ExchangeRate {
   id         Int                @id @default(autoincrement())
+  userId     String             @map("user_id")
   recordedAt DateTime           @default(now()) @map("recorded_at")
   source     ExchangeRateSource
-  rateBuy    Decimal?           @db.Decimal(10, 2) @map("rate_buy")
-  rateSell   Decimal?           @db.Decimal(10, 2) @map("rate_sell")
-  rateMid    Decimal?           @db.Decimal(10, 2) @map("rate_mid")
+  rateBuy    Decimal?           @map("rate_buy") @db.Decimal(10, 2)
+  rateSell   Decimal?           @map("rate_sell") @db.Decimal(10, 2)
+  rateMid    Decimal?           @map("rate_mid") @db.Decimal(10, 2)
   notes      String?
   createdAt  DateTime           @default(now()) @map("created_at")
 
-  transactions     Transaction[]
-  snapshots        Snapshot[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Restrict)
+  transactions Transaction[]
+  snapshots    Snapshot[]
 
+  @@index([userId])
   @@map("exchange_rates")
 }
 
@@ -90,31 +174,36 @@ model ExchangeRate {
 
 model Income {
   id                     Int      @id @default(autoincrement())
+  userId                 String   @map("user_id")
   month                  DateTime @db.Date
-  grossIncomeUsd         Decimal  @db.Decimal(10, 2) @map("gross_income_usd")
-  budgetCapUsd           Decimal  @db.Decimal(10, 2) @map("budget_cap_usd")
+  grossIncomeUsd         Decimal  @map("gross_income_usd") @db.Decimal(10, 2)
+  budgetCapUsd           Decimal  @map("budget_cap_usd") @db.Decimal(10, 2)
   // TODO(rename): no siempre es "inversión" — es el excedente asignado a lo que sea ese mes.
   // Refactor pendiente: automaticInvestmentUsd -> surplusAllocatedUsd, requiere migración RENAME COLUMN.
-  automaticInvestmentUsd Decimal  @db.Decimal(10, 2) @map("automatic_investment_usd")
+  automaticInvestmentUsd Decimal  @map("automatic_investment_usd") @db.Decimal(10, 2)
   // TODO(rename): ver nota de automaticInvestmentUsd. automaticDest -> surplusDest.
-  automaticDest          String   @db.VarChar(50) @map("automatic_dest")
-  exchangeRate           Decimal  @db.Decimal(10, 2) @map("exchange_rate")
+  automaticDest          String   @map("automatic_dest") @db.VarChar(50)
+  exchangeRate           Decimal  @map("exchange_rate") @db.Decimal(10, 2)
   notes                  String?
   createdAt              DateTime @default(now()) @map("created_at")
 
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, month])
   @@map("income")
 }
 
 model InstallmentPlan {
   id                  Int           @id @default(autoincrement())
+  userId              String        @map("user_id")
   description         String        @db.VarChar(255)
-  totalAmountGs       Decimal?      @db.Decimal(15, 2) @map("total_amount_gs")
-  totalAmountUsd      Decimal?      @db.Decimal(10, 2) @map("total_amount_usd")
-  installmentsTotal   Int           @db.SmallInt @map("installments_total")
-  installmentsPaid    Int           @default(0) @db.SmallInt @map("installments_paid")
-  installmentAmountGs Decimal?      @db.Decimal(15, 2) @map("installment_amount_gs")
-  startDate           DateTime      @db.Date @map("start_date")
-  endDate             DateTime?     @db.Date @map("end_date")
+  totalAmountGs       Decimal?      @map("total_amount_gs") @db.Decimal(15, 2)
+  totalAmountUsd      Decimal?      @map("total_amount_usd") @db.Decimal(10, 2)
+  installmentsTotal   Int           @map("installments_total") @db.SmallInt
+  installmentsPaid    Int           @default(0) @map("installments_paid") @db.SmallInt
+  installmentAmountGs Decimal?      @map("installment_amount_gs") @db.Decimal(15, 2)
+  startDate           DateTime      @map("start_date") @db.Date
+  endDate             DateTime?     @map("end_date") @db.Date
   paymentMethod       PaymentMethod @map("payment_method")
   categoryId          Int           @map("category_id")
   essentialityId      Int           @map("essentiality_id")
@@ -122,89 +211,99 @@ model InstallmentPlan {
   notes               String?
   createdAt           DateTime      @default(now()) @map("created_at")
 
+  user         User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   category     Category          @relation(fields: [categoryId], references: [id])
   essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
   transactions Transaction[]
 
+  @@index([userId])
   @@map("installment_plans")
 }
 
 model Transaction {
-  id                Int           @id @default(autoincrement())
-  date              DateTime      @db.Date
-  description       String        @db.VarChar(255)
-  amountGs          Decimal?      @db.Decimal(15, 2) @map("amount_gs")
-  amountUsd         Decimal?      @db.Decimal(10, 2) @map("amount_usd")
-  exchangeRateValue Decimal?      @db.Decimal(10, 2) @map("exchange_rate")
-  exchangeRateId    Int?          @map("exchange_rate_id")
-  categoryId        Int           @map("category_id")
-  essentialityId    Int           @map("essentiality_id")
-  paymentMethod     PaymentMethod @map("payment_method")
-  weekOfMonth       Int?          @db.SmallInt @map("week_of_month")
-  isInstallment     Boolean       @default(false) @map("is_installment")
-  installmentCurrent Int?         @db.SmallInt @map("installment_current")
-  installmentTotal  Int?          @db.SmallInt @map("installment_total")
-  installmentPlanId Int?          @map("installment_plan_id")
-  isRecurring       Boolean       @default(false) @map("is_recurring")
-  recurringItemId   Int?          @map("recurring_item_id")
-  notes             String?
-  createdAt         DateTime      @default(now()) @map("created_at")
+  id                 Int           @id @default(autoincrement())
+  userId             String        @map("user_id")
+  date               DateTime      @db.Date
+  description        String        @db.VarChar(255)
+  amountGs           Decimal?      @map("amount_gs") @db.Decimal(15, 2)
+  amountUsd          Decimal?      @map("amount_usd") @db.Decimal(10, 2)
+  exchangeRateValue  Decimal?      @map("exchange_rate") @db.Decimal(10, 2)
+  exchangeRateId     Int?          @map("exchange_rate_id")
+  categoryId         Int           @map("category_id")
+  essentialityId     Int           @map("essentiality_id")
+  paymentMethod      PaymentMethod @map("payment_method")
+  weekOfMonth        Int?          @map("week_of_month") @db.SmallInt
+  isInstallment      Boolean       @default(false) @map("is_installment")
+  installmentCurrent Int?          @map("installment_current") @db.SmallInt
+  installmentTotal   Int?          @map("installment_total") @db.SmallInt
+  installmentPlanId  Int?          @map("installment_plan_id")
+  isRecurring        Boolean       @default(false) @map("is_recurring")
+  recurringItemId    Int?          @map("recurring_item_id")
+  notes              String?
+  createdAt          DateTime      @default(now()) @map("created_at")
 
+  user            User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   category        Category          @relation(fields: [categoryId], references: [id])
   essentiality    EssentialityLevel @relation(fields: [essentialityId], references: [id])
   exchangeRate    ExchangeRate?     @relation(fields: [exchangeRateId], references: [id])
   installmentPlan InstallmentPlan?  @relation(fields: [installmentPlanId], references: [id])
   recurringItem   RecurringItem?    @relation(fields: [recurringItemId], references: [id], onDelete: SetNull)
 
+  @@index([userId, date])
   @@map("transactions")
 }
 
 model Budget {
   id             Int       @id @default(autoincrement())
+  userId         String    @map("user_id")
   month          DateTime  @db.Date
   categoryId     Int       @map("category_id")
   essentialityId Int       @map("essentiality_id")
-  budgetedUsd    Decimal?  @db.Decimal(10, 2) @map("budgeted_usd")
-  budgetedGs     Decimal?  @db.Decimal(15, 2) @map("budgeted_gs")
+  budgetedUsd    Decimal?  @map("budgeted_usd") @db.Decimal(10, 2)
+  budgetedGs     Decimal?  @map("budgeted_gs") @db.Decimal(15, 2)
   isRecurring    Boolean   @default(false) @map("is_recurring")
   notes          String?
   deletedAt      DateTime? @map("deleted_at")
   deleteReason   String?   @map("delete_reason")
   createdAt      DateTime  @default(now()) @map("created_at")
 
+  user         User              @relation(fields: [userId], references: [id], onDelete: Restrict)
   category     Category          @relation(fields: [categoryId], references: [id])
   essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
 
-  @@unique([month, categoryId])
+  @@unique([userId, month, categoryId])
   @@map("budgets")
 }
 
 model Snapshot {
   id                    Int      @id @default(autoincrement())
-  date                  DateTime @db.Date @map("month")
-  incomeUsd             Decimal? @db.Decimal(10, 2) @map("income_usd")
-  exchangeRateValue     Decimal? @db.Decimal(10, 2) @map("exchange_rate")
+  userId                String   @map("user_id")
+  date                  DateTime @map("month") @db.Date
+  incomeUsd             Decimal? @map("income_usd") @db.Decimal(10, 2)
+  exchangeRateValue     Decimal? @map("exchange_rate") @db.Decimal(10, 2)
   exchangeRateId        Int?     @map("exchange_rate_id")
-  balanceItauUsd        Decimal? @db.Decimal(10, 2) @map("balance_itau_usd")
-  balanceItauGs         Decimal? @db.Decimal(15, 2) @map("balance_itau_gs")
-  balanceUenoUsd        Decimal? @db.Decimal(10, 2) @map("balance_ueno_usd")
-  balanceUenoGs         Decimal? @db.Decimal(15, 2) @map("balance_ueno_gs")
-  balanceMangoGs        Decimal? @db.Decimal(15, 2) @map("balance_mango_gs")
-  balanceGnbGs          Decimal? @db.Decimal(15, 2) @map("balance_gnb_gs")
-  gnbCardGs             Decimal? @db.Decimal(15, 2) @map("gnb_card_gs")
-  itauCardGs            Decimal? @db.Decimal(15, 2) @map("itau_card_gs")
-  uenoCardGs            Decimal? @db.Decimal(15, 2) @map("ueno_card_gs")
-  pendingInstallmentsGs Decimal? @db.Decimal(15, 2) @map("pending_installments_gs")
-  netWorthUsd           Decimal? @db.Decimal(10, 2) @map("net_worth_usd")
-  totalInvestedUsd      Decimal? @db.Decimal(10, 2) @map("total_invested_usd")
-  totalDebtUsd          Decimal? @db.Decimal(10, 2) @map("total_debt_usd")
-  savingsRatePct        Decimal? @db.Decimal(5, 2) @map("savings_rate_pct")
+  balanceItauUsd        Decimal? @map("balance_itau_usd") @db.Decimal(10, 2)
+  balanceItauGs         Decimal? @map("balance_itau_gs") @db.Decimal(15, 2)
+  balanceUenoUsd        Decimal? @map("balance_ueno_usd") @db.Decimal(10, 2)
+  balanceUenoGs         Decimal? @map("balance_ueno_gs") @db.Decimal(15, 2)
+  balanceMangoGs        Decimal? @map("balance_mango_gs") @db.Decimal(15, 2)
+  balanceGnbGs          Decimal? @map("balance_gnb_gs") @db.Decimal(15, 2)
+  gnbCardGs             Decimal? @map("gnb_card_gs") @db.Decimal(15, 2)
+  itauCardGs            Decimal? @map("itau_card_gs") @db.Decimal(15, 2)
+  uenoCardGs            Decimal? @map("ueno_card_gs") @db.Decimal(15, 2)
+  pendingInstallmentsGs Decimal? @map("pending_installments_gs") @db.Decimal(15, 2)
+  netWorthUsd           Decimal? @map("net_worth_usd") @db.Decimal(10, 2)
+  totalInvestedUsd      Decimal? @map("total_invested_usd") @db.Decimal(10, 2)
+  totalDebtUsd          Decimal? @map("total_debt_usd") @db.Decimal(10, 2)
+  savingsRatePct        Decimal? @map("savings_rate_pct") @db.Decimal(5, 2)
   notes                 String?
   createdAt             DateTime @default(now()) @map("created_at")
 
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Restrict)
   exchangeRate ExchangeRate?        @relation(fields: [exchangeRateId], references: [id])
   investments  SnapshotInvestment[]
 
+  @@index([userId])
   @@map("monthly_snapshot")
 }
 
@@ -214,7 +313,7 @@ model SnapshotInvestment {
   name       String   @db.VarChar(100)
   currency   Currency
   value      Decimal  @db.Decimal(15, 2)
-  returnPct  Decimal? @db.Decimal(5, 2) @map("return_pct")
+  returnPct  Decimal? @map("return_pct") @db.Decimal(5, 2)
   createdAt  DateTime @default(now()) @map("created_at")
 
   snapshot Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
@@ -224,34 +323,37 @@ model SnapshotInvestment {
 
 model RecurringItem {
   id             Int                @id @default(autoincrement())
+  userId         String             @map("user_id")
   description    String             @db.VarChar(255)
-  amountGs       Decimal?           @db.Decimal(15, 2) @map("amount_gs")
-  amountUsd      Decimal?           @db.Decimal(10, 2) @map("amount_usd")
+  amountGs       Decimal?           @map("amount_gs") @db.Decimal(15, 2)
+  amountUsd      Decimal?           @map("amount_usd") @db.Decimal(10, 2)
   categoryId     Int                @map("category_id")
   essentialityId Int                @map("essentiality_id")
   paymentMethod  PaymentMethod      @map("payment_method")
   frequency      RecurringFrequency
-  billingDay     Int?               @db.SmallInt @map("billing_day")
-  billingMonth   Int?               @db.SmallInt @map("billing_month")
+  billingDay     Int?               @map("billing_day") @db.SmallInt
+  billingMonth   Int?               @map("billing_month") @db.SmallInt
   isVariable     Boolean            @default(false) @map("is_variable")
   active         Boolean            @default(true)
   notes          String?
   createdAt      DateTime           @default(now()) @map("created_at")
 
-  category     Category          @relation(fields: [categoryId], references: [id])
-  essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
+  user         User                @relation(fields: [userId], references: [id], onDelete: Restrict)
+  category     Category            @relation(fields: [categoryId], references: [id])
+  essentiality EssentialityLevel   @relation(fields: [essentialityId], references: [id])
   transactions Transaction[]
   skips        RecurringItemSkip[]
 
+  @@index([userId])
   @@map("recurring_items")
 }
 
 model RecurringItemSkip {
-  id              Int           @id @default(autoincrement())
-  recurringItemId Int           @map("recurring_item_id")
-  month           DateTime      @db.Date
-  reason          String        @db.VarChar(255)
-  createdAt       DateTime      @default(now()) @map("created_at")
+  id              Int      @id @default(autoincrement())
+  recurringItemId Int      @map("recurring_item_id")
+  month           DateTime @db.Date
+  reason          String   @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at")
 
   recurringItem RecurringItem @relation(fields: [recurringItemId], references: [id], onDelete: Cascade)
 

@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { SnapshotForm } from '@/components/snapshots/SnapshotForm'
+import { requireUser } from '@/lib/auth-helpers'
 import { snapshotService } from '@/lib/container'
 import type { UpdateSnapshotPayload } from '../../actions'
 import { updateSnapshot } from '../../actions'
@@ -9,13 +10,14 @@ export default async function EditSnapshotPage({
 }: {
 	params: Promise<{ id: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
 
 	const [snapshot, latest] = await Promise.all([
-		snapshotService.findById(id).catch(() => null),
-		snapshotService.findLatest(),
+		snapshotService.findById(user.id, id).catch(() => null),
+		snapshotService.findLatest(user.id),
 	])
 	if (!snapshot) notFound()
 

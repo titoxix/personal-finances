@@ -1,6 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { ZodError } from 'zod'
 import { UpdateInstallmentPlanSchema } from '@/domain/entities/installment-plan'
+import { requireUser } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 import { createPrismaInstallmentPlanRepository } from '@/repositories/prisma/PrismaInstallmentPlanRepository'
 import { createInstallmentPlanService } from '@/services/InstallmentPlanService'
@@ -15,9 +16,10 @@ export async function GET(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const plan = await makeService().findById(Number(id))
+		const plan = await makeService().findById(user.id, Number(id))
 		return Response.json(plan)
 	} catch (error) {
 		if (
@@ -34,11 +36,12 @@ export async function PATCH(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
 		const body = await request.json()
 		const input = UpdateInstallmentPlanSchema.parse(body)
-		const plan = await makeService().update(Number(id), input)
+		const plan = await makeService().update(user.id, Number(id), input)
 		return Response.json(plan)
 	} catch (error) {
 		if (error instanceof ZodError) {
@@ -58,9 +61,10 @@ export async function DELETE(
 	_req: NextRequest,
 	{ params }: { params: Promise<{ id: string }> },
 ) {
+	const user = await requireUser()
 	const { id } = await params
 	try {
-		const plan = await makeService().deactivate(Number(id))
+		const plan = await makeService().deactivate(user.id, Number(id))
 		return Response.json(plan)
 	} catch (error) {
 		if (

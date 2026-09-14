@@ -42,15 +42,24 @@ export type UpdateTransactionInput = {
 }
 
 export interface ITransactionRepository {
-	findAll(): Promise<Transaction[]>
-	findById(id: number): Promise<Transaction | null>
-	findByMonth(month: Date): Promise<Transaction[]>
+	findAll(userId: string): Promise<Transaction[]>
+	findById(userId: string, id: number): Promise<Transaction | null>
+	findByMonth(userId: string, month: Date): Promise<Transaction[]>
 	findByMonthAndCategory(
+		userId: string,
 		month: Date,
 		categoryId: number,
 	): Promise<Transaction[]>
-	findByDateRange(start: Date, end: Date): Promise<Transaction[]>
-	create(input: CreateTransactionInput): Promise<Transaction>
-	update(id: number, input: UpdateTransactionInput): Promise<Transaction>
-	delete(id: number): Promise<void>
+	findByDateRange(
+		userId: string,
+		start: Date,
+		end: Date,
+	): Promise<Transaction[]>
+	create(userId: string, input: CreateTransactionInput): Promise<Transaction>
+	update(
+		userId: string,
+		id: number,
+		input: UpdateTransactionInput,
+	): Promise<Transaction>
+	delete(userId: string, id: number): Promise<void>
 }

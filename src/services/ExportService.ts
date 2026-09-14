@@ -58,24 +58,34 @@ type SingleEntityType = (typeof SINGLE_ENTITY_TYPES)[number]
 
 export function createExportService(deps: ExportServiceDeps) {
 	async function fetchEntity(
+		userId: string,
 		entityType: SingleEntityType,
 		range: DateRangeFilter,
 	): Promise<unknown[]> {
 		switch (entityType) {
 			case 'transactions':
-				return deps.transactionRepo.findByDateRange(range.start, range.end)
+				return deps.transactionRepo.findByDateRange(
+					userId,
+					range.start,
+					range.end,
+				)
 			case 'incomes':
-				return deps.incomeRepo.findByDateRange(range.start, range.end)
+				return deps.incomeRepo.findByDateRange(userId, range.start, range.end)
 			case 'budgets':
-				return deps.budgetRepo.findByDateRange(range.start, range.end)
+				return deps.budgetRepo.findByDateRange(userId, range.start, range.end)
 			case 'exchange-rates':
-				return deps.exchangeRateRepo.findByDateRange(range.start, range.end)
+				return deps.exchangeRateRepo.findByDateRange(
+					userId,
+					range.start,
+					range.end,
+				)
 			case 'snapshots':
-				return deps.snapshotRepo.findByDateRange(range.start, range.end)
+				return deps.snapshotRepo.findByDateRange(userId, range.start, range.end)
 			case 'recurring-items':
-				return deps.recurringItemRepo.findActive()
+				return deps.recurringItemRepo.findActive(userId)
 			case 'installment-plans':
 				return deps.installmentPlanRepo.findActiveInDateRange(
+					userId,
 					range.start,
 					range.end,
 				)
@@ -83,12 +93,13 @@ export function createExportService(deps: ExportServiceDeps) {
 	}
 
 	async function fetchAll(
+		userId: string,
 		range: DateRangeFilter,
 	): Promise<Record<string, unknown[]>> {
 		const results = await Promise.all(
 			SINGLE_ENTITY_TYPES.map(async (type) => ({
 				type,
-				data: await fetchEntity(type, range),
+				data: await fetchEntity(userId, type, range),
 			})),
 		)
 		return Object.fromEntries(results.map((r) => [r.type, r.data]))
@@ -96,11 +107,12 @@ export function createExportService(deps: ExportServiceDeps) {
 
 	return {
 		count: async (
+			userId: string,
 			entityType: ExportEntityType,
 			range: DateRangeFilter,
 		): Promise<ExportCountResult> => {
 			if (entityType === 'all') {
-				const allData = await fetchAll(range)
+				const allData = await fetchAll(userId, range)
 				const breakdown: Record<string, number> = {}
 				let total = 0
 				for (const [type, data] of Object.entries(allData)) {
@@ -110,18 +122,19 @@ export function createExportService(deps: ExportServiceDeps) {
 				return { entityType, count: total, breakdown }
 			}
 
-			const data = await fetchEntity(entityType, range)
+			const data = await fetchEntity(userId, entityType, range)
 			return { entityType, count: data.length }
 		},
 
 		exportData: async (
+			userId: string,
 			entityType: ExportEntityType,
 			range: DateRangeFilter,
 		): Promise<ExportDataResult> => {
 			const data =
 				entityType === 'all'
-					? await fetchAll(range)
-					: await fetchEntity(entityType, range)
+					? await fetchAll(userId, range)
+					: await fetchEntity(userId, entityType, range)
 
 			return {
 				entityType,

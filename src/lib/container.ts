@@ -9,6 +9,7 @@ import { createPrismaRecurringItemRepository } from '@/repositories/prisma/Prism
 import { createPrismaRecurringItemSkipRepository } from '@/repositories/prisma/PrismaRecurringItemSkipRepository'
 import { createPrismaSnapshotRepository } from '@/repositories/prisma/PrismaSnapshotRepository'
 import { createPrismaTransactionRepository } from '@/repositories/prisma/PrismaTransactionRepository'
+import { createPrismaUserRepository } from '@/repositories/prisma/PrismaUserRepository'
 import { createBudgetService } from '@/services/BudgetService'
 import { createCategoryService } from '@/services/CategoryService'
 import { createEssentialityLevelService } from '@/services/EssentialityLevelService'
@@ -20,6 +21,9 @@ import { createRecurringItemService } from '@/services/RecurringItemService'
 import { createSnapshotExportService } from '@/services/SnapshotExportService'
 import { createSnapshotService } from '@/services/SnapshotService'
 import { createTransactionService } from '@/services/TransactionService'
+import { createUserService } from '@/services/UserService'
+
+export const userService = createUserService(createPrismaUserRepository(prisma))
 
 export const exchangeRateService = createExchangeRateService(
 	createPrismaExchangeRateRepository(prisma),

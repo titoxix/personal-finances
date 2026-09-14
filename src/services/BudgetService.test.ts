@@ -3,6 +3,8 @@ import type { Budget } from '@/domain/entities/budget'
 import type { IBudgetRepository } from '@/domain/repositories/IBudgetRepository'
 import { createBudgetService } from './BudgetService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): IBudgetRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -48,10 +50,10 @@ describe('createBudgetService', () => {
 			const budgets = [makeBudget()]
 			vi.mocked(repo.findAll).mockResolvedValue(budgets)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(budgets)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -60,7 +62,7 @@ describe('createBudgetService', () => {
 			const budget = makeBudget()
 			vi.mocked(repo.findById).mockResolvedValue(budget)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(budget)
 		})
@@ -68,7 +70,9 @@ describe('createBudgetService', () => {
 		it('throws when budget does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow('Budget not found')
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
+				'Budget not found',
+			)
 		})
 	})
 
@@ -78,7 +82,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue(specific)
 			vi.mocked(repo.findRecurring).mockResolvedValue([])
 
-			const result = await service.findByMonth(MAY_2026)
+			const result = await service.findByMonth(USER_ID, MAY_2026)
 
 			expect(result).toEqual(specific)
 		})
@@ -94,7 +98,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue([specificCategory2])
 			vi.mocked(repo.findRecurring).mockResolvedValue([recurringCategory1])
 
-			const result = await service.findByMonth(MAY_2026)
+			const result = await service.findByMonth(USER_ID, MAY_2026)
 
 			expect(result).toHaveLength(2)
 			expect(result).toContain(specificCategory2)
@@ -112,7 +116,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonth).mockResolvedValue([specific])
 			vi.mocked(repo.findRecurring).mockResolvedValue([recurring])
 
-			const result = await service.findByMonth(MAY_2026)
+			const result = await service.findByMonth(USER_ID, MAY_2026)
 
 			expect(result).toHaveLength(1)
 			expect(result[0]).toBe(specific)
@@ -124,7 +128,7 @@ describe('createBudgetService', () => {
 			const budget = makeBudget()
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(budget)
 
-			const result = await service.findByMonthAndCategory(MAY_2026, 1)
+			const result = await service.findByMonthAndCategory(USER_ID, MAY_2026, 1)
 
 			expect(result).toBe(budget)
 		})
@@ -132,7 +136,7 @@ describe('createBudgetService', () => {
 		it('returns null when no budget exists for that combination', async () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(null)
 
-			const result = await service.findByMonthAndCategory(MAY_2026, 99)
+			const result = await service.findByMonthAndCategory(USER_ID, MAY_2026, 99)
 
 			expect(result).toBeNull()
 		})
@@ -144,7 +148,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(budget)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				month: MAY_2026,
 				categoryId: 1,
 				essentialityId: 1,
@@ -158,7 +162,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(makeBudget())
 
 			await expect(
-				service.create({
+				service.create(USER_ID, {
 					month: MAY_2026,
 					categoryId: 1,
 					essentialityId: 1,
@@ -171,7 +175,11 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(null)
 
 			await expect(
-				service.create({ month: MAY_2026, categoryId: 1, essentialityId: 1 }),
+				service.create(USER_ID, {
+					month: MAY_2026,
+					categoryId: 1,
+					essentialityId: 1,
+				}),
 			).rejects.toThrow('budget requires budgetedUsd or budgetedGs')
 		})
 	})
@@ -183,18 +191,20 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { budgetedUsd: 600 })
+			const result = await service.update(USER_ID, 1, { budgetedUsd: 600 })
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { budgetedUsd: 600 })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
+				budgetedUsd: 600,
+			})
 		})
 
 		it('throws when budget does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { budgetedUsd: 600 })).rejects.toThrow(
-				'Budget not found',
-			)
+			await expect(
+				service.update(USER_ID, 999, { budgetedUsd: 600 }),
+			).rejects.toThrow('Budget not found')
 		})
 	})
 
@@ -209,12 +219,14 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.adjustForMonth(1, MAY_2026, {
+			const result = await service.adjustForMonth(USER_ID, 1, MAY_2026, {
 				budgetedUsd: 600,
 			})
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, { budgetedUsd: 600 })
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
+				budgetedUsd: 600,
+			})
 			expect(repo.create).not.toHaveBeenCalled()
 		})
 
@@ -239,7 +251,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(created)
 
-			const result = await service.adjustForMonth(1, JUN_2026, {
+			const result = await service.adjustForMonth(USER_ID, 1, JUN_2026, {
 				budgetedUsd: 150,
 				budgetedGs: null,
 				essentialityId: 2,
@@ -248,7 +260,7 @@ describe('createBudgetService', () => {
 			})
 
 			expect(result).toBe(created)
-			expect(repo.create).toHaveBeenCalledWith({
+			expect(repo.create).toHaveBeenCalledWith(USER_ID, {
 				month: JUN_2026,
 				categoryId: 3,
 				essentialityId: 2,
@@ -264,7 +276,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
 			await expect(
-				service.adjustForMonth(999, MAY_2026, { budgetedUsd: 600 }),
+				service.adjustForMonth(USER_ID, 999, MAY_2026, { budgetedUsd: 600 }),
 			).rejects.toThrow('Budget not found')
 		})
 
@@ -283,7 +295,7 @@ describe('createBudgetService', () => {
 			vi.mocked(repo.findByMonthAndCategory).mockResolvedValue(existing)
 
 			await expect(
-				service.adjustForMonth(1, JUN_2026, { budgetedUsd: 150 }),
+				service.adjustForMonth(USER_ID, 1, JUN_2026, { budgetedUsd: 150 }),
 			).rejects.toThrow('Budget already exists for this month and category')
 		})
 	})

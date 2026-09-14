@@ -19,16 +19,17 @@ export type UpdateBudgetInput = {
 }
 
 export interface IBudgetRepository {
-	findAll(): Promise<Budget[]>
-	findById(id: number): Promise<Budget | null>
-	findByMonth(month: Date): Promise<Budget[]>
+	findAll(userId: string): Promise<Budget[]>
+	findById(userId: string, id: number): Promise<Budget | null>
+	findByMonth(userId: string, month: Date): Promise<Budget[]>
 	findByMonthAndCategory(
+		userId: string,
 		month: Date,
 		categoryId: number,
 	): Promise<Budget | null>
-	findByDateRange(start: Date, end: Date): Promise<Budget[]>
-	findRecurring(upToMonth: Date): Promise<Budget[]>
-	create(input: CreateBudgetInput): Promise<Budget>
-	update(id: number, input: UpdateBudgetInput): Promise<Budget>
-	softDelete(id: number, reason?: string): Promise<Budget>
+	findByDateRange(userId: string, start: Date, end: Date): Promise<Budget[]>
+	findRecurring(userId: string, upToMonth: Date): Promise<Budget[]>
+	create(userId: string, input: CreateBudgetInput): Promise<Budget>
+	update(userId: string, id: number, input: UpdateBudgetInput): Promise<Budget>
+	softDelete(userId: string, id: number, reason?: string): Promise<Budget>
 }

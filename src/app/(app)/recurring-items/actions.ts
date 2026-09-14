@@ -6,6 +6,7 @@ import type {
 	PaymentMethod,
 	RecurringFrequency,
 } from '@/domain/entities/recurring-item'
+import { requireUser } from '@/lib/auth-helpers'
 import { recurringItemService } from '@/lib/container'
 
 export type CreateRecurringItemPayload = {
@@ -39,8 +40,9 @@ export type UpdateRecurringItemPayload = {
 export async function createRecurringItem(
 	payload: CreateRecurringItemPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await recurringItemService.create(payload)
+		await recurringItemService.create(user.id, payload)
 	} catch (e) {
 		return {
 			error:
@@ -55,8 +57,9 @@ export async function updateRecurringItem(
 	id: number,
 	payload: UpdateRecurringItemPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await recurringItemService.update(id, payload)
+		await recurringItemService.update(user.id, id, payload)
 	} catch (e) {
 		return {
 			error:
@@ -72,8 +75,9 @@ export async function updateRecurringItem(
 export async function deactivateRecurringItem(
 	id: number,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await recurringItemService.deactivate(id)
+		await recurringItemService.deactivate(user.id, id)
 	} catch (e) {
 		return {
 			error:
@@ -91,8 +95,10 @@ export async function skipRecurringItem(
 	month: string,
 	reason: string,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
 		await recurringItemService.skipForMonth(
+			user.id,
 			recurringItemId,
 			new Date(month),
 			reason,
@@ -112,8 +118,13 @@ export async function unskipRecurringItem(
 	recurringItemId: number,
 	month: string,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await recurringItemService.unskipForMonth(recurringItemId, new Date(month))
+		await recurringItemService.unskipForMonth(
+			user.id,
+			recurringItemId,
+			new Date(month),
+		)
 	} catch (e) {
 		return {
 			error:

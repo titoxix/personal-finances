@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { TransactionForm } from '@/components/transactions/TransactionForm'
+import { requireUser } from '@/lib/auth-helpers'
 import {
 	categoryService,
 	essentialityService,
@@ -15,6 +16,7 @@ export default async function EditTransactionPage({
 }: {
 	params: Promise<{ id: string }>
 }) {
+	const user = await requireUser()
 	const { id: idStr } = await params
 	const id = Number(idStr)
 	if (Number.isNaN(id)) notFound()
@@ -26,11 +28,11 @@ export default async function EditTransactionPage({
 		recurringItems,
 		installmentPlans,
 	] = await Promise.all([
-		transactionService.findById(id).catch(() => null),
-		categoryService.findAll(),
-		essentialityService.findAll(),
-		recurringItemService.findActive(),
-		installmentPlanService.findActive(),
+		transactionService.findById(user.id, id).catch(() => null),
+		categoryService.findAll(user.id),
+		essentialityService.findAll(user.id),
+		recurringItemService.findActive(user.id),
+		installmentPlanService.findActive(user.id),
 	])
 
 	if (!transaction) notFound()

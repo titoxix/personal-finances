@@ -1,10 +1,12 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { EssentialityLevelList } from '@/components/essentiality-levels/EssentialityLevelList'
+import { requireUser } from '@/lib/auth-helpers'
 import { essentialityService } from '@/lib/container'
 
 export default async function EssentialityLevelsPage() {
-	const levels = await essentialityService.findAll()
+	const user = await requireUser()
+	const levels = await essentialityService.findAll(user.id)
 
 	return (
 		<div>

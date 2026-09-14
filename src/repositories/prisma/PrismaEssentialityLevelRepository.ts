@@ -9,18 +9,24 @@ export function createPrismaEssentialityLevelRepository(
 	prisma: PrismaClient,
 ): IEssentialityLevelRepository {
 	return {
-		findAll: () =>
-			prisma.essentialityLevel.findMany({ orderBy: { sortOrder: 'asc' } }),
-		findById: (id) => prisma.essentialityLevel.findUnique({ where: { id } }),
-		findByCode: (code) =>
-			prisma.essentialityLevel.findUnique({ where: { code } }),
-		create: (input: CreateEssentialityLevelInput) =>
-			prisma.essentialityLevel.create({ data: input }),
-		update: (id: number, input: UpdateEssentialityLevelInput) =>
-			prisma.essentialityLevel.update({ where: { id }, data: input }),
-		deactivate: (id: number) =>
+		findAll: (userId) =>
+			prisma.essentialityLevel.findMany({
+				where: { userId },
+				orderBy: { sortOrder: 'asc' },
+			}),
+		findById: (userId, id) =>
+			prisma.essentialityLevel.findUnique({ where: { id, userId } }),
+		findByCode: (userId, code) =>
+			prisma.essentialityLevel.findUnique({
+				where: { userId_code: { userId, code } },
+			}),
+		create: (userId, input: CreateEssentialityLevelInput) =>
+			prisma.essentialityLevel.create({ data: { ...input, userId } }),
+		update: (userId, id: number, input: UpdateEssentialityLevelInput) =>
+			prisma.essentialityLevel.update({ where: { id, userId }, data: input }),
+		deactivate: (userId, id: number) =>
 			prisma.essentialityLevel.update({
-				where: { id },
+				where: { id, userId },
 				data: { active: false },
 			}),
 	}

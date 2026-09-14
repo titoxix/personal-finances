@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { PaymentMethod } from '@/domain/entities/recurring-item'
+import { requireUser } from '@/lib/auth-helpers'
 import { installmentPlanService } from '@/lib/container'
 
 export type CreateInstallmentPlanPayload = {
@@ -33,8 +34,9 @@ export type UpdateInstallmentPlanPayload = {
 export async function createInstallmentPlan(
 	payload: CreateInstallmentPlanPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await installmentPlanService.create(payload)
+		await installmentPlanService.create(user.id, payload)
 	} catch (e) {
 		return {
 			error:
@@ -49,8 +51,9 @@ export async function updateInstallmentPlan(
 	id: number,
 	payload: UpdateInstallmentPlanPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await installmentPlanService.update(id, payload)
+		await installmentPlanService.update(user.id, id, payload)
 	} catch (e) {
 		return {
 			error:
@@ -66,8 +69,9 @@ export async function updateInstallmentPlan(
 export async function deactivateInstallmentPlan(
 	id: number,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await installmentPlanService.deactivate(id)
+		await installmentPlanService.deactivate(user.id, id)
 	} catch (e) {
 		return {
 			error:

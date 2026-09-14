@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { requireUser } from '@/lib/auth-helpers'
 import { exchangeRateService } from '@/lib/container'
 
 export type CreateExchangeRatesPayload = {
@@ -15,11 +16,12 @@ export type CreateExchangeRatesPayload = {
 export async function createExchangeRates(
 	payload: CreateExchangeRatesPayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	const recordedAt = new Date(payload.recordedAt)
 	const notes = payload.notes.trim() || undefined
 
 	try {
-		await exchangeRateService.create({
+		await exchangeRateService.create(user.id, {
 			source: 'itau',
 			rateBuy: payload.itau.rateBuy ?? undefined,
 			rateSell: payload.itau.rateSell ?? undefined,
@@ -27,7 +29,7 @@ export async function createExchangeRates(
 			recordedAt,
 		})
 
-		await exchangeRateService.create({
+		await exchangeRateService.create(user.id, {
 			source: 'ueno',
 			rateBuy: payload.ueno.rateBuy ?? undefined,
 			rateSell: payload.ueno.rateSell ?? undefined,
@@ -36,7 +38,7 @@ export async function createExchangeRates(
 		})
 
 		if (payload.bcp.rateMid != null) {
-			await exchangeRateService.create({
+			await exchangeRateService.create(user.id, {
 				source: 'bcp',
 				rateMid: payload.bcp.rateMid,
 				notes,
@@ -65,8 +67,9 @@ export async function updateExchangeRate(
 	id: number,
 	payload: UpdateExchangeRatePayload,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await exchangeRateService.update(id, {
+		await exchangeRateService.update(user.id, id, {
 			rateBuy: payload.rateBuy ?? undefined,
 			rateSell: payload.rateSell ?? undefined,
 			rateMid: payload.rateMid ?? undefined,
@@ -85,8 +88,9 @@ export async function updateExchangeRate(
 export async function deleteExchangeRate(
 	id: number,
 ): Promise<{ error: string } | undefined> {
+	const user = await requireUser()
 	try {
-		await exchangeRateService.delete(id)
+		await exchangeRateService.delete(user.id, id)
 	} catch (e) {
 		return {
 			error: e instanceof Error ? e.message : 'Error al eliminar la tasa',

@@ -82,50 +82,53 @@ export function createPrismaSnapshotRepository(
 	prisma: PrismaClient,
 ): ISnapshotRepository {
 	return {
-		findAll: async () => {
+		findAll: async (userId) => {
 			const rows = await prisma.snapshot.findMany({
+				where: { userId },
 				orderBy: { date: 'desc' },
 				include: { investments: true },
 			})
 			return rows.map(toDomain)
 		},
-		findById: async (id) => {
-			const row = await prisma.snapshot.findUnique({
-				where: { id },
-				include: { investments: true },
-			})
-			return row ? toDomain(row) : null
-		},
-		findByDateRange: async (start: Date, end: Date) => {
-			const rows = await prisma.snapshot.findMany({
-				where: { date: { gte: start, lt: end } },
-				orderBy: { date: 'desc' },
-				include: { investments: true },
-			})
-			return rows.map(toDomain)
-		},
-		findLatest: async () => {
+		findById: async (userId, id) => {
 			const row = await prisma.snapshot.findFirst({
+				where: { id, userId },
+				include: { investments: true },
+			})
+			return row ? toDomain(row) : null
+		},
+		findByDateRange: async (userId, start: Date, end: Date) => {
+			const rows = await prisma.snapshot.findMany({
+				where: { userId, date: { gte: start, lt: end } },
+				orderBy: { date: 'desc' },
+				include: { investments: true },
+			})
+			return rows.map(toDomain)
+		},
+		findLatest: async (userId) => {
+			const row = await prisma.snapshot.findFirst({
+				where: { userId },
 				orderBy: { date: 'desc' },
 				include: { investments: true },
 			})
 			return row ? toDomain(row) : null
 		},
-		create: async (input: CreateSnapshotInput) => {
+		create: async (userId, input: CreateSnapshotInput) => {
 			const { investments, ...snapshotData } = input
 			const row = await prisma.snapshot.create({
 				data: {
 					...snapshotData,
+					userId,
 					...(investments?.length && { investments: { create: investments } }),
 				},
 				include: { investments: true },
 			})
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateSnapshotInput) => {
+		update: async (userId, id: number, input: UpdateSnapshotInput) => {
 			const { investments, ...snapshotData } = input
 			const row = await prisma.snapshot.update({
-				where: { id },
+				where: { id, userId },
 				data: {
 					...snapshotData,
 					...(investments !== undefined && {

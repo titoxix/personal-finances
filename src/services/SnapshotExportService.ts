@@ -261,6 +261,7 @@ function filterInstallmentPlansForMonth(
 
 export function createSnapshotExportService(deps: SnapshotExportDeps) {
 	async function buildExportForSnapshot(
+		userId: string,
 		snapshot: Snapshot,
 	): Promise<SnapshotExport> {
 		const { monthStart, monthEnd } = monthBounds(snapshot.date)
@@ -274,18 +275,18 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 			categories,
 			essentialities,
 		] = await Promise.all([
-			deps.incomeRepo.findByMonth(snapshot.date),
-			deps.transactionRepo.findByMonth(snapshot.date),
-			deps.budgetRepo.findByMonth(snapshot.date),
-			deps.recurringItemRepo.findActive(),
-			deps.installmentPlanRepo.findAll(),
-			deps.categoryRepo.findAll(),
-			deps.essentialityRepo.findAll(),
+			deps.incomeRepo.findByMonth(userId, snapshot.date),
+			deps.transactionRepo.findByMonth(userId, snapshot.date),
+			deps.budgetRepo.findByMonth(userId, snapshot.date),
+			deps.recurringItemRepo.findActive(userId),
+			deps.installmentPlanRepo.findAll(userId),
+			deps.categoryRepo.findAll(userId),
+			deps.essentialityRepo.findAll(userId),
 		])
 
 		const rawExchangeRate =
 			snapshot.exchangeRateId != null
-				? await deps.exchangeRateRepo.findById(snapshot.exchangeRateId)
+				? await deps.exchangeRateRepo.findById(userId, snapshot.exchangeRateId)
 				: null
 
 		const { categoryMap, essentialityMap } = buildLabelMaps(
@@ -338,12 +339,12 @@ export function createSnapshotExportService(deps: SnapshotExportDeps) {
 	return {
 		buildExportForSnapshot,
 
-		buildAllExports: async (): Promise<SnapshotExport[]> => {
-			const snapshots = await deps.snapshotRepo.findAll()
+		buildAllExports: async (userId: string): Promise<SnapshotExport[]> => {
+			const snapshots = await deps.snapshotRepo.findAll(userId)
 			const sorted = [...snapshots].sort(
 				(a, b) => a.date.getTime() - b.date.getTime(),
 			)
-			return Promise.all(sorted.map((s) => buildExportForSnapshot(s)))
+			return Promise.all(sorted.map((s) => buildExportForSnapshot(userId, s)))
 		},
 	}
 }

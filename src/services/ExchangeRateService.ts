@@ -23,39 +23,46 @@ function validateCreate(input: CreateExchangeRateInput): void {
 
 export function createExchangeRateService(repo: IExchangeRateRepository) {
 	return {
-		findAll: (): Promise<ExchangeRate[]> => repo.findAll(),
+		findAll: (userId: string): Promise<ExchangeRate[]> => repo.findAll(userId),
 
-		findById: async (id: number): Promise<ExchangeRate> => {
-			const rate = await repo.findById(id)
+		findById: async (userId: string, id: number): Promise<ExchangeRate> => {
+			const rate = await repo.findById(userId, id)
 			if (!rate) throw new Error('ExchangeRate not found')
 			return rate
 		},
 
-		findBySource: (source: ExchangeRateSource): Promise<ExchangeRate[]> =>
-			repo.findBySource(source),
+		findBySource: (
+			userId: string,
+			source: ExchangeRateSource,
+		): Promise<ExchangeRate[]> => repo.findBySource(userId, source),
 
 		findLatestBySource: (
+			userId: string,
 			source: ExchangeRateSource,
-		): Promise<ExchangeRate | null> => repo.findLatestBySource(source),
+		): Promise<ExchangeRate | null> => repo.findLatestBySource(userId, source),
 
-		create: async (input: CreateExchangeRateInput): Promise<ExchangeRate> => {
+		create: async (
+			userId: string,
+			input: CreateExchangeRateInput,
+		): Promise<ExchangeRate> => {
 			validateCreate(input)
-			return repo.create(input)
+			return repo.create(userId, input)
 		},
 
 		update: async (
+			userId: string,
 			id: number,
 			input: UpdateExchangeRateInput,
 		): Promise<ExchangeRate> => {
-			const existing = await repo.findById(id)
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('ExchangeRate not found')
-			return repo.update(id, input)
+			return repo.update(userId, id, input)
 		},
 
-		delete: async (id: number): Promise<void> => {
-			const existing = await repo.findById(id)
+		delete: async (userId: string, id: number): Promise<void> => {
+			const existing = await repo.findById(userId, id)
 			if (!existing) throw new Error('ExchangeRate not found')
-			return repo.delete(id)
+			return repo.delete(userId, id)
 		},
 	}
 }

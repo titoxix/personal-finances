@@ -22,10 +22,10 @@ export type UpdateIncomeInput = {
 }
 
 export interface IIncomeRepository {
-	findAll(): Promise<Income[]>
-	findById(id: number): Promise<Income | null>
-	findByMonth(month: Date): Promise<Income | null>
-	findByDateRange(start: Date, end: Date): Promise<Income[]>
-	create(input: CreateIncomeInput): Promise<Income>
-	update(id: number, input: UpdateIncomeInput): Promise<Income>
+	findAll(userId: string): Promise<Income[]>
+	findById(userId: string, id: number): Promise<Income | null>
+	findByMonth(userId: string, month: Date): Promise<Income | null>
+	findByDateRange(userId: string, start: Date, end: Date): Promise<Income[]>
+	create(userId: string, input: CreateIncomeInput): Promise<Income>
+	update(userId: string, id: number, input: UpdateIncomeInput): Promise<Income>
 }

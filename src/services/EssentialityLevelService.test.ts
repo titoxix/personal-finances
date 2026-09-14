@@ -3,6 +3,8 @@ import type { EssentialityLevel } from '@/domain/entities/essentiality-level'
 import type { IEssentialityLevelRepository } from '@/domain/repositories/IEssentialityLevelRepository'
 import { createEssentialityLevelService } from './EssentialityLevelService'
 
+const USER_ID = 'user-1'
+
 const makeRepo = (): IEssentialityLevelRepository => ({
 	findAll: vi.fn(),
 	findById: vi.fn(),
@@ -42,10 +44,10 @@ describe('createEssentialityLevelService', () => {
 			]
 			vi.mocked(repo.findAll).mockResolvedValue(levels)
 
-			const result = await service.findAll()
+			const result = await service.findAll(USER_ID)
 
 			expect(result).toBe(levels)
-			expect(repo.findAll).toHaveBeenCalledOnce()
+			expect(repo.findAll).toHaveBeenCalledWith(USER_ID)
 		})
 	})
 
@@ -54,7 +56,7 @@ describe('createEssentialityLevelService', () => {
 			const level = makeLevel()
 			vi.mocked(repo.findById).mockResolvedValue(level)
 
-			const result = await service.findById(1)
+			const result = await service.findById(USER_ID, 1)
 
 			expect(result).toBe(level)
 		})
@@ -62,7 +64,7 @@ describe('createEssentialityLevelService', () => {
 		it('throws when level does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.findById(999)).rejects.toThrow(
+			await expect(service.findById(USER_ID, 999)).rejects.toThrow(
 				'EssentialityLevel not found',
 			)
 		})
@@ -73,7 +75,7 @@ describe('createEssentialityLevelService', () => {
 			const level = makeLevel()
 			vi.mocked(repo.findByCode).mockResolvedValue(level)
 
-			const result = await service.findByCode('essential')
+			const result = await service.findByCode(USER_ID, 'essential')
 
 			expect(result).toBe(level)
 		})
@@ -81,7 +83,7 @@ describe('createEssentialityLevelService', () => {
 		it('returns null when code does not exist', async () => {
 			vi.mocked(repo.findByCode).mockResolvedValue(null)
 
-			const result = await service.findByCode('inexistente')
+			const result = await service.findByCode(USER_ID, 'inexistente')
 
 			expect(result).toBeNull()
 		})
@@ -93,14 +95,14 @@ describe('createEssentialityLevelService', () => {
 			vi.mocked(repo.findByCode).mockResolvedValue(null)
 			vi.mocked(repo.create).mockResolvedValue(level)
 
-			const result = await service.create({
+			const result = await service.create(USER_ID, {
 				code: 'essential',
 				label: 'Esencial',
 				sortOrder: 1,
 			})
 
 			expect(result).toBe(level)
-			expect(repo.create).toHaveBeenCalledWith({
+			expect(repo.create).toHaveBeenCalledWith(USER_ID, {
 				code: 'essential',
 				label: 'Esencial',
 				sortOrder: 1,
@@ -111,7 +113,11 @@ describe('createEssentialityLevelService', () => {
 			vi.mocked(repo.findByCode).mockResolvedValue(makeLevel())
 
 			await expect(
-				service.create({ code: 'essential', label: 'Esencial', sortOrder: 1 }),
+				service.create(USER_ID, {
+					code: 'essential',
+					label: 'Esencial',
+					sortOrder: 1,
+				}),
 			).rejects.toThrow('EssentialityLevel code already exists')
 		})
 	})
@@ -123,10 +129,12 @@ describe('createEssentialityLevelService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.update).mockResolvedValue(updated)
 
-			const result = await service.update(1, { label: 'Esencial actualizado' })
+			const result = await service.update(USER_ID, 1, {
+				label: 'Esencial actualizado',
+			})
 
 			expect(result).toBe(updated)
-			expect(repo.update).toHaveBeenCalledWith(1, {
+			expect(repo.update).toHaveBeenCalledWith(USER_ID, 1, {
 				label: 'Esencial actualizado',
 			})
 		})
@@ -134,9 +142,9 @@ describe('createEssentialityLevelService', () => {
 		it('throws when level does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.update(999, { label: 'x' })).rejects.toThrow(
-				'EssentialityLevel not found',
-			)
+			await expect(
+				service.update(USER_ID, 999, { label: 'x' }),
+			).rejects.toThrow('EssentialityLevel not found')
 		})
 	})
 
@@ -147,16 +155,16 @@ describe('createEssentialityLevelService', () => {
 			vi.mocked(repo.findById).mockResolvedValue(existing)
 			vi.mocked(repo.deactivate).mockResolvedValue(deactivated)
 
-			const result = await service.deactivate(1)
+			const result = await service.deactivate(USER_ID, 1)
 
 			expect(result).toBe(deactivated)
-			expect(repo.deactivate).toHaveBeenCalledWith(1)
+			expect(repo.deactivate).toHaveBeenCalledWith(USER_ID, 1)
 		})
 
 		it('throws when level does not exist', async () => {
 			vi.mocked(repo.findById).mockResolvedValue(null)
 
-			await expect(service.deactivate(999)).rejects.toThrow(
+			await expect(service.deactivate(USER_ID, 999)).rejects.toThrow(
 				'EssentialityLevel not found',
 			)
 		})

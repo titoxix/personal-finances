@@ -3,6 +3,23 @@
 import { NextRequest } from 'next/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@/lib/auth-helpers', () => ({
+	requireUser: vi.fn(async () => ({
+		id: 'test-user-id',
+		email: 'test@example.com',
+		name: 'Test User',
+		role: 'USER',
+		country: 'Paraguay',
+	})),
+	requireAdmin: vi.fn(async () => ({
+		id: 'test-user-id',
+		email: 'test@example.com',
+		name: 'Test User',
+		role: 'ADMIN',
+		country: 'Paraguay',
+	})),
+}))
+
 const mockSnapshotService = {
 	findById: vi.fn(),
 }
@@ -47,7 +64,7 @@ describe('GET /api/monthly-snapshots/[id]/export', () => {
 		)
 		expect(
 			mockSnapshotExportService.buildExportForSnapshot,
-		).toHaveBeenCalledWith(snapshot)
+		).toHaveBeenCalledWith('test-user-id', snapshot)
 	})
 
 	it('zero-pads single-digit months and days in the filename', async () => {

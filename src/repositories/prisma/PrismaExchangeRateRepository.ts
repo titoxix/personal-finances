@@ -37,50 +37,55 @@ export function createPrismaExchangeRateRepository(
 	prisma: PrismaClient,
 ): IExchangeRateRepository {
 	return {
-		findAll: async () => {
+		findAll: async (userId) => {
 			const rows = await prisma.exchangeRate.findMany({
+				where: { userId },
 				orderBy: { recordedAt: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		findById: async (id) => {
-			const row = await prisma.exchangeRate.findUnique({ where: { id } })
+		findById: async (userId, id) => {
+			const row = await prisma.exchangeRate.findUnique({
+				where: { id, userId },
+			})
 			return row ? toDomain(row) : null
 		},
-		findBySource: async (source: ExchangeRateSource) => {
+		findBySource: async (userId, source: ExchangeRateSource) => {
 			const rows = await prisma.exchangeRate.findMany({
-				where: { source },
+				where: { userId, source },
 				orderBy: { recordedAt: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		findLatestBySource: async (source: ExchangeRateSource) => {
+		findLatestBySource: async (userId, source: ExchangeRateSource) => {
 			const row = await prisma.exchangeRate.findFirst({
-				where: { source },
+				where: { userId, source },
 				orderBy: { recordedAt: 'desc' },
 			})
 			return row ? toDomain(row) : null
 		},
-		findByDateRange: async (start: Date, end: Date) => {
+		findByDateRange: async (userId, start: Date, end: Date) => {
 			const rows = await prisma.exchangeRate.findMany({
-				where: { recordedAt: { gte: start, lt: end } },
+				where: { userId, recordedAt: { gte: start, lt: end } },
 				orderBy: { recordedAt: 'desc' },
 			})
 			return rows.map(toDomain)
 		},
-		create: async (input: CreateExchangeRateInput) => {
-			const row = await prisma.exchangeRate.create({ data: input })
+		create: async (userId, input: CreateExchangeRateInput) => {
+			const row = await prisma.exchangeRate.create({
+				data: { ...input, userId },
+			})
 			return toDomain(row)
 		},
-		update: async (id: number, input: UpdateExchangeRateInput) => {
+		update: async (userId, id: number, input: UpdateExchangeRateInput) => {
 			const row = await prisma.exchangeRate.update({
-				where: { id },
+				where: { id, userId },
 				data: input,
 			})
 			return toDomain(row)
 		},
-		delete: async (id: number) => {
-			await prisma.exchangeRate.delete({ where: { id } })
+		delete: async (userId, id: number) => {
+			await prisma.exchangeRate.delete({ where: { id, userId } })
 		},
 	}
 }

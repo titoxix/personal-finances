@@ -58,6 +58,9 @@ next-env.d.ts
 
 # project tasks
 /tasks
+/ai-plans
 
 # temporary scripts and test data
 /tmp
+backups/
+
