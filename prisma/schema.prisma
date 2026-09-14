@@ -163,17 +163,19 @@ model Budget {
   id             Int       @id @default(autoincrement())
   month          DateTime  @db.Date
   categoryId     Int       @map("category_id")
-  essentialityId Int       @map("essentiality_id")
+  essentialityId Int?      @map("essentiality_id")
   budgetedUsd    Decimal?  @db.Decimal(10, 2) @map("budgeted_usd")
   budgetedGs     Decimal?  @db.Decimal(15, 2) @map("budgeted_gs")
+  marginUsd      Decimal?  @db.Decimal(10, 2) @map("margin_usd")
+  marginGs       Decimal?  @db.Decimal(15, 2) @map("margin_gs")
   isRecurring    Boolean   @default(false) @map("is_recurring")
   notes          String?
   deletedAt      DateTime? @map("deleted_at")
   deleteReason   String?   @map("delete_reason")
   createdAt      DateTime  @default(now()) @map("created_at")
 
-  category     Category          @relation(fields: [categoryId], references: [id])
-  essentiality EssentialityLevel @relation(fields: [essentialityId], references: [id])
+  category     Category           @relation(fields: [categoryId], references: [id])
+  essentiality EssentialityLevel? @relation(fields: [essentialityId], references: [id])
 
   @@unique([month, categoryId])
   @@map("budgets")
