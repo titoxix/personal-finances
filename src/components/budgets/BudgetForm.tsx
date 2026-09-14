@@ -29,7 +29,7 @@ type EditProps = {
 	categoryLabel: string
 	essentialityLevels: EssentialityLevel[]
 	initialValues: {
-		essentialityId: number
+		essentialityId: number | null
 		currency: 'usd' | 'gs'
 		amount: number
 		isRecurring: boolean

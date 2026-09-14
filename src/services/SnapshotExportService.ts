@@ -231,14 +231,17 @@ function buildLabelMaps(
 }
 
 function enrichWithLabels<
-	T extends { categoryId: number; essentialityId: number },
+	T extends { categoryId: number; essentialityId: number | null },
 >(
 	item: T,
 	categoryMap: Map<number, Category>,
 	essentialityMap: Map<number, EssentialityLevel>,
 ) {
 	const category = categoryMap.get(item.categoryId)
-	const essentiality = essentialityMap.get(item.essentialityId)
+	const essentiality =
+		item.essentialityId === null
+			? undefined
+			: essentialityMap.get(item.essentialityId)
 	return {
 		...item,
 		categoryCode: category?.code ?? null,

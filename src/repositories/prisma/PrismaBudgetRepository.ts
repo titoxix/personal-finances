@@ -10,9 +10,11 @@ type PrismaBudget = {
 	id: number
 	month: Date
 	categoryId: number
-	essentialityId: number
+	essentialityId: number | null
 	budgetedUsd: { toNumber(): number } | null
 	budgetedGs: { toNumber(): number } | null
+	marginUsd: { toNumber(): number } | null
+	marginGs: { toNumber(): number } | null
 	isRecurring: boolean
 	notes: string | null
 	deletedAt: Date | null
@@ -28,6 +30,8 @@ function toDomain(raw: PrismaBudget): Budget {
 		essentialityId: raw.essentialityId,
 		budgetedUsd: raw.budgetedUsd?.toNumber() ?? null,
 		budgetedGs: raw.budgetedGs?.toNumber() ?? null,
+		marginUsd: raw.marginUsd?.toNumber() ?? null,
+		marginGs: raw.marginGs?.toNumber() ?? null,
 		isRecurring: raw.isRecurring,
 		notes: raw.notes,
 		deletedAt: raw.deletedAt,
@@ -62,6 +66,10 @@ export function createPrismaBudgetRepository(
 			})
 			return row ? toDomain(row) : null
 		},
+		existsForMonthAndCategory: async (month: Date, categoryId: number) => {
+			const count = await prisma.budget.count({ where: { month, categoryId } })
+			return count > 0
+		},
 		findByDateRange: async (start: Date, end: Date) => {
 			const rows = await prisma.budget.findMany({
 				where: { month: { gte: start, lt: end }, deletedAt: null },
@@ -89,11 +97,37 @@ export function createPrismaBudgetRepository(
 			return latest.map(toDomain)
 		},
 		create: async (input: CreateBudgetInput) => {
-			const row = await prisma.budget.create({ data: input })
+			const {
+				essentialityId: _essentialityId,
+				currency,
+				margin,
+				...legacyInput
+			} = input
+			const row = await prisma.budget.create({
+				data: {
+					...legacyInput,
+					essentialityId: null,
+					...(currency === 'USD' ? { marginUsd: margin } : {}),
+					...(currency === 'GS' ? { marginGs: margin } : {}),
+				},
+			})
 			return toDomain(row)
 		},
 		update: async (id: number, input: UpdateBudgetInput) => {
-			const row = await prisma.budget.update({ where: { id }, data: input })
+			const {
+				essentialityId: _essentialityId,
+				currency,
+				margin,
+				...legacyInput
+			} = input
+			const row = await prisma.budget.update({
+				where: { id },
+				data: {
+					...legacyInput,
+					...(currency === 'USD' ? { marginUsd: margin, marginGs: null } : {}),
+					...(currency === 'GS' ? { marginUsd: null, marginGs: margin } : {}),
+				},
+			})
 			return toDomain(row)
 		},
 		softDelete: async (id: number, reason?: string) => {

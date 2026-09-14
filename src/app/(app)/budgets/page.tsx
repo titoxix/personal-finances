@@ -198,7 +198,10 @@ export default async function BudgetsPage({
 				<div className="space-y-2">
 					{budgets.map((budget, idx) => {
 						const category = categoryMap.get(budget.categoryId)
-						const essentiality = essentialityMap.get(budget.essentialityId)
+						const essentiality =
+							budget.essentialityId === null
+								? undefined
+								: essentialityMap.get(budget.essentialityId)
 						const spent = spentMap.get(budget.categoryId) ?? { usd: 0, gs: 0 }
 
 						const isUsd = budget.budgetedUsd != null

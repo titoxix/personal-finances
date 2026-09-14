@@ -75,6 +75,44 @@ describe('PrismaBudgetRepository', () => {
 			expect(result[0]?.budgetedUsd).toBe(500)
 			expect(result[0]?.budgetedGs).toBe(3900000)
 		})
+
+		it('maps nullable margins without changing legacy totals or essentiality', async () => {
+			await prismaTest.budget.createMany({
+				data: [
+					{
+						...baseBudget(),
+						budgetedUsd: 500,
+						budgetedGs: 3900000,
+					},
+					{
+						month: MAY_2026,
+						categoryId: category2Id,
+						essentialityId: null,
+						marginUsd: 25.5,
+						marginGs: 200000,
+					},
+				],
+			})
+
+			const result = await repository.findAll()
+			const legacy = result.find((budget) => budget.categoryId === categoryId)
+			const margin = result.find((budget) => budget.categoryId === category2Id)
+
+			expect(legacy).toMatchObject({
+				budgetedUsd: 500,
+				budgetedGs: 3900000,
+				marginUsd: null,
+				marginGs: null,
+				essentialityId,
+			})
+			expect(margin).toMatchObject({
+				budgetedUsd: null,
+				budgetedGs: null,
+				marginUsd: 25.5,
+				marginGs: 200000,
+				essentialityId: null,
+			})
+		})
 	})
 
 	describe('findById', () => {
@@ -163,7 +201,7 @@ describe('PrismaBudgetRepository', () => {
 			expect(result.id).toBeDefined()
 			expect(result.month).toEqual(MAY_2026)
 			expect(result.categoryId).toBe(categoryId)
-			expect(result.essentialityId).toBe(essentialityId)
+			expect(result.essentialityId).toBeNull()
 			expect(result.budgetedUsd).toBeNull()
 			expect(result.budgetedGs).toBeNull()
 			expect(result.notes).toBeNull()
@@ -181,6 +219,37 @@ describe('PrismaBudgetRepository', () => {
 			expect(result.budgetedUsd).toBe(500)
 			expect(result.budgetedGs).toBe(3900000)
 			expect(result.notes).toBe('Incluye delivery')
+		})
+
+		it('creates a budget with null essentiality and a zero USD margin', async () => {
+			const result = await repository.create({
+				month: MAY_2026,
+				categoryId,
+				essentialityId,
+				currency: 'USD',
+				margin: 0,
+			})
+
+			expect(result).toMatchObject({
+				essentialityId: null,
+				marginUsd: 0,
+				marginGs: null,
+				budgetedUsd: null,
+				budgetedGs: null,
+			})
+		})
+
+		it('creates a budget with a non-negative GS margin', async () => {
+			const result = await repository.create({
+				month: MAY_2026,
+				categoryId,
+				essentialityId: null,
+				currency: 'GS',
+				margin: 250000,
+			})
+
+			expect(result.marginUsd).toBeNull()
+			expect(result.marginGs).toBe(250000)
 		})
 	})
 
@@ -212,6 +281,61 @@ describe('PrismaBudgetRepository', () => {
 
 			expect(result.budgetedUsd).toBeNull()
 			expect(result.notes).toBeNull()
+		})
+
+		it('preserves stored legacy essentiality when an update supplies another value', async () => {
+			const replacement = await prismaTest.essentialityLevel.create({
+				data: { code: 'deseable', label: 'Deseable', sortOrder: 2 },
+			})
+			const created = await prismaTest.budget.create({
+				data: { ...baseBudget(), budgetedUsd: 500, marginGs: 100000 },
+			})
+
+			const result = await repository.update(created.id, {
+				essentialityId: replacement.id,
+				currency: 'USD',
+				margin: 0,
+			})
+
+			expect(result.essentialityId).toBe(essentialityId)
+			expect(result.budgetedUsd).toBe(500)
+			expect(result.marginUsd).toBe(0)
+			expect(result.marginGs).toBeNull()
+		})
+
+		it('preserves a stored null essentiality when an update supplies a value', async () => {
+			const created = await prismaTest.budget.create({
+				data: { ...baseBudget(), essentialityId: null },
+			})
+
+			const result = await repository.update(created.id, {
+				essentialityId,
+			})
+
+			expect(result.essentialityId).toBeNull()
+		})
+	})
+
+	describe('existsForMonthAndCategory', () => {
+		it('returns true when the matching budget is soft-deleted', async () => {
+			await prismaTest.budget.create({
+				data: { ...baseBudget(), deletedAt: new Date() },
+			})
+
+			await expect(
+				repository.existsForMonthAndCategory(MAY_2026, categoryId),
+			).resolves.toBe(true)
+			await expect(
+				repository.existsForMonthAndCategory(APR_2026, categoryId),
+			).resolves.toBe(false)
+		})
+
+		it('keeps category and month unique after soft deletion', async () => {
+			await prismaTest.budget.create({
+				data: { ...baseBudget(), deletedAt: new Date() },
+			})
+
+			await expect(repository.create(baseBudget())).rejects.toThrow()
 		})
 	})
 })

@@ -1,11 +1,13 @@
-import type { Budget } from '@/domain/entities/budget'
+import type { Budget, BudgetCurrency } from '@/domain/entities/budget'
 
 export type CreateBudgetInput = {
 	month: Date
 	categoryId: number
-	essentialityId: number
+	essentialityId: number | null
 	budgetedUsd?: number
 	budgetedGs?: number
+	currency?: BudgetCurrency
+	margin?: number
 	isRecurring?: boolean
 	notes?: string
 }
@@ -13,7 +15,9 @@ export type CreateBudgetInput = {
 export type UpdateBudgetInput = {
 	budgetedUsd?: number | null
 	budgetedGs?: number | null
-	essentialityId?: number
+	essentialityId?: number | null
+	currency?: BudgetCurrency
+	margin?: number
 	isRecurring?: boolean
 	notes?: string | null
 }
@@ -26,6 +30,7 @@ export interface IBudgetRepository {
 		month: Date,
 		categoryId: number,
 	): Promise<Budget | null>
+	existsForMonthAndCategory(month: Date, categoryId: number): Promise<boolean>
 	findByDateRange(start: Date, end: Date): Promise<Budget[]>
 	findRecurring(upToMonth: Date): Promise<Budget[]>
 	create(input: CreateBudgetInput): Promise<Budget>
